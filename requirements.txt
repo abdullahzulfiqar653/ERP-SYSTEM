@@ -9,7 +9,7 @@ constantly==15.1.0
 cryptography==36.0.1
 daphne==3.0.2
 distlib==0.3.4
-Django==3.2
+Django==3.2.12
 djangorestframework==3.13.1
 filelock==3.5.0
 hyperlink==21.0.0

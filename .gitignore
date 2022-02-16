@@ -30,6 +30,9 @@ boostertech_backend/urls.py
 # Node artifact files
 node_modules/
 dist/
+*.pyc
+boostertech_backend/
+boostertech_backend/**/*.pyc
 
 # Compiled Java class files
 *.class
@@ -72,3 +75,4 @@ Thumbs.db
 *.mov
 *.wmv
 
+db.sqlite3
