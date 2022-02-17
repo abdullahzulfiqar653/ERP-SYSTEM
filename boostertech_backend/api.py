@@ -2,5 +2,5 @@ from django.urls import path, include
 
 
 urlpatterns = [
-	# path('user/', include('user.api')),
+    path('auth/', include('rest_framework.urls')),
 ]

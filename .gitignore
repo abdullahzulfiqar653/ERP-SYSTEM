@@ -19,7 +19,7 @@ boostertechapp/migrations
 **/migrations/*
 **/**/migrations
 mysql/
-boostertech_backend/settings.py
+boostertech_backend/.env
 boostertech_backend/urls.py
 .idea/
 # These are some examples of commonly ignored file patterns.
