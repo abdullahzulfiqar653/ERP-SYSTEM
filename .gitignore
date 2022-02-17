@@ -51,6 +51,7 @@ dist/
 
 # JetBrains IDE
 .idea/
+__pycache__
 
 # Unit test reports
 TEST*.xml
