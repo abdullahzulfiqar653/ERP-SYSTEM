@@ -19,7 +19,7 @@ SECRET_KEY = env('SECRET_KEY')
 DEBUG = env('DEBUG')
 
 ALLOWED_HOSTS = env('ALLOWED_HOSTS')
-
+CORS_ALLOW_CREDENTIALS = True
 
 # Application definition
 
@@ -33,8 +33,10 @@ INSTALLED_APPS = [
 
     # other APPS:
     'rest_framework',
+    'rest_framework.authtoken',
 
     # developer started apps:
+    'Core',
 ]
 
 MIDDLEWARE = [
@@ -131,3 +133,15 @@ STATIC_URL = '/static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGIN_REDIRECT_URL ='/'
+
+# RestFrameWork Settings
+REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated'
+    ],
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        # 'rest_framework.authentication.BasicAuthentication',
+        # 'rest_framework.authentication.SessionAuthentication',
+    ]
+}
