@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     # other APPS:
     'rest_framework',
     'rest_framework.authtoken',
+    'django_rest_passwordreset',
 
     # developer started apps:
     'Core',
@@ -133,6 +134,28 @@ STATIC_URL = '/static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGIN_REDIRECT_URL ='/'
 
+
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = 'smtp.gmail.com'
+# EMAIL_USE_TLS = True
+# EMAIL_PORT = 587
+# EMAIL_HOST_USER = 'Dev.Beyonderissolutions@gmail.com'
+# EMAIL_HOST_PASSWORD = 'yourpassword'
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.mailtrap.io'
+EMAIL_HOST_USER = env('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')
+EMAIL_PORT = env('EMAIL_PORT')
+
+EMAIL_USE_TLS = True
+EMAIL_USE_SSL = False
+
+PASSWORD_RESET_DOMAIN = 'localhost:3000'
+PASSWORD_RESET_PROTOCOL = "http"
+DOMAIN = 'example.com'
+SITE_NAME = 'Foo Website'
+
 # RestFrameWork Settings
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
@@ -144,3 +167,5 @@ REST_FRAMEWORK = {
         # 'rest_framework.authentication.SessionAuthentication',
     ]
 }
+
+
