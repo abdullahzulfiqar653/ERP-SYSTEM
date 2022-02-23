@@ -2,17 +2,18 @@ from django.contrib import admin
 from django.urls import path, include
 from .views import (
     RegisterAPIView,
-    ChangePasswordView
-) 
-from rest_framework_simplejwt.views import (
-    TokenObtainPairView,
-    TokenRefreshView,
+    ChangePasswordView,
+    CustomJWTView,
+    ForgetPasswordView,
+    ResetPsswordConfirmView
 )
 
+
+
 urlpatterns = [
-    path('login/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('login/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('login/', CustomJWTView.as_view(), name='token_obtain_pair'),
     path('register/', RegisterAPIView.as_view()),
     path('password/update/', ChangePasswordView.as_view()),
-    path('password/reset/', include('django_rest_passwordreset.urls', namespace='password_reset'))
+    path('password/reset/', ForgetPasswordView.as_view()),
+    path('password/reset/confirm/', ResetPsswordConfirmView.as_view())
 ]
