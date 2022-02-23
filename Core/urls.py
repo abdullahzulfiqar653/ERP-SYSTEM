@@ -1,11 +1,11 @@
-from django.contrib import admin
-from django.urls import path, include
+from django.urls import path
 from .views import (
     RegisterAPIView,
-    ChangePasswordView,
     CustomJWTView,
+    ChangePasswordView,
     ForgetPasswordView,
-    ResetPsswordConfirmView
+    ResetPsswordConfirmView,
+    CompaniesListAPIView,
 )
 
 
@@ -15,5 +15,6 @@ urlpatterns = [
     path('register/', RegisterAPIView.as_view()),
     path('password/update/', ChangePasswordView.as_view()),
     path('password/reset/', ForgetPasswordView.as_view()),
-    path('password/reset/confirm/', ResetPsswordConfirmView.as_view())
+    path('password/reset/confirm/', ResetPsswordConfirmView.as_view()),
+    path('companies/', CompaniesListAPIView.as_view())
 ]

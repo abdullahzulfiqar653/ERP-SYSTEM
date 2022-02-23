@@ -1,17 +1,25 @@
-from django.contrib.auth.models import User
+import random, string
+from rest_framework import serializers
 from rest_framework import generics
-from rest_framework.response import Response
 from rest_framework import status
 from rest_framework import permissions
 from rest_framework.views import APIView
-from .models import UserTableDB
-from .serializers import RegisterSerializer, ChangePasswordSerializer,CustomJWTSerializer
 from rest_framework_jwt.views import ObtainJSONWebToken
-from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
-from rest_framework import serializers
+from rest_framework.authtoken.models import Token
+from django.contrib.auth.models import User
+
+from .pagination import CompaniesLimitOffsetPagination
 from utils.email import send_email
-import random, string
+from .models import UserTableDB
+from .serializers import (
+        RegisterSerializer,
+        ChangePasswordSerializer,
+        CustomJWTSerializer,
+        CompaniesFetchSerializer
+    )
+
+
 
 
 '''Here we are customizing ObtainJSONWebToken View to return one more attribute is_admin so in client side 
@@ -169,3 +177,13 @@ class ResetPsswordConfirmView(APIView):
             else:
                 return Response({'message':"Link has been Expired"},status.HTTP_201_CREATED)
         return Response(False)
+
+
+'''This view is just accessible by the Super admin user and here we are
+returning the list of all users except the admin hisself.
+Also we are attaching the pagination class to this view so admin user can imit result from client side.'''
+class CompaniesListAPIView(generics.ListAPIView):
+    queryset = User.objects.filter(is_superuser=False)
+    permission_classes = (permissions.IsAdminUser,)
+    serializer_class = CompaniesFetchSerializer
+    pagination_class = CompaniesLimitOffsetPagination

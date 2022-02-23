@@ -1,4 +1,6 @@
 
+from pyexpat import model
+from attr import fields
 from rest_framework.validators import UniqueValidator
 from rest_framework import serializers
 from django.contrib.auth.models import User
@@ -94,3 +96,13 @@ class ChangePasswordSerializer(serializers.Serializer):
         if attrs['new_password'] != attrs['new_password1']:
             raise serializers.ValidationError({"password": "password fields did not match."})
         return attrs
+
+
+'''Serializer to return only id and username fields as needed for frontend'''
+class CompaniesFetchSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = [
+            'id',
+            'username',
+        ]
