@@ -1,18 +1,14 @@
-
-from pyexpat import model
-from attr import fields
-from rest_framework.validators import UniqueValidator
 from rest_framework import serializers
+from rest_framework.validators import UniqueValidator
+from rest_framework_jwt.serializers import JSONWebTokenSerializer
+from rest_framework_jwt.settings import api_settings
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
-
-from .models import UserTableDB
-
-from rest_framework_jwt.serializers import JSONWebTokenSerializer
 from django.contrib.auth import authenticate, get_user_model
 from django.utils.translation import ugettext as _
-from rest_framework_jwt.settings import api_settings
-# User = get_user_model()
+from .models import UserTableDB
+
+
 jwt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER
 jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
 jwt_decode_handler = api_settings.JWT_DECODE_HANDLER
@@ -40,7 +36,8 @@ class CustomJWTSerializer(JSONWebTokenSerializer):
                     payload = jwt_payload_handler(user)
                     return {
                         'token': jwt_encode_handler(payload),
-                        'is_admin': user.is_superuser
+                        'is_admin': user.is_superuser,
+                        'email': user.email
                     }
                 else:
                     msg = _('Unable to log in with provided credentials.')
@@ -81,7 +78,6 @@ class RegisterSerializer(serializers.ModelSerializer):
         )
         user.set_password(validated_data['password'])
         user.save()
-        UserTableDB.objects.create(user=user)
         return user
 
 '''This Change passswrod serialzer checking if new passwords are matched
@@ -97,6 +93,14 @@ class ChangePasswordSerializer(serializers.Serializer):
             raise serializers.ValidationError({"password": "password fields did not match."})
         return attrs
 
+class UserProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = [
+            'first_name',
+            'last_name',
+            'email',
+        ]
 
 '''Serializer to return only id and username fields as needed for frontend'''
 class CompaniesFetchSerializer(serializers.ModelSerializer):

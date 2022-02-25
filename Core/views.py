@@ -1,4 +1,4 @@
-import random, string
+from django.conf import settings
 from rest_framework import serializers
 from rest_framework import generics
 from rest_framework import status
@@ -6,20 +6,20 @@ from rest_framework import permissions
 from rest_framework.views import APIView
 from rest_framework_jwt.views import ObtainJSONWebToken
 from rest_framework.response import Response
-from rest_framework.authtoken.models import Token
 from django.contrib.auth.models import User
+from django.core.validators import validate_email
+from django.core.exceptions import ValidationError
 
-from .pagination import CompaniesLimitOffsetPagination
+from utils.pagination import CompaniesLimitOffsetPagination
 from utils.email import send_email
 from .models import UserTableDB
+from.helper import generate_token
 from .serializers import (
         RegisterSerializer,
         ChangePasswordSerializer,
         CustomJWTSerializer,
         CompaniesFetchSerializer
     )
-
-
 
 
 '''Here we are customizing ObtainJSONWebToken View to return one more attribute is_admin so in client side 
@@ -31,10 +31,11 @@ class CustomJWTView(ObtainJSONWebToken):
         if serializer.is_valid():
             return Response({
                 'token': serializer.validated_data['token'],
-                'is_admin': serializer.validated_data['is_admin']
-            })
+                'is_admin': serializer.validated_data['is_admin'],
+                'email': serializer.validated_data['email']
+            }, status.HTTP_200_OK)
         else:
-            raise serializers.ValidationError({"non_field_errors":"Account with this email/username does not exists"})
+            raise serializers.ValidationError({"fields_error":"Account with provided credentials does not exists"}, status.HTTP_400_BAD_REQUEST)
 
 
 '''This View is for registration of users. A user can register his self bases on 4 arguments:
@@ -48,12 +49,14 @@ class RegisterAPIView(generics.GenericAPIView):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
             serializer.save()
-
+            user = User.objects.get(email=serializer.validated_data['email'])
+            email_activation_token = generate_token()
             # This is Content we need to send for email after registration process
             email = {
                 "title": "Thank your for registering with BoosterTech Portal",
                 "shortDescription": "These are the next steps.",
                 "subtitle": "BoosterTech Business handling solution in one go",
+                'link': settings.PASSWORD_RESET_PROTOCOL + '://'+ settings.PASSWORD_RESET_DOMAIN +'/api/core/email/activate/activation_key='+ email_activation_token,
                 "message": '''You have successfully registered with BoosterTech. You can 
                         now login in to your profile and start. We have 
                         thousands of features just waiting for you to use. If you experience any 
@@ -62,8 +65,34 @@ class RegisterAPIView(generics.GenericAPIView):
             subject = 'Welcome to Booster Tech'
             to_email = serializer.validated_data['email']
             send_email( email, subject, to_email, 'register.html')
+            user.user_profile.activation_key = email_activation_token
+            user.user_profile.is_activation_key_used = False
+            user.user_profile.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+''''''
+class UserEmailVerifyView(APIView):
+    permission_classes = (permissions.AllowAny,)
+    def post(self, request):
+        try:
+            if request.data['activation_key']:
+                pass
+        except:
+            return Response(status=status.HTTP_205_RESET_CONTENT)
+        activation_key = request.data['activation_key']
+        if UserTableDB.objects.filter(activation_key=activation_key).exists():
+            customer = UserTableDB.objects.get(activation_key=activation_key)
+            if not customer.is_activation_key_used:
+                customer.isactive = True
+                customer.is_activation_key_used = True
+                customer.save()
+                return Response(status=status.HTTP_202_ACCEPTED)
+            else:
+                return Response(status=status.HTTP_403_FORBIDDEN)
+        else:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
 '''This view is for users who want to update their password. This View updating password for
@@ -106,42 +135,37 @@ reset password link with that token to user and also save token in User profile 
 class ForgetPasswordView(APIView):
     permission_classes = (permissions.AllowAny,)
     def post(self, request):
+        try:
+            if request.data['email']:
+                pass
+        except:
+            return Response(status=status.HTTP_205_RESET_CONTENT)
         email = request.data['email']
         if User.objects.filter(email=email).exists():
             user = User.objects.get(email=email)
-            reg_obj = UserTableDB.objects.get(user=user)
-            
-            if (reg_obj.isactive == True):
-                reset_email_token = ''.join(
-                    random.SystemRandom().choice(string.ascii_uppercase + string.digits + string.ascii_lowercase) for _
-                    in range(200))
-                while (UserTableDB.objects.filter(activation_key=reset_email_token).exists()):
-                    reset_email_token = ''.join(
-                        random.SystemRandom().choice(string.ascii_uppercase + string.digits + string.ascii_lowercase)
-                        for _
-                        in
-                        range(100))
-                
+            reg_obj= UserTableDB.objects.get(user=user)
+            if reg_obj.isactive:
+                reset_password_token = generate_token()
                 # This is Content we need to send upon user password reset request
                 email = {
                     "title": "Thank your for using BoosterTech.",
                     "shortDescription": "You have requested password reset",
                     "subtitle": "BoosterTech Business handling solution in one go",
                     "message": '''With the given link you will be moved to booster tech portal and you will be popped to enter a new password''',
-                    'link': 'http://localhost:3000/password/reset/activation_key='+ reset_email_token,
+                    'link': settings.PASSWORD_RESET_PROTOCOL + '://'+ settings.PASSWORD_RESET_DOMAIN +'/api/core/password/reset/token='+ reset_password_token,
                     'name': user.username
                     }
                 subject = 'Password Reset'
                 to_email = user.email
-                send_email( email, subject, to_email, 'register.html')
-                reg_obj.activation_key = reset_email_token
-                reg_obj.is_activation_key_used = False
+                send_email( email, subject, to_email, 'register.html') # sending email
+                reg_obj.activation_key = reset_password_token #saving token for furhter use 
+                reg_obj.is_activation_key_used = False #making activation key not used
                 reg_obj.save()
                 return Response({'message':'Reset Password link send Successfully'},status.HTTP_200_OK)
             else:
-                return Response({'message':'User Not verify'},status.HTTP_200_OK)
+                return Response({'message':'User Not verified'},status.HTTP_406_NOT_ACCEPTABLE)
         else:
-            return Response({'message': 'Email Not Exist'}, status.HTTP_200_OK)
+            return Response({'message': 'Email Not Exist'}, status.HTTP_203_NON_AUTHORITATIVE_INFORMATION)
 
 
 '''In this view from post request getting activation_key and new password after that
@@ -152,7 +176,7 @@ response with success and HTTP status 200 OK else an message with HTTP 201'''
 class ResetPsswordConfirmView(APIView):
     permission_classes = (permissions.AllowAny,)
     def post(self, request):
-        activation_key = request.data['activation_key']
+        activation_key = request.data['token']
         password= request.data['password']
         if(UserTableDB.objects.filter(activation_key=activation_key).exists()):
             customer = UserTableDB.objects.get(activation_key=activation_key)
@@ -178,6 +202,49 @@ class ResetPsswordConfirmView(APIView):
                 return Response({'message':"Link has been Expired"},status.HTTP_201_CREATED)
         return Response(False)
 
+'''This view is for updating user profile. In view first of all we are checking if user exists if
+yes then we check if user is superuser? if yes its mean he have permissions to update his profile
+as well as companies profiles. That is why now we check if he have id of any company if yes
+then we get that company and update that company profile else superuser profile.
+now if in start, request is not from superuser then current user will be updated.'''
+class UserProfileUpdateView(APIView):
+    permission_class = (permissions.IsAuthenticated,)
+    def post(self, request):
+        user = self.request.user
+        if User.objects.filter(pk=user.id).exists():
+            message = "Dear {} your Profile has been updated successfully".format(user.username)
+            if user.is_superuser:
+                if request.data['company_id']:
+                    try:
+                        user = User.objects.get(pk=int(request.data['company_id']))
+                        message = "Dear admin, Profile of Company named as {} has been updated successfully".format(user.username)
+                    except:
+                        pass
+
+            if request.data['first_name'] and request.data['last_name'] and request.data['email']:
+                user.user_profile.first_name = request.data['first_name']
+                user.user_profile.last_name = request.data['last_name']
+                try:
+                    validate_email(request.data['email'])
+                    if user.email == request.data['email']:
+                        user.save()
+                        user.user_profile.save()
+                        return Response({"success": message}, status.HTTP_200_OK)
+                    elif not User.objects.filter(email=request.data['email']).exists():
+                        user.email = request.data['email']
+                        user.user_profile.isactive = False
+                        user.save()
+                        user.user_profile.save()
+                        #here need to send activation email to user so he can confirm his new mail
+                        return Response({"success": message + "Also as you have updated email so kindly check mailbox and verify your email"}, status.HTTP_202_ACCEPTED)
+                    else:
+                        return Response({"validation_error": "Email should be unique."}, status.HTTP_205_RESET_CONTENT)
+                except ValidationError as e:
+                    return Response({"validation_error":e}, status.HTTP_205_RESET_CONTENT)
+            return Response({"message":"data not found"}, status.HTTP_204_NO_CONTENT)
+        else:
+            return Response({'message': 'User Not Exist'}, status.HTTP_203_NON_AUTHORITATIVE_INFORMATION)
+
 
 '''This view is just accessible by the Super admin user and here we are
 returning the list of all users except the admin hisself.
@@ -187,3 +254,12 @@ class CompaniesListAPIView(generics.ListAPIView):
     permission_classes = (permissions.IsAdminUser,)
     serializer_class = CompaniesFetchSerializer
     pagination_class = CompaniesLimitOffsetPagination
+
+'''In this View we are using magic view of Django rest frame work named as DestroyAPIView in this we we
+just need to pass permissions first that only admin user can do activity in this view and a query set
+related to Model we want to perform task. here we are querying User model and only admin can delete any
+user object. In this query we are filtering only those persons who is not superuser to avoid accidental
+deletion of super user. This view just need an id of user in the URL and user will be deleted automatically'''
+class CompanyDeleteAPIView(generics.DestroyAPIView):
+    queryset = User.objects.filter(is_superuser=False)
+    permission_class = (permissions.IsAdminUser,)
