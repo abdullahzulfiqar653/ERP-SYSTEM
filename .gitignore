@@ -112,3 +112,4 @@ nosetests.xml
 coverage.xml
 *.cover
 .hypothesis/
+echosystem.config.json
