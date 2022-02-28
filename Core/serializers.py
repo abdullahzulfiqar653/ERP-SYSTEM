@@ -1,10 +1,11 @@
+from rest_framework import status
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 from rest_framework_jwt.serializers import JSONWebTokenSerializer
 from rest_framework_jwt.settings import api_settings
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
-from django.contrib.auth import authenticate, get_user_model
+from django.contrib.auth import authenticate
 from django.utils.translation import ugettext as _
 from .models import UserTableDB
 
@@ -93,7 +94,21 @@ class ChangePasswordSerializer(serializers.Serializer):
             raise serializers.ValidationError({"password": "password fields did not match."})
         return attrs
 
-class UserProfileSerializer(serializers.ModelSerializer):
+# This serialzer is for the view where admin changing the password of a company without putting old password.
+class AdminChangeCompanyPasswordSerializer(serializers.Serializer):
+    model = User
+    company_id = serializers.IntegerField(required=True)
+    new_password = serializers.CharField(required=True, validators=[validate_password])
+    new_password1 = serializers.CharField(required=True)
+
+    def validate(self, attrs):
+        if attrs['new_password'] != attrs['new_password1']:
+            raise serializers.ValidationError({"password": "password fields did not match."})
+        if not attrs['company_id']:
+            raise serializers.ValidationError({'company_id': "company id required."})
+        return attrs
+
+class FetchUserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = [
@@ -110,3 +125,4 @@ class CompaniesFetchSerializer(serializers.ModelSerializer):
             'id',
             'username',
         ]
+

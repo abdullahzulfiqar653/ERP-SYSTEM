@@ -18,7 +18,9 @@ from .serializers import (
         RegisterSerializer,
         ChangePasswordSerializer,
         CustomJWTSerializer,
-        CompaniesFetchSerializer
+        CompaniesFetchSerializer,
+        FetchUserProfileSerializer,
+        AdminChangeCompanyPasswordSerializer
     )
 
 
@@ -72,7 +74,9 @@ class RegisterAPIView(generics.GenericAPIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-''''''
+'''This view accepting post request and in the payload clientside will send an activation_key
+after that this view checks if the key exists or not if exist then verify if it is already used
+or a fresh key, if it is a fresh key then find the user against that key and  make that user active.'''
 class UserEmailVerifyView(APIView):
     permission_classes = (permissions.AllowAny,)
     def post(self, request):
@@ -115,18 +119,43 @@ class ChangePasswordView(generics.UpdateAPIView):
         
         if serializer.is_valid():
             # Checking if the old password is correct or not
+            print(self.object.check_password(serializer.data.get("old_password")), "aaaaaaaaaaaaaa")
             if not self.object.check_password(serializer.data.get("old_password")):
                 return Response({"old_password": "Wrong passwrod."}, status=status.HTTP_400_BAD_REQUEST)
-
-            self.object.set_password(serializer.data.get("new_password"))
-            self.object.save()
-            response = {
-                'status': 'success',
-                'code': status.HTTP_200_OK,
-                'message': "Dear {} your password is updated successfully".format(self.object.username), 
-            }
-            return Response(response)
+            else:
+                self.object.set_password(serializer.data.get("new_password"))
+                self.object.save()
+                response = {
+                    'status': 'success',
+                    'code': status.HTTP_200_OK,
+                    'message': "Dear {} your password is updated successfully".format(self.object.username), 
+                }
+                return Response(response, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+'''This view updating user password but only admin user can update password of company(user).
+As only admins can access this view so no need of old password. Only new password and company
+id required to change the password of that user'''
+class AdminChangeCompanyPasswordView(generics.UpdateAPIView):
+    serializer_class = AdminChangeCompanyPasswordSerializer
+    model = User
+    permission_classes = (permissions.IsAdminUser,)
+
+    # method updating password for authenticated user after serializing.
+    def update(self, request, *args, **kwargs):
+        admin = self.request.user
+        serializer = self.get_serializer(data=request.data)
+        
+        if serializer.is_valid():
+            user = User.objects.get(pk=serializer.data.get("company_id"))
+            user.set_password(serializer.data.get("new_password"))
+            user.save()
+            response = {
+                'message': "Dear {}, you successfully changed password for company named as {}.".format(admin.username, user.username), 
+            }
+            return Response(response, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 
 '''This Forget password view taking an email then checking if exist then check if user email is
@@ -178,10 +207,10 @@ class ResetPsswordConfirmView(APIView):
     def post(self, request):
         activation_key = request.data['token']
         password= request.data['password']
-        if(UserTableDB.objects.filter(activation_key=activation_key).exists()):
-            customer = UserTableDB.objects.get(activation_key=activation_key)
-            if customer.is_activation_key_used==False:
-                user= User.objects.get(email=customer.user.email)
+        if UserTableDB.objects.filter(activation_key=activation_key).exists(): #Checking if token is available in database
+            customer = UserTableDB.objects.get(activation_key=activation_key) #getting user profile against provided token
+            if not customer.is_activation_key_used: # checking if token is already used or not?
+                user= User.objects.get(email=customer.user.email) # getting user against present profile
                 user.set_password(password)
                 user.save()
                 customer.is_activation_key_used=True
@@ -197,10 +226,16 @@ class ResetPsswordConfirmView(APIView):
                 subject = 'Password Reset Confirm'
                 to_email = user.email
                 send_email( email, subject, to_email, 'register.html')
-                return Response({'success':'Password Reset Successfully'},status.HTTP_202_ACCEPTED)
+                return Response({'message': 'Dear '+ user.username +', your Password Reset Successfully'},status.HTTP_202_ACCEPTED)
             else:
-                return Response({'message':"Link has been Expired"},status.HTTP_201_CREATED)
-        return Response(False)
+                return Response({'message':"Link has been Expired"}, status.HTTP_400_BAD_REQUEST)
+        return Response(status.HTTP_203_NON_AUTHORITATIVE_INFORMATION)
+
+'''Getting user profile. This view take id of given model and return data related to that user.'''
+class FetchUserProfileView(generics.RetrieveAPIView):
+    queryset = User.objects.all()
+    serializer_class = FetchUserProfileSerializer
+    permission_class = (permissions.IsAuthenticated,)
 
 '''This view is for updating user profile. In view first of all we are checking if user exists if
 yes then we check if user is superuser? if yes its mean he have permissions to update his profile
@@ -211,39 +246,37 @@ class UserProfileUpdateView(APIView):
     permission_class = (permissions.IsAuthenticated,)
     def post(self, request):
         user = self.request.user
-        if User.objects.filter(pk=user.id).exists():
-            message = "Dear {} your Profile has been updated successfully".format(user.username)
-            if user.is_superuser:
+        message = "Dear {} your Profile has been updated successfully".format(user.username)
+        if user.is_superuser:
+            try:
                 if request.data['company_id']:
-                    try:
-                        user = User.objects.get(pk=int(request.data['company_id']))
-                        message = "Dear admin, Profile of Company named as {} has been updated successfully".format(user.username)
-                    except:
-                        pass
+                    user = User.objects.get(pk=int(request.data['company_id']))
+                    message = "Dear admin, Profile of Company named as {} has been updated successfully".format(user.username)
+            except:
+                pass
 
-            if request.data['first_name'] and request.data['last_name'] and request.data['email']:
-                user.user_profile.first_name = request.data['first_name']
-                user.user_profile.last_name = request.data['last_name']
-                try:
-                    validate_email(request.data['email'])
-                    if user.email == request.data['email']:
-                        user.save()
-                        user.user_profile.save()
-                        return Response({"success": message}, status.HTTP_200_OK)
-                    elif not User.objects.filter(email=request.data['email']).exists():
-                        user.email = request.data['email']
-                        user.user_profile.isactive = False
-                        user.save()
-                        user.user_profile.save()
-                        #here need to send activation email to user so he can confirm his new mail
-                        return Response({"success": message + "Also as you have updated email so kindly check mailbox and verify your email"}, status.HTTP_202_ACCEPTED)
-                    else:
-                        return Response({"validation_error": "Email should be unique."}, status.HTTP_205_RESET_CONTENT)
-                except ValidationError as e:
-                    return Response({"validation_error":e}, status.HTTP_205_RESET_CONTENT)
-            return Response({"message":"data not found"}, status.HTTP_204_NO_CONTENT)
-        else:
-            return Response({'message': 'User Not Exist'}, status.HTTP_203_NON_AUTHORITATIVE_INFORMATION)
+        if request.data['first_name'] and request.data['last_name'] and request.data['email']:
+            user.user_profile.first_name = request.data['first_name']
+            user.user_profile.last_name = request.data['last_name']
+            try:
+                validate_email(request.data['email'])
+                if user.email == request.data['email']:
+                    user.save()
+                    user.user_profile.save()
+                    return Response({"success": message}, status.HTTP_200_OK)
+                elif not User.objects.filter(email=request.data['email']).exists():
+                    user.email = request.data['email']
+                    user.user_profile.isactive = False
+                    user.save()
+                    user.user_profile.save()
+                    #here need to send activation email to user so he can confirm his new mail
+                    return Response({"success": message + "Also as you have updated email so kindly check mailbox and verify your email"}, status.HTTP_202_ACCEPTED)
+                else:
+                    return Response({"validation_error": "Email should be unique."}, status.HTTP_205_RESET_CONTENT)
+            except ValidationError as e:
+                return Response({"validation_error":e}, status.HTTP_205_RESET_CONTENT)
+        return Response({"message":"data not found"}, status.HTTP_204_NO_CONTENT)
+        
 
 
 '''This view is just accessible by the Super admin user and here we are
