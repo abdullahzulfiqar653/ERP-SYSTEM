@@ -1,5 +1,9 @@
+import profile
+from pyexpat import model
+from attr import field
 from rest_framework import status
 from rest_framework import serializers
+from rest_framework.response import Response
 from rest_framework.validators import UniqueValidator
 from rest_framework_jwt.serializers import JSONWebTokenSerializer
 from rest_framework_jwt.settings import api_settings
@@ -7,7 +11,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth import authenticate
 from django.utils.translation import ugettext as _
-from .models import UserTableDB
+from .models import Company, UserProfile
 
 
 jwt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER
@@ -18,7 +22,7 @@ jwt_get_username_from_payload = api_settings.JWT_PAYLOAD_GET_USERNAME_HANDLER
 '''Here we are overriding JSONWEBTokenSerializer because we want our users to login with email
 and username both also here in response we are adding is_admin so on client side it will be
 evaluated if the user is admin or a normal user'''
-class CustomJWTSerializer(JSONWebTokenSerializer):               
+class CustomJWTSerializer(JSONWebTokenSerializer):          
     username_field = 'username_or_email'
     def validate(self, attrs):
         password = attrs.get("password")
@@ -37,7 +41,7 @@ class CustomJWTSerializer(JSONWebTokenSerializer):
                     payload = jwt_payload_handler(user)
                     return {
                         'token': jwt_encode_handler(payload),
-                        'is_admin': user.is_superuser,
+                        'is_admin': user.is_staff,
                         'email': user.email
                     }
                 else:
@@ -55,7 +59,7 @@ class CustomJWTSerializer(JSONWebTokenSerializer):
 '''This Serializer validating password with build in method validate password and
 in valdate method checking if both entered passwords are same. Also verfying
 uniqueness of email requested to register. if is_valid() comes true then creating
-a user and also an profile for that user. Note:profile model name is UserTableDB'''
+a user and also an profile for that user. Note:profile model name is UserProfile'''
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(max_length=128, min_length=8, write_only=True, validators=[validate_password])
     password1 = serializers.CharField(write_only=True, required=True)
@@ -94,35 +98,50 @@ class ChangePasswordSerializer(serializers.Serializer):
             raise serializers.ValidationError({"password": "password fields did not match."})
         return attrs
 
-# This serialzer is for the view where admin changing the password of a company without putting old password.
+# This serialzer is for the view where admin changing the password of a user without putting old password.
 class AdminChangeCompanyPasswordSerializer(serializers.Serializer):
     model = User
-    company_id = serializers.IntegerField(required=True)
+    user_id = serializers.IntegerField(required=True)
     new_password = serializers.CharField(required=True, validators=[validate_password])
     new_password1 = serializers.CharField(required=True)
 
     def validate(self, attrs):
         if attrs['new_password'] != attrs['new_password1']:
             raise serializers.ValidationError({"password": "password fields did not match."})
-        if not attrs['company_id']:
-            raise serializers.ValidationError({'company_id': "company id required."})
+        if not attrs['user_id']:
+            raise serializers.ValidationError({'user_id': "company id required."})
         return attrs
 
-class FetchUserProfileSerializer(serializers.ModelSerializer):
+
+# this serialzer getting used in FetchUserProfileSerializer so we can return first and last name of user.
+class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
-        model = User
+        model = UserProfile
         fields = [
             'first_name',
             'last_name',
-            'email',
         ]
+#This Serializer returning profile to the user and also using UserProfileSerializer
+class FetchUserProfileSerializer(serializers.ModelSerializer):
+    profile = serializers.SerializerMethodField()
+    class Meta:
+        model = User
+        fields = [
+            'email',
+            'profile',
+        ]
+    def get_profile(self, user):
+        profile = UserProfile.objects.filter(user=user).first()
+        return UserProfileSerializer(profile).data if profile is not None else None
+
+
+
 
 '''Serializer to return only id and username fields as needed for frontend'''
 class CompaniesFetchSerializer(serializers.ModelSerializer):
     class Meta:
-        model = User
+        model = Company
         fields = [
             'id',
-            'username',
+            'name',
         ]
-
