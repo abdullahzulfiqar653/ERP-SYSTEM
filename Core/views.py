@@ -1,3 +1,5 @@
+from urllib import response
+from urllib.request import Request
 from django.conf import settings
 from rest_framework import serializers
 from rest_framework import generics
@@ -13,7 +15,7 @@ from django.db.models import Q
 
 from utils.pagination import LimitOffsetPagination
 from utils.email import send_email
-from .models import UserProfile, Company
+from .models import UserProfile, Company, CompanyAccessRecord
 from.helper import generate_token
 from .serializers import (
         RegisterSerializer,
@@ -21,7 +23,9 @@ from .serializers import (
         CustomJWTSerializer,
         CompaniesFetchSerializer,
         FetchUserProfileSerializer,
-        AdminChangeCompanyPasswordSerializer
+        AdminChangeUserPasswordSerializer,
+        CompanyCreateSerializer,
+        CompanyAccessSerializer,
     )
 
 
@@ -43,7 +47,7 @@ class CustomJWTView(ObtainJSONWebToken):
                 'email': serializer.validated_data['email']
             }, status.HTTP_200_OK)
         else:
-            raise serializers.ValidationError({"fields_error":"Account with provided credentials does not exists"}, status.HTTP_400_BAD_REQUEST)
+            raise serializers.ValidationError({"message":"Account with provided credentials does not exists."}, status.HTTP_400_BAD_REQUEST)
 
 
 '''
@@ -191,8 +195,8 @@ This view updating user password but only admin user can update password of comp
 As only admins can access this view so no need of old password. Only new password and company
 id required to change the password of that user
 '''
-class AdminChangeCompanyPasswordView(generics.UpdateAPIView):
-    serializer_class = AdminChangeCompanyPasswordSerializer
+class AdminChangeUserPasswordView(generics.UpdateAPIView):
+    serializer_class = AdminChangeUserPasswordSerializer
     permission_classes = (permissions.IsAdminUser,)
 
     # method updating password for authenticated user after serializing.
@@ -211,7 +215,6 @@ class AdminChangeCompanyPasswordView(generics.UpdateAPIView):
             }
             return Response(response, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 
 
 '''
@@ -301,7 +304,6 @@ class FetchUserProfileView(generics.RetrieveAPIView):
     permission_class = (permissions.IsAuthenticated,)
 
 
-
 '''
 This view is for updating user profile. In view first of all we are checking if user exists if
 yes then we check if user is superuser? if yes its mean he have permissions to update his profile
@@ -343,7 +345,62 @@ class UserProfileUpdateView(APIView):
             except ValidationError as e:
                 return Response({"validation_error":e}, status.HTTP_205_RESET_CONTENT)
         return Response({"message":"data not found"}, status.HTTP_204_NO_CONTENT)
-        
+
+
+'''
+This View in post request recieving user_id and a list of companies after that view check if user is the subuser
+of current user if yes then verify the company if company is of the current user then check if it is alreaedy
+assigned to the same user or someone else under the same admin If not then create a new permission for the user
+to access all those companies and remove any removed requested company
+'''
+class CompanyAccessView(generics.CreateAPIView):
+    permission_classes = (permissions.IsAdminUser,)
+    serializer_class = CompanyAccessSerializer
+    def post(self, request, *args, **kwargs):
+        adminUser = self.request.user
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            if User.objects.filter(pk=int(request.data['user_id'])).exists():
+                user = User.objects.filter(pk=int(request.data['user_id'])).first()
+                if user.user_profile.admin == adminUser:
+                    
+                    already_assigned_list = list(CompanyAccessRecord.objects.filter(user=user).values_list('company_id', flat=True))
+                    permission_remove_list = list(set(already_assigned_list) - set(request.data['company_list']))
+                    for company_id in request.data['company_list']:
+                        if Company.objects.filter(pk=company_id, user=adminUser).exists(): 
+                            if company_id in CompanyAccessRecord.objects.all().values_list('company',flat=True): #ok
+                                if CompanyAccessRecord.objects.get(company=company_id).id in list(CompanyAccessRecord.objects.filter(user=user).values_list('id', flat=True)):
+                                    continue
+                                else:
+                                    return response({"message": "company already assigned to other user"})
+                            else:
+                                record = CompanyAccessRecord(user=user, company=Company.objects.get(pk=company_id))
+                                record.save()
+                    for company_id in permission_remove_list:
+                        obj = CompanyAccessRecord.objects.get(company_id=company_id)
+                        obj.delete()
+                    return Response({"message":"Permissions created."},status=status.HTTP_201_CREATED)
+                        
+                return Response({"message":"you dont have permission for this user"}, status=status.HTTP_401_UNAUTHORIZED)
+            return Response({"message":"user not exists"}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.errors, status=status.HTTP_205_RESET_CONTENT)
+
+
+
+'''
+This View getting post request with data and validating name field for company after
+that creating company with that name or raise errors if any
+'''
+class AddCompanyAPIView(generics.CreateAPIView):
+    permission_classes = (permissions.IsAdminUser,)
+    serializer_class = CompanyCreateSerializer
+    def post(self, request, format=None):
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            Company.objects.create(user=self.request.user, name=request.data['name'])
+            return Response(status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 
 '''
@@ -351,15 +408,16 @@ This view is just accessible by the Super admin user and here we are returning t
 except the admin hisself. Also we are attaching the pagination class to this view so admin user can
 imit result from client side.
 '''
-class AdminCompaniesListAPIView(generics.ListAPIView):
-    # queryset = User.objects.filter(is_superuser=False)
-    permission_classes = (permissions.IsAdminUser,)
+class CompaniesListAPIView(generics.ListAPIView):
+    permission_classes = (permissions.IsAuthenticated,)
     serializer_class = CompaniesFetchSerializer
     pagination_class = LimitOffsetPagination
     def get_queryset(self):
         user = self.request.user
-        Company.objects.filter(user=user)
-        return Company.objects.filter(user=user)
+        if not self.request.user.is_staff:
+            return Company.objects.filter(user=user)
+        else:
+            return Company.objects.filter(user=user)
 
 
 class UserCompaniesListAPIView(generics.ListAPIView):

@@ -19,16 +19,20 @@ class UserProfile(models.Model):
 
 
 class Company(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='user_company')
-    name = models.CharField(max_length=255)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='user_company', )
+    name = models.CharField(max_length=255, unique=True)
 
     def __str__(self) -> str:
         return self.name
 
 
-# class CompanyAccessRecord(models.Model):
-#     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='user_access')
-#     comapny = models.ForeignKey(Company, on_delete=models.CASCADE,)
+class CompanyAccessRecord(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='user_access')
+    company = models.ForeignKey(Company, on_delete=models.CASCADE,)
+
+    def __str__(self) -> str:
+        return str(self.id) + "-" + self.company.name + "-"+ str(self.company.id)
+
 
 
 '''This function recieving a signal from database whenever a User instance is created and on

@@ -1,6 +1,7 @@
 import profile
 from pyexpat import model
-from attr import field
+from typing_extensions import Required
+from attr import field, fields
 from rest_framework import status
 from rest_framework import serializers
 from rest_framework.response import Response
@@ -99,7 +100,7 @@ class ChangePasswordSerializer(serializers.Serializer):
         return attrs
 
 # This serialzer is for the view where admin changing the password of a user without putting old password.
-class AdminChangeCompanyPasswordSerializer(serializers.Serializer):
+class AdminChangeUserPasswordSerializer(serializers.Serializer):
     model = User
     user_id = serializers.IntegerField(required=True)
     new_password = serializers.CharField(required=True, validators=[validate_password])
@@ -121,6 +122,8 @@ class UserProfileSerializer(serializers.ModelSerializer):
             'first_name',
             'last_name',
         ]
+
+
 #This Serializer returning profile to the user and also using UserProfileSerializer
 class FetchUserProfileSerializer(serializers.ModelSerializer):
     profile = serializers.SerializerMethodField()
@@ -135,6 +138,14 @@ class FetchUserProfileSerializer(serializers.ModelSerializer):
         return UserProfileSerializer(profile).data if profile is not None else None
 
 
+class CompanyCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Company
+        fields = [
+            'name',
+        ]
+    
+    
 
 
 '''Serializer to return only id and username fields as needed for frontend'''
@@ -145,3 +156,19 @@ class CompaniesFetchSerializer(serializers.ModelSerializer):
             'id',
             'name',
         ]
+
+
+class CompanyAccessSerializer(serializers.ModelSerializer):
+    user_id = serializers.IntegerField()
+    company_list = serializers.ListField(child=serializers.IntegerField(required=True) )
+    class Meta:
+        model = Company
+        fields = [
+            'user_id',
+            'company_list'
+        ]
+    
+    def validate(self, attrs):
+        if not bool(attrs['company_list']):
+            raise serializers.ValidationError({ 'message': "list should contain atleast one company id."})
+        return attrs
