@@ -135,13 +135,25 @@ class FetchUserProfileSerializer(serializers.ModelSerializer):
         return UserProfileSerializer(profile).data if profile is not None else None
 
 
+'''
+This Serilizer is a simplest serializer for Company model insuring the field name
+so admins set a valueable name for their companies
+'''
 class CompanyCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Company
         fields = [
             'name',
         ]
-    
+
+class CompanyUpdateSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField()
+    class Meta:
+        model = Company
+        fields = [
+            'id',
+            'name',
+        ]
     
 
 
@@ -155,6 +167,10 @@ class CompaniesFetchSerializer(serializers.ModelSerializer):
         ]
 
 
+'''
+This serializer is recieving user_id and a list of company id's so we can assign
+permission to that user for the requested companies.
+'''
 class CompanyAccessSerializer(serializers.ModelSerializer):
     user_id = serializers.IntegerField()
     company_list = serializers.ListField(child=serializers.IntegerField(required=True) )

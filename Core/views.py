@@ -5,13 +5,11 @@ from rest_framework import status
 from rest_framework import permissions
 from rest_framework.views import APIView
 from rest_framework_jwt.views import ObtainJSONWebToken
-from rest_framework_jwt.settings import api_settings
 from rest_framework_jwt.serializers import VerifyJSONWebTokenSerializer, RefreshJSONWebTokenSerializer
 from rest_framework.response import Response
 from django.contrib.auth.models import User
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
-from django.db.models import Q
 
 from utils.pagination import LimitOffsetPagination
 from utils.email import send_email
@@ -25,12 +23,10 @@ from .serializers import (
         FetchUserProfileSerializer,
         AdminChangeUserPasswordSerializer,
         CompanyCreateSerializer,
+        CompanyUpdateSerializer,
         CompanyAccessSerializer,
     )
 
-
-jwt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER
-jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
 
 '''
 Here we are customizing ObtainJSONWebToken View to return two more attribute is_admin and email so in client side 
@@ -427,11 +423,29 @@ class AddCompanyAPIView(generics.CreateAPIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+class UpdateCompanyAPIView(generics.UpdateAPIView):
+    permission_classes = (permissions.IsAdminUser, )
+    serializer_class = CompanyUpdateSerializer
+
+    def update(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            if Company.objects.filter(pk=request.data['id'], user=self.request.user).exists():
+                company = Company.objects.get(pk=request.data['id'])
+                company.name = request.data['name']
+                company.save()
+                return Response(status=status.HTTP_200_OK)
+            return Response(status=status.HTTP_406_NOT_ACCEPTABLE)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 
 '''
-This view is just accessible by the Super admin user and here we are returning the list of all users
-except the admin hisself. Also we are attaching the pagination class to this view so admin user can
-imit result from client side.
+This view is just accessible by the admin user and authenticated user here we are returning the list companies
+associated with the current user. Firstly, we check if user is admin then all companies associated with him will
+be returned else user is not admin so we get the list of companies he is allowed to access from Company Access
+table record and then query for the list of those companies and returned to user. Also we are attaching the
+pagination class to this view so user can limit result from client side.
 '''
 class CompaniesListAPIView(generics.ListAPIView):
     permission_classes = (permissions.IsAuthenticated,)
@@ -440,22 +454,23 @@ class CompaniesListAPIView(generics.ListAPIView):
     def get_queryset(self):
         user = self.request.user
         if not self.request.user.is_staff:
-            return Company.objects.filter(user=user)
+            user_records = list(CompanyAccessRecord.objects.filter(user=user).values_list("company_id", flat=True))
+            return Company.objects.filter(pk__in=user_records)
         else:
             return Company.objects.filter(user=user)
 
 
-class UserCompaniesListAPIView(generics.ListAPIView):
-    permission_classes = (permissions.IsAuthenticated,)
-    serializer_class = CompaniesFetchSerializer
-    pagination_class = LimitOffsetPagination
-    def get_queryset(self):
-        user = self.request.user
-        adminuser = User.objects.get(pk=user.affiliate)
-        companies = Company.objects.filter(user=adminuser).values_list('id', flat=True)
+# class UserCompaniesListAPIView(generics.ListAPIView):
+#     permission_classes = (permissions.IsAuthenticated,)
+#     serializer_class = CompaniesFetchSerializer
+#     pagination_class = LimitOffsetPagination
+#     def get_queryset(self):
+#         user = self.request.user
+#         adminuser = User.objects.get(pk=user.affiliate)
+#         companies = Company.objects.filter(user=adminuser).values_list('id', flat=True)
 
-        ids = ImaginaryTable.objects.filter( Q(user=user.id) and Q(affiliate_id=user.affilate)).values_list('company_id', flat=True)
-        return Company.objects.filter(user=user)
+#         ids = ImaginaryTable.objects.filter( Q(user=user.id) and Q(affiliate_id=user.affilate)).values_list('company_id', flat=True)
+#         return Company.objects.filter(user=user)
 
 
 
@@ -472,6 +487,20 @@ class UserDeleteAPIView(generics.DestroyAPIView):
 
     def perform_destroy(self, instance):
         if not UserProfile.objects.filter(user=instance.id, admin=self.request.user.id).exists():
-            return Response({"message": "you are an unauthorized user to perform this action"}, status=status.HTTP_401_UNAUTHORIZED)
+            return {"message": "you are not allowed to perform this action"}
+        else:
+            super().perform_destroy(instance)
+
+
+
+'''
+Taking an id of company in url of this and deleting that company after validating the owner.
+'''
+class CompanyDeleteAPIView(generics.DestroyAPIView):
+    queryset = Company.objects.all()
+    permission_class = (permissions.IsAdminUser,)
+    def perform_destroy(self, instance):
+        if not Company.objects.filter(user=self.request.user.id, id=instance.id).exists():
+            return {"message": "you are not allowed to perform this action"}
         else:
             super().perform_destroy(instance)
