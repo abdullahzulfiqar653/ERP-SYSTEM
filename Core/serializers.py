@@ -1,7 +1,3 @@
-import profile
-from pyexpat import model
-from typing_extensions import Required
-from attr import field, fields
 from rest_framework import status
 from rest_framework import serializers
 from rest_framework.response import Response
@@ -35,6 +31,7 @@ class CustomJWTSerializer(JSONWebTokenSerializer):
             }
             if all(credentials.values()):
                 user = authenticate(**credentials)
+                print(user)
                 if user:
                     if not user.is_active:
                         msg = _('User account is disabled.')
@@ -167,8 +164,3 @@ class CompanyAccessSerializer(serializers.ModelSerializer):
             'user_id',
             'company_list'
         ]
-    
-    def validate(self, attrs):
-        if not bool(attrs['company_list']):
-            raise serializers.ValidationError({ 'message': "list should contain atleast one company id."})
-        return attrs

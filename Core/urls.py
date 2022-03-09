@@ -3,6 +3,7 @@ from .views import (
     AdminRegisterAPIView,
     UserRegisterAPIView,
     CustomJWTView,
+    RefreshJWTTokenView,
     ChangePasswordView,
     ForgetPasswordView,
     ResetPsswordConfirmView,
@@ -14,13 +15,15 @@ from .views import (
     AdminChangeUserPasswordView,
     AddCompanyAPIView,
     CompanyAccessView,
+    
 )
 
 
 
 urlpatterns = [
     path('login/', CustomJWTView.as_view(),),
-    
+    path('users/', RefreshJWTTokenView.as_view(),),
+
     path('admin/register/', AdminRegisterAPIView.as_view()),
     path('user/register/', UserRegisterAPIView.as_view()),
 

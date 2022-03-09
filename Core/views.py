@@ -1,5 +1,3 @@
-from urllib import response
-from urllib.request import Request
 from django.conf import settings
 from rest_framework import serializers
 from rest_framework import generics
@@ -7,6 +5,8 @@ from rest_framework import status
 from rest_framework import permissions
 from rest_framework.views import APIView
 from rest_framework_jwt.views import ObtainJSONWebToken
+from rest_framework_jwt.settings import api_settings
+from rest_framework_jwt.serializers import VerifyJSONWebTokenSerializer, RefreshJSONWebTokenSerializer
 from rest_framework.response import Response
 from django.contrib.auth.models import User
 from django.core.validators import validate_email
@@ -29,6 +29,9 @@ from .serializers import (
     )
 
 
+jwt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER
+jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
+
 '''
 Here we are customizing ObtainJSONWebToken View to return two more attribute is_admin and email so in client side 
 developer can check the user logged in is an admin user or a simple user and email for display.
@@ -48,6 +51,26 @@ class CustomJWTView(ObtainJSONWebToken):
             }, status.HTTP_200_OK)
         else:
             raise serializers.ValidationError({"message":"Account with provided credentials does not exists."}, status.HTTP_400_BAD_REQUEST)
+
+'''
+This view taking a payload in post request containing token of user and passing that token to
+verify JSON web token serializer and if token gets verified then token is passed to RefreshJSONWebTokenSerializer
+and a new brand token with extra time added is returned in response
+'''
+class RefreshJWTTokenView(ObtainJSONWebToken):
+    permission_classes = (permissions.AllowAny,)
+    serializer_class=RefreshJSONWebTokenSerializer
+    def post(self, request, *args, **kwargs):
+        data = {'token': request.data['token']}
+        # verified_data = VerifyJSONWebTokenSerializer().validate(data)
+        # data = {'token': verified_data['token']}
+        valid_data = RefreshJSONWebTokenSerializer().validate(data)
+        return Response({
+                'token': valid_data['token'],
+                'is_admin': valid_data['user'].is_staff,
+                'email': valid_data['user'].email
+            }, status.HTTP_200_OK)
+
 
 
 '''
@@ -177,7 +200,7 @@ class ChangePasswordView(generics.UpdateAPIView):
         if serializer.is_valid():
             # Checking if the old password is correct or not
             if not self.object.check_password(serializer.data.get("old_password")):
-                return Response({"old_password": "Wrong passwrod."}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"message": "Wrong passwrod."}, status=status.HTTP_400_BAD_REQUEST)
             else:
                 self.object.set_password(serializer.data.get("new_password"))
                 self.object.save()
@@ -359,23 +382,25 @@ class CompanyAccessView(generics.CreateAPIView):
     def post(self, request, *args, **kwargs):
         adminUser = self.request.user
         serializer = self.get_serializer(data=request.data)
-        if serializer.is_valid():
-            if User.objects.filter(pk=int(request.data['user_id'])).exists():
-                user = User.objects.filter(pk=int(request.data['user_id'])).first()
-                if user.user_profile.admin == adminUser:
-                    
-                    already_assigned_list = list(CompanyAccessRecord.objects.filter(user=user).values_list('company_id', flat=True))
-                    permission_remove_list = list(set(already_assigned_list) - set(request.data['company_list']))
-                    for company_id in request.data['company_list']:
-                        if Company.objects.filter(pk=company_id, user=adminUser).exists(): 
-                            if company_id in CompanyAccessRecord.objects.all().values_list('company',flat=True): #ok
+        if serializer.is_valid(): #checking if coming data is valid
+            if User.objects.filter(pk=int(request.data['user_id'])).exists(): #checking if user requested esist in data base
+                user = User.objects.filter(pk=int(request.data['user_id'])).first() #getting user instance so we can assign permissions to him
+                if user.user_profile.admin == adminUser: # checking if user is subuser of current admin user else without performing actions HTTP_401 returned
+                    already_assigned_list = list(CompanyAccessRecord.objects.filter(user=user).values_list('company_id', flat=True)) #getting list of previously assigned companies
+                    permission_remove_list = list(set(already_assigned_list) - set(request.data['company_list'])) #subtracting old list from new so we can remove permissions which are not allowed
+                    for company_id in request.data['company_list']: #looping on list of companies
+                        if Company.objects.filter(pk=company_id, user=adminUser).exists(): # checking if current user is owner of current company if not then simply pass
+                            if company_id in CompanyAccessRecord.objects.all().values_list('company',flat=True): # here checking if company permissions are already assigned to someone
                                 if CompanyAccessRecord.objects.get(company=company_id).id in list(CompanyAccessRecord.objects.filter(user=user).values_list('id', flat=True)):
                                     continue
                                 else:
-                                    return response({"message": "company already assigned to other user"})
+                                    continue
                             else:
                                 record = CompanyAccessRecord(user=user, company=Company.objects.get(pk=company_id))
                                 record.save()
+                        else:
+                            pass
+                    
                     for company_id in permission_remove_list:
                         obj = CompanyAccessRecord.objects.get(company_id=company_id)
                         obj.delete()
