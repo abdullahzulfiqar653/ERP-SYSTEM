@@ -54,13 +54,11 @@ class CustomJWTSerializer(JSONWebTokenSerializer):
             raise serializers.ValidationError(msg)
 
 
-'''This Serializer validating password with build in method validate password and
-in valdate method checking if both entered passwords are same. Also verfying
-uniqueness of email requested to register. if is_valid() comes true then creating
+'''This Serializer validating password with build in method validate password.
+Also verfying uniqueness of email requested to register. if is_valid() comes true then creating
 a user and also an profile for that user. Note:profile model name is UserProfile'''
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(max_length=128, min_length=8, write_only=True, validators=[validate_password])
-    password1 = serializers.CharField(write_only=True, required=True)
     email = serializers.EmailField(validators=[UniqueValidator(queryset=User.objects.all())])
     class Meta:
         model = User
@@ -68,12 +66,7 @@ class RegisterSerializer(serializers.ModelSerializer):
             'email',
             'username',
             'password',
-            'password1',
         ]
-    def validate(self, attrs):
-        if attrs['password'] != attrs['password1']:
-            raise serializers.ValidationError({"password": "password fields did not match."})
-        return attrs
     def create(self, validated_data):
         user = User.objects.create_user(
             username=validated_data['username'],
@@ -89,23 +82,14 @@ class ChangePasswordSerializer(serializers.Serializer):
     model = User
     old_password = serializers.CharField(required=True)
     new_password = serializers.CharField(required=True, validators=[validate_password])
-    new_password1 = serializers.CharField(required=True)
-
-    def validate(self, attrs):
-        if attrs['new_password'] != attrs['new_password1']:
-            raise serializers.ValidationError({"password": "password fields did not match."})
-        return attrs
 
 # This serialzer is for the view where admin changing the password of a user without putting old password.
 class AdminChangeUserPasswordSerializer(serializers.Serializer):
     model = User
     user_id = serializers.IntegerField(required=True)
     new_password = serializers.CharField(required=True, validators=[validate_password])
-    new_password1 = serializers.CharField(required=True)
 
     def validate(self, attrs):
-        if attrs['new_password'] != attrs['new_password1']:
-            raise serializers.ValidationError({"password": "password fields did not match."})
         if not attrs['user_id']:
             raise serializers.ValidationError({'user_id': "company id required."})
         return attrs

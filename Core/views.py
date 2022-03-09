@@ -177,8 +177,7 @@ class UserEmailVerifyView(APIView):
 '''
 This view is for users who want to update their password. This View updating password for
 admin or simple users except those who are not authenticated. This View first checking if
-old password is rite then serialzer validating the password and password1 if they
-are matched then updating password.
+old password is rite then updating password.
 '''
 class ChangePasswordView(generics.UpdateAPIView):
     serializer_class = ChangePasswordSerializer
@@ -423,6 +422,9 @@ class AddCompanyAPIView(generics.CreateAPIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+'''
+This View simply taking id argument and after ensuring permission updating the name of company
+'''
 class UpdateCompanyAPIView(generics.UpdateAPIView):
     permission_classes = (permissions.IsAdminUser, )
     serializer_class = CompanyUpdateSerializer
