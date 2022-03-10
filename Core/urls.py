@@ -36,7 +36,7 @@ urlpatterns = [
     path('password/reset/confirm/', ResetPsswordConfirmView.as_view()),
 
     path('login/', CustomJWTView.as_view(),),
-    path('users/', RefreshJWTTokenView.as_view(),),
+    path('auth/user/', RefreshJWTTokenView.as_view(),),
 
     path('profile/<pk>/', FetchUserProfileView.as_view()),
     path('profile/update/', UpdateUserProfileView.as_view()),

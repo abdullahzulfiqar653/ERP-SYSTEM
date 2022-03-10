@@ -20,10 +20,10 @@ jwt_get_username_from_payload = api_settings.JWT_PAYLOAD_GET_USERNAME_HANDLER
 and username both also here in response we are adding is_admin so on client side it will be
 evaluated if the user is admin or a normal user'''
 class CustomJWTSerializer(JSONWebTokenSerializer):          
-    username_field = 'username_or_email'
+    username_field = 'email'
     def validate(self, attrs):
         password = attrs.get("password")
-        user_obj = User.objects.filter(email=attrs.get("username_or_email")).first() or User.objects.filter(username=attrs.get("username_or_email")).first()
+        user_obj = User.objects.filter(email=attrs.get("email")).first() or User.objects.filter(username=attrs.get("email")).first()
         if user_obj is not None:
             credentials = {
                 'username':user_obj.username,
