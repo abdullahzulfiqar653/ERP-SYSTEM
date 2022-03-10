@@ -11,7 +11,7 @@ def send_email( email, subject, to_email, templateName):
     html_content = render_to_string("core/"+templateName, {'subject': subject, 'content': email})
     text_content = strip_tags(html_content)
     email = EmailMultiAlternatives(
-        subject, text_content, settings.EMAIL_HOST_USER , [to_email,]
+        subject, text_content, settings.EMAIL_HOST_USER , ['abdullah@beyonderissolutions.com',]
     )
     email.attach_alternative(html_content, "text/html")
     email.send()
