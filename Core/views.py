@@ -56,10 +56,11 @@ verify JSON web token serializer and if token gets verified then token is passed
 and a new brand token with extra time added is returned in response
 '''
 class RefreshJWTTokenView(ObtainJSONWebToken):
-    permission_classes = (permissions.AllowAny,)
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
     serializer_class=RefreshJSONWebTokenSerializer
-    def post(self, request, *args, **kwargs):
-        data = {'token': request.data['token']}
+    def get(self, request, *args, **kwargs):
+        auth_token = request.META.get('HTTP_AUTHORIZATION').split(" ")
+        data = {'token': auth_token[1]}
         # verified_data = VerifyJSONWebTokenSerializer().validate(data)
         # data = {'token': verified_data['token']}
         valid_data = RefreshJSONWebTokenSerializer().validate(data)
