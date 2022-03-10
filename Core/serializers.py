@@ -96,6 +96,20 @@ class AdminChangeUserPasswordSerializer(serializers.Serializer):
 
 
 # this serialzer getting used in FetchUserProfileSerializer so we can return first and last name of user.
+class UpdateUserProfileSerializer(serializers.ModelSerializer):
+    user_id = serializers.IntegerField()
+    email = serializers.EmailField()
+    class Meta:
+        model = UserProfile
+        fields = [
+            'first_name',
+            'last_name',
+            'email',
+            'user_id'
+        ]
+
+
+# this serialzer getting used in FetchUserProfileSerializer so we can return first and last name of user.
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserProfile
@@ -103,7 +117,6 @@ class UserProfileSerializer(serializers.ModelSerializer):
             'first_name',
             'last_name',
         ]
-
 
 #This Serializer returning profile to the user and also using UserProfileSerializer
 class FetchUserProfileSerializer(serializers.ModelSerializer):
