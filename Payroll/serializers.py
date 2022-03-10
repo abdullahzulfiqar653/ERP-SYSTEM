@@ -1,5 +1,3 @@
-import imp
-from attr import field
 from rest_framework import generics
 from rest_framework import serializers
 from .models import Team

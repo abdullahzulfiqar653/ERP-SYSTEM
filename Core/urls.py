@@ -10,7 +10,7 @@ from .views import (
     ForgetPasswordView,
     ResetPsswordConfirmView,
     CompaniesListAPIView,
-    UserProfileUpdateView,
+    UpdateUserProfileView,
     FetchUserProfileView,
     
     UserEmailVerifyView,
@@ -32,17 +32,17 @@ urlpatterns = [
     
     path('email/activate/', UserEmailVerifyView.as_view()),
 
-    path('password/update/', ChangePasswordView.as_view()),
-    path('password/update/user/', AdminChangeUserPasswordView.as_view()),
+    path('password/reset/', ForgetPasswordView.as_view()),
+    path('password/reset/confirm/', ResetPsswordConfirmView.as_view()),
 
     path('login/', CustomJWTView.as_view(),),
     path('users/', RefreshJWTTokenView.as_view(),),
 
-    path('password/reset/', ForgetPasswordView.as_view()),
-    path('password/reset/confirm/', ResetPsswordConfirmView.as_view()),
-
-    path('profile/update/', UserProfileUpdateView.as_view()),
     path('profile/<pk>/', FetchUserProfileView.as_view()),
+    path('profile/update/', UpdateUserProfileView.as_view()),
+
+    path('password/update/', ChangePasswordView.as_view()),
+    path('password/update/user/', AdminChangeUserPasswordView.as_view()),
 
     path('user/destroy/<pk>/', UserDeleteAPIView.as_view()),
 
