@@ -19,6 +19,7 @@ from .serializers import (
         RegisterSerializer,
         ChangePasswordSerializer,
         CustomJWTSerializer,
+        UpdateUserProfileSerializer,
         CompaniesFetchSerializer,
         FetchUserProfileSerializer,
         AdminChangeUserPasswordSerializer,
@@ -48,6 +49,7 @@ class CustomJWTView(ObtainJSONWebToken):
         else:
             raise serializers.ValidationError({"message":"Account with provided credentials does not exists."}, status.HTTP_400_BAD_REQUEST)
 
+
 '''
 This view taking a payload in post request containing token of user and passing that token to
 verify JSON web token serializer and if token gets verified then token is passed to RefreshJSONWebTokenSerializer
@@ -66,7 +68,6 @@ class RefreshJWTTokenView(ObtainJSONWebToken):
                 'is_admin': valid_data['user'].is_staff,
                 'email': valid_data['user'].email
             }, status.HTTP_200_OK)
-
 
 
 '''
@@ -200,8 +201,6 @@ class ChangePasswordView(generics.UpdateAPIView):
                 self.object.set_password(serializer.data.get("new_password"))
                 self.object.save()
                 response = {
-                    'status': 'success',
-                    'code': status.HTTP_200_OK,
                     'message': "Dear {} your password is updated successfully".format(self.object.username), 
                 }
                 return Response(response, status=status.HTTP_200_OK)
@@ -273,7 +272,7 @@ class ForgetPasswordView(APIView):
             else:
                 return Response({'message':'User Not verified'},status.HTTP_406_NOT_ACCEPTABLE)
         else:
-            return Response({'message': 'Email Not Exist'}, status.HTTP_203_NON_AUTHORITATIVE_INFORMATION)
+            return Response({'message': 'Email Not Exist'}, status.HTTP_403_FORBIDDEN)
 
 
 '''
@@ -329,9 +328,11 @@ as well as companies profiles. That is why now we check if he have id of any com
 then we get that company and update that company profile else superuser profile.
 now if in start, request is not from superuser then current user will be updated.
 '''
-class UserProfileUpdateView(APIView):
+class UpdateUserProfileView(generics.UpdateAPIView):
     permission_class = (permissions.IsAuthenticated,)
-    def put(self, request):
+    serializer_class = UpdateUserProfileSerializer
+    def put(self, request, *args, **kwargs):
+        
         user = self.request.user
         message = "Dear {} your Profile has been updated successfully".format(user.username)
         if user.is_staff:
@@ -406,7 +407,6 @@ class CompanyAccessView(generics.CreateAPIView):
         return Response(serializer.errors, status=status.HTTP_205_RESET_CONTENT)
 
 
-
 '''
 This View getting post request with data and validating name field for company after
 that creating company with that name or raise errors if any
@@ -439,7 +439,6 @@ class UpdateCompanyAPIView(generics.UpdateAPIView):
                 return Response(status=status.HTTP_200_OK)
             return Response(status=status.HTTP_406_NOT_ACCEPTABLE)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 
 
 '''
@@ -492,7 +491,6 @@ class UserDeleteAPIView(generics.DestroyAPIView):
             return {"message": "you are not allowed to perform this action"}
         else:
             super().perform_destroy(instance)
-
 
 
 '''
