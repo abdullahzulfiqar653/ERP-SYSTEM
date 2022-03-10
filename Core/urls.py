@@ -38,7 +38,7 @@ urlpatterns = [
     path('login/', CustomJWTView.as_view(),),
     path('auth/user/', RefreshJWTTokenView.as_view(),),
 
-    path('profile/<pk>/', FetchUserProfileView.as_view()),
+    path('profile/', FetchUserProfileView.as_view()),
     path('profile/update/', UpdateUserProfileView.as_view()),
 
     path('password/update/', ChangePasswordView.as_view()),
