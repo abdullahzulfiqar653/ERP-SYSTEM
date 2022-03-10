@@ -195,7 +195,7 @@ REST_FRAMEWORK = {
 
 JWT_AUTH = {
     # how long the original token is valid for
-    'JWT_EXPIRATION_DELTA': datetime.timedelta(minutes=1),
+    'JWT_EXPIRATION_DELTA': datetime.timedelta(days=5),
     'JWT_REFRESH_EXPIRATION_DELTA': datetime.timedelta(days=20),
     'JWT_ALLOW_REFRESH': True,
 }
