@@ -1,5 +1,5 @@
 import random, string
-from .models import UserTableDB
+from .models import UserProfile
 
 
 def generate_token():
@@ -9,7 +9,7 @@ def generate_token():
             string.digits +
             string.ascii_lowercase
             ) for _ in range(200))
-    while (UserTableDB.objects.filter(activation_key=token).exists()):
+    while (UserProfile.objects.filter(activation_key=token).exists()):
         token = ''.join(
             random.SystemRandom().choice(
                 string.ascii_uppercase + 

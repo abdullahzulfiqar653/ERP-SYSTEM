@@ -1,6 +1,7 @@
 from pathlib import Path
 import environ
 import os
+import datetime
 # These two lines reading environment variables from .env
 env = environ.Env()
 environ.Env.read_env()
@@ -37,6 +38,7 @@ INSTALLED_APPS = [
 
     # developer started apps:
     'Core',
+    'Payroll',
 ]
 
 MIDDLEWARE = [
@@ -189,4 +191,11 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.BasicAuthentication',
     ),
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination'
+}
+
+JWT_AUTH = {
+    # how long the original token is valid for
+    'JWT_EXPIRATION_DELTA': datetime.timedelta(days=5),
+    'JWT_REFRESH_EXPIRATION_DELTA': datetime.timedelta(days=20),
+    'JWT_ALLOW_REFRESH': True,
 }
