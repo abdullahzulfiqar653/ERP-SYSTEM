@@ -21,7 +21,6 @@ from .serializers import (
         CustomJWTSerializer,
         UpdateUserProfileSerializer,
         CompaniesFetchSerializer,
-        FetchUserProfileSerializer,
         AdminChangeUserPasswordSerializer,
         CompanyCreateSerializer,
         CompanyUpdateSerializer,
@@ -55,11 +54,14 @@ This view taking a payload in post request containing token of user and passing 
 verify JSON web token serializer and if token gets verified then token is passed to RefreshJSONWebTokenSerializer
 and a new brand token with extra time added is returned in response
 '''
-class RefreshJWTTokenView(ObtainJSONWebToken):
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+class RefreshJWTTokenView(APIView):
+    permission_classes = (permissions.IsAuthenticated,)
     serializer_class=RefreshJSONWebTokenSerializer
     def get(self, request, *args, **kwargs):
-        auth_token = request.META.get('HTTP_AUTHORIZATION').split(" ")
+        auth_token = request.META.get('HTTP_AUTHORIZATION')
+        if not auth_token:
+            return Response({"message":"Something bad hapend"})
+        auth_token = auth_token.split(" ")
         data = {'token': auth_token[1]}
         # verified_data = VerifyJSONWebTokenSerializer().validate(data)
         # data = {'token': verified_data['token']}
@@ -314,12 +316,17 @@ class ResetPsswordConfirmView(APIView):
 
 
 '''
-Getting user profile. This view take id in URL and return profile related to that user.
+Getting user profile. getting current user and return user data.
 '''
-class FetchUserProfileView(generics.RetrieveAPIView):
-    queryset = User.objects.all()
-    serializer_class = FetchUserProfileSerializer
+class FetchUserProfileView(APIView):
     permission_class = (permissions.IsAuthenticated,)
+    def get(self, request):
+        user = self.request.user
+        return Response({
+                'email': user.email,
+                'first_name': user.user_profile.first_name,
+                'last_name': user.user_profile.last_name
+            }, status.HTTP_200_OK)
 
 
 '''
@@ -329,10 +336,11 @@ as well as companies profiles. That is why now we check if he have id of any com
 then we get that company and update that company profile else superuser profile.
 now if in start, request is not from superuser then current user will be updated.
 '''
-class UpdateUserProfileView(generics.UpdateAPIView):
+class UpdateUserProfileView(APIView):
+    # queryset = UserProfile.objects.all()
     permission_class = (permissions.IsAuthenticated,)
     serializer_class = UpdateUserProfileSerializer
-    def put(self, request, *args, **kwargs):
+    def patch(self, request, format=None):
         
         user = self.request.user
         message = "Dear {} your Profile has been updated successfully".format(user.username)
@@ -343,8 +351,9 @@ class UpdateUserProfileView(generics.UpdateAPIView):
                     message = "Dear admin, Profile of User named as {} has been updated successfully".format(user.username)
             except:
                 pass
-
-        if request.data['first_name'] and request.data['last_name'] and request.data['email']:
+        if ((request.data.get("first_name") or request.data.get("first_name")=="") and
+                (request.data.get("last_name") or request.data.get("last_name")=="") and
+                    (request.data.get("email") or request.data.get("email")=="")):
             user.user_profile.first_name = request.data['first_name']
             user.user_profile.last_name = request.data['last_name']
             try:
@@ -352,19 +361,19 @@ class UpdateUserProfileView(generics.UpdateAPIView):
                 if user.email == request.data['email']:
                     user.save()
                     user.user_profile.save()
-                    return Response({"success": message}, status.HTTP_200_OK)
+                    return Response({"message": message}, status.HTTP_200_OK)
                 elif not User.objects.filter(email=request.data['email']).exists():
                     user.email = request.data['email']
                     user.user_profile.isactive = False
                     user.save()
                     user.user_profile.save()
                     #here need to send activation email to user so he can confirm his new mail
-                    return Response({"success": message + " Also as you have updated email so kindly check mailbox and verify your email"}, status.HTTP_202_ACCEPTED)
+                    return Response({"message": message + " Also as you have updated email so kindly check mailbox and verify your email"}, status.HTTP_202_ACCEPTED)
                 else:
-                    return Response({"validation_error": "Email should be unique."}, status.HTTP_205_RESET_CONTENT)
+                    return Response({"message": "Email should be unique."}, status.HTTP_205_RESET_CONTENT)
             except ValidationError as e:
-                return Response({"validation_error":e}, status.HTTP_205_RESET_CONTENT)
-        return Response({"message":"data not found"}, status.HTTP_204_NO_CONTENT)
+                return Response({"message":e}, status.HTTP_205_RESET_CONTENT)
+        return Response({"message":"Some of data is missing"}, status.HTTP_205_RESET_CONTENT)
 
 
 '''
@@ -444,9 +453,11 @@ class UpdateCompanyAPIView(generics.UpdateAPIView):
 
 '''
 This view is just accessible by the admin user and authenticated user here we are returning the list companies
-associated with the current user. Firstly, we check if user is admin then all companies associated with him will
-be returned else user is not admin so we get the list of companies he is allowed to access from Company Access
-table record and then query for the list of those companies and returned to user. Also we are attaching the
+associated with the current user. Firstly, we check if user is authenticated and not an admin so we get the list
+of companies he is allowed to access from Company Access table record and then query for the list of those companies
+and returned to user. Else we check if user is admin then if he want to see the companies he assigned to any of his user
+then in payload there will be an user_id So if there is user id then companies allowed to that user will be returned.
+If admin dont have any id then all of his companies will be returned. Also we are attaching the
 pagination class to this view so user can limit result from client side.
 '''
 class CompaniesListAPIView(generics.ListAPIView):
@@ -458,21 +469,12 @@ class CompaniesListAPIView(generics.ListAPIView):
         if not self.request.user.is_staff:
             user_records = list(CompanyAccessRecord.objects.filter(user=user).values_list("company_id", flat=True))
             return Company.objects.filter(pk__in=user_records)
+        elif self.request.data.get("user_id") and UserProfile.objects.filter(user__pk=self.request.data.get("user_id"), admin=self.request.user).exists():
+            user = User.objects.filter(pk=self.request.data.get("user_id")).first()
+            user_records = list(CompanyAccessRecord.objects.filter(user=user).values_list("company_id", flat=True))
+            return Company.objects.filter(pk__in=user_records)
         else:
             return Company.objects.filter(user=user)
-
-
-# class UserCompaniesListAPIView(generics.ListAPIView):
-#     permission_classes = (permissions.IsAuthenticated,)
-#     serializer_class = CompaniesFetchSerializer
-#     pagination_class = LimitOffsetPagination
-#     def get_queryset(self):
-#         user = self.request.user
-#         adminuser = User.objects.get(pk=user.affiliate)
-#         companies = Company.objects.filter(user=adminuser).values_list('id', flat=True)
-
-#         ids = ImaginaryTable.objects.filter( Q(user=user.id) and Q(affiliate_id=user.affilate)).values_list('company_id', flat=True)
-#         return Company.objects.filter(user=user)
 
 
 

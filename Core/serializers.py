@@ -118,18 +118,18 @@ class UserProfileSerializer(serializers.ModelSerializer):
             'last_name',
         ]
 
-#This Serializer returning profile to the user and also using UserProfileSerializer
-class FetchUserProfileSerializer(serializers.ModelSerializer):
-    profile = serializers.SerializerMethodField()
-    class Meta:
-        model = User
-        fields = [
-            'email',
-            'profile',
-        ]
-    def get_profile(self, user):
-        profile = UserProfile.objects.filter(user=user).first()
-        return UserProfileSerializer(profile).data if profile is not None else None
+# #This Serializer returning profile to the user and also using UserProfileSerializer
+# class FetchUserProfileSerializer(serializers.ModelSerializer):
+#     profile = serializers.SerializerMethodField()
+#     class Meta:
+#         model = User
+#         fields = [
+#             'email',
+#             'profile',
+#         ]
+#     def get_profile(self, user):
+#         profile = UserProfile.objects.filter(user=user).first()
+#         return UserProfileSerializer(profile).data if profile is not None else None
 
 
 '''
