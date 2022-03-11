@@ -20,6 +20,7 @@ from .views import (
     CompanyAccessView,
 
     UserDeleteAPIView,
+    UsersListAPIView,
     CompanyDeleteAPIView,
 
     UpdateCompanyAPIView,
@@ -38,6 +39,7 @@ urlpatterns = [
 
     path('login/', CustomJWTView.as_view(),),
     path('auth/user/', RefreshJWTTokenView.as_view(),),
+    path('users/', UsersListAPIView.as_view()),
 
     path('profile/', FetchUserProfileView.as_view()),
     path('profile/update/', UpdateUserProfileView.as_view()),

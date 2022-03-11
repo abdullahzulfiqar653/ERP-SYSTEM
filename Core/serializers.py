@@ -83,6 +83,16 @@ class ChangePasswordSerializer(serializers.Serializer):
     old_password = serializers.CharField(required=True)
     new_password = serializers.CharField(required=True, validators=[validate_password])
 
+
+class UsersListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = [
+            'id',
+            'first_name',
+        ]
+
+
 # This serialzer is for the view where admin changing the password of a user without putting old password.
 class AdminChangeUserPasswordSerializer(serializers.Serializer):
     model = User
