@@ -26,6 +26,7 @@ from .serializers import (
         CompanyCreateSerializer,
         CompanyUpdateSerializer,
         CompanyAccessSerializer,
+        UsersListSerializer,
     )
 
 
@@ -389,19 +390,21 @@ class CompanyAccessView(generics.CreateAPIView):
     def post(self, request, *args, **kwargs):
         adminUser = self.request.user
         serializer = self.get_serializer(data=request.data)
+        companies_list = list(map(int, request.data['company_list']))
         if serializer.is_valid(): #checking if coming data is valid
             if User.objects.filter(pk=int(request.data['user_id'])).exists(): #checking if user requested esist in data base
                 user = User.objects.filter(pk=int(request.data['user_id'])).first() #getting user instance so we can assign permissions to him
                 if user.user_profile.admin == adminUser: # checking if user is subuser of current admin user else without performing actions HTTP_401 returned
                     already_assigned_list = list(CompanyAccessRecord.objects.filter(user=user).values_list('company_id', flat=True)) #getting list of previously assigned companies
-                    permission_remove_list = list(set(already_assigned_list) - set(request.data['company_list'])) #subtracting old list from new so we can remove permissions which are not allowed
-                    for company_id in request.data['company_list']: #looping on list of companies
+                    permission_remove_list = list(set(already_assigned_list) - set(companies_list)) #subtracting old list from new so we can remove permissions which are not allowed
+                    for company_id in companies_list: #looping on list of companies
                         if Company.objects.filter(pk=company_id, user=adminUser).exists(): # checking if current user is owner of current company if not then simply pass
-                            if company_id in CompanyAccessRecord.objects.all().values_list('company',flat=True): # here checking if company permissions are already assigned to someone
-                                if CompanyAccessRecord.objects.get(company=company_id).id in list(CompanyAccessRecord.objects.filter(user=user).values_list('id', flat=True)):
-                                    continue
-                                else:
-                                    continue
+                            if company_id in list(CompanyAccessRecord.objects.all().values_list('company',flat=True)): # here checking if company permissions are already assigned to someone
+                                continue
+                                # if CompanyAccessRecord.objects.get(company=company_id).id in list(CompanyAccessRecord.objects.filter(user=user).values_list('id', flat=True)):
+                                #     continue
+                                # else:
+                                #     continue
                             else:
                                 record = CompanyAccessRecord(user=user, company=Company.objects.get(pk=company_id))
                                 record.save()
@@ -473,6 +476,17 @@ class CompaniesListAPIView(generics.ListAPIView):
         else:
             return Company.objects.filter(user=user)
 
+
+'''Listing al users related to admin who request'''
+class UsersListAPIView(generics.ListAPIView):
+    permission_classes = (permissions.IsAdminUser,)
+    serializer_class = UsersListSerializer
+    pagination_class = LimitOffsetPagination
+    def get_queryset(self):
+        user = self.request.user
+        associated_profiles_list = UserProfile.objects.filter(admin=user).values_list("user_id", flat=True)
+        return User.objects.filter(pk__in=list(associated_profiles_list), is_staff=False)
+
 '''
 Endpoint returning companies which are assigned by admin to his sub user.
 Enpoint have user_id of subuser in his params if no user_id then HTTP_400 generated
@@ -482,16 +496,19 @@ class UserCompaniesListAPIView(generics.ListAPIView):
     permission_classes = (permissions.IsAdminUser,)
     def get(self,request):
         user = self.request.user
+        print(user,  "aaaaaaaaaaaaaaaaaaaa")
         try:
             user_id = int(request.query_params["user_id"])
-        except:
+        except: 
             return Response(status=status.HTTP_400_BAD_REQUEST)
         if UserProfile.objects.filter(user__pk=user_id, admin=self.request.user).exists():
             user = User.objects.filter(pk=user_id).first()
             user_records = list(CompanyAccessRecord.objects.filter(user=user).values_list("company_id", flat=True))
             records = Company.objects.filter(pk__in=user_records)
+            print(records)
             records = CompaniesFetchSerializer(records, many=True)
-        return Response(records.data, status=status.HTTP_200_OK)
+            return Response(records.data, status=status.HTTP_200_OK)
+        return Response(status=status.HTTP_203_NON_AUTHORITATIVE_INFORMATION)
 
 
 '''
