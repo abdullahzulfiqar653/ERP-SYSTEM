@@ -10,6 +10,7 @@ from .views import (
     ForgetPasswordView,
     ResetPsswordConfirmView,
     CompaniesListAPIView,
+    UserCompaniesListAPIView,
     UpdateUserProfileView,
     FetchUserProfileView,
     
@@ -49,6 +50,7 @@ urlpatterns = [
     path('company/create/', AddCompanyAPIView.as_view()),
     path('company/update/', UpdateCompanyAPIView.as_view()),
     path('companies/', CompaniesListAPIView.as_view()),
+    path('companies/user/', UserCompaniesListAPIView.as_view()),
     path('company/destroy/<pk>/', CompanyDeleteAPIView.as_view()),
     path('company/permission/generate/', CompanyAccessView.as_view())
 ]
