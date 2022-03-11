@@ -1,3 +1,4 @@
+
 from django.conf import settings
 from rest_framework import serializers
 from rest_framework import generics
@@ -351,9 +352,9 @@ class UpdateUserProfileView(APIView):
                     message = "Dear admin, Profile of User named as {} has been updated successfully".format(user.username)
             except:
                 pass
-        if ((request.data.get("first_name") or request.data.get("first_name")=="") and
-                (request.data.get("last_name") or request.data.get("last_name")=="") and
-                    (request.data.get("email") or request.data.get("email")=="")):
+        if ((request.data.get("first_name") or request.data.get("first_name")=="") and #checiking if first_name attribute exists if yes then its not necessary to have any value
+                (request.data.get("last_name") or request.data.get("last_name")=="") and #checiking if last_name attribute exists if yes then its not necessary to have any value
+                    (request.data.get("email") or request.data.get("email")=="")): #checiking if email attribute exists if yes then its not necessary to have any value as email field have its on checks right ahead
             user.user_profile.first_name = request.data['first_name']
             user.user_profile.last_name = request.data['last_name']
             try:
@@ -469,18 +470,33 @@ class CompaniesListAPIView(generics.ListAPIView):
         if not self.request.user.is_staff:
             user_records = list(CompanyAccessRecord.objects.filter(user=user).values_list("company_id", flat=True))
             return Company.objects.filter(pk__in=user_records)
-        elif self.request.data.get("user_id") and UserProfile.objects.filter(user__pk=self.request.data.get("user_id"), admin=self.request.user).exists():
-            user = User.objects.filter(pk=self.request.data.get("user_id")).first()
-            user_records = list(CompanyAccessRecord.objects.filter(user=user).values_list("company_id", flat=True))
-            return Company.objects.filter(pk__in=user_records)
         else:
             return Company.objects.filter(user=user)
 
+'''
+Endpoint returning companies which are assigned by admin to his sub user.
+Enpoint have user_id of subuser in his params if no user_id then HTTP_400 generated
+after that check is verifying if user is subuser of current admin if yes then companies access record will be returned. 
+'''
+class UserCompaniesListAPIView(generics.ListAPIView):
+    permission_classes = (permissions.IsAdminUser,)
+    def get(self,request):
+        user = self.request.user
+        try:
+            user_id = int(request.query_params["user_id"])
+        except:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+        if UserProfile.objects.filter(user__pk=user_id, admin=self.request.user).exists():
+            user = User.objects.filter(pk=user_id).first()
+            user_records = list(CompanyAccessRecord.objects.filter(user=user).values_list("company_id", flat=True))
+            records = Company.objects.filter(pk__in=user_records)
+            records = CompaniesFetchSerializer(records, many=True)
+        return Response(records.data, status=status.HTTP_200_OK)
 
 
 '''
 In this View we are using magic view of Django rest frame work named as DestroyAPIView in this we we
-just need to pass permissions first that only admin user can do activity in this view and a query set
+just need to pass permissions first that onlty admin user can do activity in this view and a query set
 related to Model we want to perform task. here we are querying User model and only admin can delete any
 user object. In this query we are filtering only those persons who is not admin to avoid accidental
 deletion of super user. This view just need an id of user in the URL and user will be deleted automatically
@@ -490,6 +506,7 @@ class UserDeleteAPIView(generics.DestroyAPIView):
     permission_class = (permissions.IsAdminUser,)
 
     def perform_destroy(self, instance):
+        print(instance)
         if not UserProfile.objects.filter(user=instance.id, admin=self.request.user.id).exists():
             return {"message": "you are not allowed to perform this action"}
         else:
