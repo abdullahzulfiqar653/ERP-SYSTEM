@@ -22,7 +22,7 @@ class Company(models.Model):
     name = models.CharField(max_length=255, unique=True)
 
     def __str__(self) -> str:
-        return self.name
+        return str(self.id) + " "+ self.name
 
 
 class CompanyAccessRecord(models.Model):

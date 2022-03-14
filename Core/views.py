@@ -225,8 +225,8 @@ class AdminChangeUserPasswordView(generics.UpdateAPIView):
     def update(self, request, *args, **kwargs):
         admin = self.request.user
         serializer = self.get_serializer(data=request.data)
-        
-        if serializer.is_valid():
+        serializer.is_valid(raise_exception=True)
+        if User.objects.filter(pk=serializer.data.get("user_id")).exists():
             user = User.objects.get(pk=serializer.data.get("user_id"))
             if not user.user_profile.admin == self.request.user:
                 return Response({"message": "you are an unauthorized user to perform this action"}, status=status.HTTP_401_UNAUTHORIZED)
@@ -236,7 +236,7 @@ class AdminChangeUserPasswordView(generics.UpdateAPIView):
                 'message': "Dear {}, you successfully changed password for user named as {}.".format(admin.username, user.username), 
             }
             return Response(response, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
 '''
@@ -496,7 +496,6 @@ class UserCompaniesListAPIView(generics.ListAPIView):
     permission_classes = (permissions.IsAdminUser,)
     def get(self,request):
         user = self.request.user
-        print(user,  "aaaaaaaaaaaaaaaaaaaa")
         try:
             user_id = int(request.query_params["user_id"])
         except: 
