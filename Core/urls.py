@@ -8,7 +8,7 @@ from .views import (
     
     ChangePasswordView,
     ForgetPasswordView,
-    ResetPsswordConfirmView,
+    ResetPasswordConfirmView,
     CompaniesListAPIView,
     UserCompaniesListAPIView,
     UpdateUserProfileView,
@@ -35,7 +35,7 @@ urlpatterns = [
     path('email/activate/', UserEmailVerifyView.as_view()),
 
     path('password/reset/', ForgetPasswordView.as_view()),
-    path('password/reset/confirm/', ResetPsswordConfirmView.as_view()),
+    path('password/reset/confirm/', ResetPasswordConfirmView.as_view()),
 
     path('login/', CustomJWTView.as_view(),),
     path('auth/user/', RefreshJWTTokenView.as_view(),),

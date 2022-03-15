@@ -8,6 +8,7 @@ from rest_framework.views import APIView
 from rest_framework_jwt.views import ObtainJSONWebToken
 from rest_framework_jwt.serializers import VerifyJSONWebTokenSerializer, RefreshJSONWebTokenSerializer
 from rest_framework.response import Response
+from rest_framework.filters import SearchFilter
 from django.contrib.auth.models import User
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
@@ -287,7 +288,7 @@ is there then check key is not already used. So, if key is fresh then update the
 for the user related to that key and sends an Confirmation email to user and return a 
 response with success and HTTP status 200 OK else an message with HTTP 201
 '''
-class ResetPsswordConfirmView(APIView):
+class ResetPasswordConfirmView(APIView):
     permission_classes = (permissions.AllowAny,)
     def post(self, request):
         activation_key = request.data['token']
@@ -468,6 +469,8 @@ class CompaniesListAPIView(generics.ListAPIView):
     permission_classes = (permissions.IsAuthenticated,)
     serializer_class = CompaniesFetchSerializer
     pagination_class = LimitOffsetPagination
+    filter_backends = [SearchFilter,]
+    search_fields = ['name', ]
     def get_queryset(self):
         user = self.request.user
         if not self.request.user.is_staff:
@@ -482,10 +485,12 @@ class UsersListAPIView(generics.ListAPIView):
     permission_classes = (permissions.IsAdminUser,)
     serializer_class = UsersListSerializer
     pagination_class = LimitOffsetPagination
+    filter_backends = [SearchFilter, ]
+    search_fields = ['first_name',]
     def get_queryset(self):
         user = self.request.user
-        associated_profiles_list = UserProfile.objects.filter(admin=user).values_list("user_id", flat=True)
-        return User.objects.filter(pk__in=list(associated_profiles_list), is_staff=False)
+        # associated_profiles_list = UserProfile.objects.filter(admin=user).values_list("user_id", flat=True)
+        return UserProfile.objects.filter(admin=user)
 
 '''
 Endpoint returning companies which are assigned by admin to his sub user.
