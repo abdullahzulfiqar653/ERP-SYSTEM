@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_jwt',
     'rest_framework.authtoken',
+    'django_filters',
 
     # developer started apps:
     'Core',
@@ -187,10 +188,12 @@ REST_FRAMEWORK = {
     ),
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
-        'rest_framework.authentication.SessionAuthentication',
         'rest_framework.authentication.BasicAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
     ),
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination'
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
+
+    'COERCE_DECIMAL_TO_STRING': False
 }
 
 JWT_AUTH = {

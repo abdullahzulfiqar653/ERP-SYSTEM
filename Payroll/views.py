@@ -1,95 +1,253 @@
+from msilib.schema import ServiceInstall
 from django.contrib.auth.models import User
+# from django_filters
 from rest_framework import status
-from .models import Team
 from rest_framework import generics
 from rest_framework import permissions
 from rest_framework.response import Response
+from .utils import update_employee, get_company_if_authenticated
 from .serializers import (
+    UpdateTeamSerializer,
     AddTeamSerializer,
-    RetriveTeamSerializer
+    RetriveTeamSerializer,
+    AddEmployeeSerializer,
+    ListEmployeeSerializer,
+    UpdateEmployeeSerializer,
 )
+from django_filters.rest_framework import DjangoFilterBackend
+from .models import Team, Employee
 from utils.pagination import LimitOffsetPagination
+from Core.models import Company, CompanyAccessRecord
+from .filters import TeamFilter, EmployeeFilter
 
-# Create your views here.
+
+#---------------------- Starting Crud for Team ---------------------------#
+
+'''
+This View is for creating a team and admin or any subusers who have permissions to access
+company can create team in that company. This View first check if user is admin and create team
+request is in his companies then its a valid request So by validating other parameters team will
+be created against requested company. If user is not admin then check if team creation request for
+a comapny is in his access records then after validating other parametrs team will be created
+against requested company.
+'''
 class AddTeamView(generics.CreateAPIView):
-    permission_classes = (permissions.IsAdminUser,)
-    serializer_class = AddTeamSerializer
-    def post(self, request, *args, **kwargs):
-        data = self.request.data
-        user = self.request.user
-        if data.get('company_id'):
-            print(user.is_staff, "    ", user.is_authenticated, "    ", user.is_superuser)
-            if user.is_superuser:
-                user = User.objects.get(pk=int(data.get('company_id')))
-        if data.get("team_name"):
-            print("hahahaha")
-            if Team.objects.filter(user=self.request.user.id).filter(team_name=data.get("team_name")).exists():
-                return Response({"messgae": "Team name must be unique"}, status=status.HTTP_205_RESET_CONTENT)
-            Team.objects.create(
-                user = user,
-                team_name = data.get("team_name"),
-                address = data.get("address"),
-                postcode = data.get("postcode"),
-                province = data.get("province"),
-                country = data.get("country"),
-                note = data.get("note")
-                )
-            return Response({'success': "Team added to list"}, status=status.HTTP_201_CREATED)
-        return Response(status=status.HTTP_205_RESET_CONTENT)
-
-
-
-class UpdateTeamView(generics.UpdateAPIView):
     permission_classes = (permissions.IsAuthenticated,)
     serializer_class = AddTeamSerializer
-    def update(self, request, *args, **kwargs):
+    def post(self, request, *args, **kwargs):
+        serializer = AddTeamSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        print(data)
         data = self.request.data
         user = self.request.user
-        if data.get('company_id'):
-            if user.is_superuser:
-                user = User.objects.get(pk=int(data.get('company_id')))
+        response = Response(status=status.HTTP_400_BAD_REQUEST)
 
-        if data.get("team_name") and data.get("team_id"):
-            if Team.objects.filter(user=user.id).filter(team_name=data.get("team_name")).exists():
-                current_team = Team.objects.filter(user=user.id).filter(team_name=data.get("team_name"))
-                if current_team.first().id == data.get("team_id"):
-                    pass
-                else:
+        company = get_company_if_authenticated(user, data['company_id'])
+        if not isinstance(company, Company):
+            return response
+        
+        if not Team.objects.filter(company=company).filter(team_name=data["team_name"]).exists():
+            team = Team.objects.create(
+                company = company,
+                team_name = data["team_name"],
+                address = data["address"],
+                postcode = data["postcode"],
+                province = data["province"],
+                country = data["country"],
+                note = data["note"]
+                )
+            return Response({'message': "Team {} created against {}.".format(team.team_name, company.name)}, status=status.HTTP_201_CREATED)
+        return Response({"message":"Enter Unique Team name"}, status=status.HTTP_205_RESET_CONTENT)
+
+
+'''
+This View is for updating any team after some validations user or admin user can update his team,
+but user is limited to only those teams which he have permissions to Access.
+'''
+class UpdateTeamView(generics.UpdateAPIView):
+    permission_classes = (permissions.IsAuthenticated,)
+    serializer_class = UpdateTeamSerializer
+    def update(self, request, id):
+        team_id = id
+        data = self.request.data
+        user = self.request.user
+
+        if Team.objects.filter(pk=team_id).exists(): #Checking if Team Exists in database.
+            team = Team.objects.get(pk=team_id)  #getting Current Team.    
+            company = Company.objects.filter(pk=team.company.id) #Getting company related to current team for next use
+            if user.is_staff:   #checking if user is a admin user.
+                if not company.filter(user=user).exists():  #veryfying if admin owns the company or not
+                    return Response(status=status.HTTP_401_UNAUTHORIZED)   
+            elif not CompanyAccessRecord.objects.filter(user=user, company=company.first()).exists():   #veryfying if sub_user owns the company or not
+                return Response(status=status.HTTP_401_UNAUTHORIZED)
+        else:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+        if data.get("team_name"): #checking if team name exists()
+            if not team.team_name == data.get("team_name"): # Checking if current team has the same name then ignoring next conditions
+                if Team.objects.filter(company=company.first(), team_name=data.get("team_name")).exists(): #veryfying uniqness in current company
                     return Response({"messgae": "Team name must be unique"}, status=status.HTTP_205_RESET_CONTENT)
-
-            team = Team.objects.get(user=self.request.user.id, pk=int(data.get("team_id")))
-
             team.team_name = data.get("team_name")
             team.address = data.get("address")
             team.postcode = data.get("postcode")
             team.province = data.get("province")
             team.country = data.get("country")
             team.note = data.get("note")
-
             team.save()
-            return Response({'success': "Team {} updated".format(team.team_name)}, status=status.HTTP_200_OK)
+
+            return Response({'message': "Team {} updated".format(team.team_name)}, status=status.HTTP_200_OK)
         return Response(status=status.HTTP_205_RESET_CONTENT)
 
 
 '''
-
+Team Listing view having a parameter in the URL as company_id and then veryfying if current
+user owns the company or have permission to access the company if yes then returning teams related to those users.
 '''
 class TeamListView(generics.ListAPIView):
-    pagination_class = LimitOffsetPagination
     permission_classes = (permissions.IsAuthenticated,)
     serializer_class = RetriveTeamSerializer
+    pagination_class = LimitOffsetPagination
+    filter_backends = [DjangoFilterBackend, ]
+    filterset_class = TeamFilter
     def get_queryset(self):
-        return Team.objects.filter(user=self.request.user)
+        company_id = self.request.GET.get('company_id')
+        empty_queryset = Team.objects.none()
+        if not company_id:
+            return empty_queryset
+        if not company_id.isdigit():
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        user = self.request.user
+        if user.is_staff and Company.objects.filter(pk=int(company_id)).filter(user=user).exists():
+            return Team.objects.filter(company=company_id)
+        elif CompanyAccessRecord.objects.filter(user=user, company_id=company_id).exists():
+            return Team.objects.filter(company=company_id)
+        else:
+            return empty_queryset
 
 
+'''
+This View have an id of Team in the URL params by that it fetch the instance of team and after
+checking some permissions it destroy that instance'''
 class TeamDestroyView(generics.DestroyAPIView):
     queryset = Team.objects.all()
     permission_class = (permissions.IsAuthenticated,)
     def perform_destroy(self, instance):
-        if not self.request.user.is_superuser:
-            if not Team.objects.filter(user=self.request.user.id, pk=instance.id).exists():
-                return Response({"message": "you are an unauthorized user to perform this action"}, status=status.HTTP_401_UNAUTHORIZED)
-            else:
-                super().perform_destroy(instance)
-        else:
+
+        user = self.request.user
+        team = Team.objects.filter(pk=instance.id).first()
+        if user.is_staff and team.company.user==user:
             super().perform_destroy(instance)
+        elif CompanyAccessRecord.objects.filter(user=user, company=team.company).exists():
+            super().perform_destroy(instance)
+        else:
+            return {"message": "you are an unauthorized user to perform this action"}
+
+
+#---------------------- Starting Crud for Employee ---------------------------#
+
+'''
+This view is For creating an employee. After request this view firstly validate data through serializer and
+then check if user request is valid to create an employee in requested company by calling method get_company_if_authenticated
+if company is returned then its mean user have permission to create Employe in requested company, and employee will be created.
+Else HTTP_400_BAD_REQUEST will be returned. 
+'''
+class EmployeeCreateAPIView(generics.CreateAPIView):
+    permission_classes = (permissions.IsAuthenticated,)
+    serializer_class = AddEmployeeSerializer
+    def post(self, request, *args, **kwargs):
+        serializer = AddEmployeeSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        user = self.request.user
+        response = Response(status=status.HTTP_400_BAD_REQUEST)
+        company = get_company_if_authenticated(user, data['company_id'])
+        if not isinstance(company, Company):
+            return response
+        employee = Employee(**serializer.validated_data)
+        employee.save()
+        return Response({'message': "Employee {} created against {}.".format(employee.name, company.name)}, status=status.HTTP_201_CREATED)
+
+
+'''
+this View overriding the base get_queryset method and in that before filtering it check weather the
+user requesting for employees for a company own the company or have permissions to access that company
+the Employess related to the requested company. user own the company or have permissions to access that
+company then only employees related to accessed company will be returned.
+This View Also containing Pagination and Filters to filter specific data.
+'''
+class EmployeeListAPIView(generics.ListAPIView):
+    permission_classes = (permissions.IsAuthenticated,)
+    serializer_class = ListEmployeeSerializer
+    pagination_class = LimitOffsetPagination
+    filter_backends = [DjangoFilterBackend,]
+    filterset_class = EmployeeFilter
+    def get_queryset(self):
+        company_id = self.request.GET.get('company_id')
+        emptyEmployeeQueryset = Employee.objects.none()
+        if not company_id:
+            return emptyEmployeeQueryset
+        if not company_id.isdigit():
+            return emptyEmployeeQueryset
+
+        user = self.request.user
+        if user.is_staff and Company.objects.filter(pk=int(company_id)).filter(user=user).exists():
+            return Employee.objects.filter(company=company_id)
+        elif CompanyAccessRecord.objects.filter(user=user, company_id=company_id).exists():
+            return Employee.objects.filter(company=company_id)
+        else:
+            return emptyEmployeeQueryset
+
+
+'''
+This View on request first check if user have permissions to the company or not if yess then check if employee
+is the employee of the requested company. After that it check if nif of user is same as previous then nif get poped
+and other data will be updated otherwise check if new nif is not belong to any existing user if not then all data of
+employee will be updated.
+'''
+class EmployeeUpdateView(generics.UpdateAPIView):
+    permission_classes = (permissions.IsAuthenticated,)
+    serializer_class = UpdateEmployeeSerializer
+    def update(self, request, emp_id):
+        serializer = UpdateEmployeeSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        user = self.request.user
+        response = Response(status=status.HTTP_400_BAD_REQUEST)
+        company = get_company_if_authenticated(user, data['company_id'])
+        if not isinstance(company, Company):
+            return response
+
+        if Employee.objects.filter(pk=emp_id, company=company).exists():
+            emp = Employee.objects.get(pk=emp_id, company=company)
+            
+            if not emp.nif == data['nif']:  #checking if nif is same as previous nif
+                if Employee.objects.filter(nif=data['nif']).exists(): #if nif is new then checking if no other employe have the same nif
+                    return Response({"message":"nif must be unique"}, status=status.HTTP_205_RESET_CONTENT)
+                else:
+                    emp = update_employee(emp, data) #calling function to update user
+            else:
+                data.pop('nif') # as user have same nif as previous so popping nif and then in next line updating Employee
+                emp = update_employee(emp, data)
+            return Response({'message': "Employee {} updated".format(emp.name)}, status=status.HTTP_200_OK)
+        return Response({'message': "You are unauthorized for the requested Employee"}, status=status.HTTP_401_UNAUTHORIZED)
+
+
+'''
+Checking if user have permissions to the requested company and also employee related to that companny
+then employee will be deleted
+'''
+class EmployeeDestroyView(generics.DestroyAPIView):
+    queryset = Employee.objects.all()
+    permission_class = (permissions.IsAuthenticated,)
+    def perform_destroy(self, instance):
+        company_id = self.request.GET.get('company_id')
+        user = self.request.user
+        response = {"message": "you are an unauthorized user to perform this action"}
+        company = get_company_if_authenticated(user, company_id)
+        if not isinstance(company, Company):
+            return response
+        if Employee.objects.filter(pk=instance.id, company=company).exists():
+            super().perform_destroy(instance)
+        else:
+            return response

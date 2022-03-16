@@ -86,10 +86,11 @@ class ChangePasswordSerializer(serializers.Serializer):
 
 class UsersListSerializer(serializers.ModelSerializer):
     class Meta:
-        model = User
+        model = UserProfile
         fields = [
-            'id',
+            'user',
             'first_name',
+            'last_name',
         ]
 
 
