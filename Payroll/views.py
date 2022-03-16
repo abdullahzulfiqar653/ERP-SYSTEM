@@ -1,6 +1,4 @@
-from msilib.schema import ServiceInstall
 from django.contrib.auth.models import User
-# from django_filters
 from rest_framework import status
 from rest_framework import generics
 from rest_framework import permissions
@@ -38,7 +36,6 @@ class AddTeamView(generics.CreateAPIView):
         serializer = AddTeamSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
-        print(data)
         data = self.request.data
         user = self.request.user
         response = Response(status=status.HTTP_400_BAD_REQUEST)
