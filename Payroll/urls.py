@@ -3,13 +3,22 @@ from .views import (
     AddTeamView,
     TeamListView,
     UpdateTeamView,
-    TeamDestroyView
+    TeamDestroyView,
+    EmployeeUpdateView,
+    EmployeeCreateAPIView,
+    EmployeeListAPIView,
+    EmployeeDestroyView
 )
 
 
 urlpatterns = [
-    path('add/', AddTeamView.as_view()),
+    path('team/add/', AddTeamView.as_view()),
     path('teams/', TeamListView.as_view()),
     path('team/update/<int:id>/', UpdateTeamView.as_view()),
-    path('team/destroy/<pk>/', TeamDestroyView.as_view())
+    path('team/destroy/<pk>/', TeamDestroyView.as_view()),
+
+    path('employee/add/', EmployeeCreateAPIView.as_view()),
+    path('employee/update/<int:emp_id>/', EmployeeUpdateView.as_view()),
+    path('employees/', EmployeeListAPIView.as_view()),
+    path('employee/destroy/<pk>/', EmployeeDestroyView.as_view()),
 ]
