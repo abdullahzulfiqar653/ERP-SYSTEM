@@ -46,7 +46,14 @@ class CustomJWTView(ObtainJSONWebToken):
             return Response({
                 'token': serializer.validated_data['token'],
                 'is_admin': serializer.validated_data['is_admin'],
-                'email': serializer.validated_data['email']
+                'user': {
+                    'id': user.id,
+                    'email': user.email,
+                    'first_name' : user.user_profile.first_name,
+                    'last_name' : user.user_profile.last_name, 
+                    'image' : user.user_profile.picture,
+
+                }
             }, status.HTTP_200_OK)
         else:
             raise serializers.ValidationError({"message":"Account with provided credentials does not exists."}, status.HTTP_400_BAD_REQUEST)
