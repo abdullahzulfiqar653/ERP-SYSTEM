@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Team, Employee
+from .models import PayRoll, PayRollItem, Team, Employee
 
 #---------------------- Serializers for Team Views ---------------------------#
 class AddTeamSerializer(serializers.ModelSerializer):
@@ -43,7 +43,6 @@ class RetriveTeamSerializer(serializers.ModelSerializer):
         ]
 
 
-
 #---------------------- Serializers for Employee Views ---------------------------#
 class AddEmployeeSerializer(serializers.ModelSerializer):
     company_id = serializers.IntegerField()
@@ -64,7 +63,6 @@ class AddEmployeeSerializer(serializers.ModelSerializer):
             'country',
             'note',
         ]
-
 
 class UpdateEmployeeSerializer(serializers.ModelSerializer):
     nif = serializers.CharField(validators=[], )
@@ -104,3 +102,61 @@ class ListEmployeeSerializer(serializers.ModelSerializer):
             'country',
             'note',
         ]
+
+
+#---------------------- Serializers for Payroll Views ---------------------------#
+
+class PayRollItemSerializer(serializers.ModelSerializer):
+    employee_id = serializers.IntegerField(required=True, write_only=True, source='employee')
+    class Meta:
+        model = PayRollItem
+        fields = [
+            'employee_id',
+            'gross',
+            'bonus',
+            'total_gross',
+        ]
+
+
+class PayRollCreateSerializer(serializers.ModelSerializer):
+    company_id = serializers.IntegerField(required=True, write_only=True, source='company')
+    payroll_items = PayRollItemSerializer(many=True)
+    class Meta:
+        model = PayRoll
+        fields = [
+            'company_id',
+            'created_at',
+            'payroll_items'
+        ]
+
+
+class PayRollListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PayRoll
+        fields = [
+            'id',
+            'created_at',
+        ]
+
+
+
+class EmployeeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Employee
+        fields = [
+            'name',
+        ]
+
+class PayRollItemListSerializer(serializers.ModelSerializer):
+    employee = EmployeeSerializer(read_only=True)
+    class Meta:
+        model = PayRollItem
+        fields = [
+            'id',
+            'employee',
+            'gross',
+            'bonus',
+            'total_gross',
+        ]
+
+

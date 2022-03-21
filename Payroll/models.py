@@ -18,11 +18,12 @@ class Team(models.Model):
     def __str__(self):
         return self.team_name +"-   -"+ self.company.name
 
+
+
 class ContractTypeEnum(models.IntegerChoices):
     PERMANENT = 1, 'permanent'
     CONTRACT = 2, 'contract'
     TRAINING = 3, 'training'
-
 
 class Employee(models.Model):
     company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='company_employee')
@@ -43,11 +44,12 @@ class Employee(models.Model):
 
 class PayRoll(models.Model):
     company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='company_payroll')
-    created_at = models.DateField(auto_now_add=True)
+    created_at = models.DateField(auto_now_add=False)
 
 class PayRollItem(models.Model):
     payroll = models.ForeignKey(PayRoll, on_delete=models.CASCADE, related_name='company_payroll')
-    employee = models.ForeignKey(Employee, on_delete=models.SET_NULL, null=True, related_name='employee_payroll')
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='employee_payroll')
     gross = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     bonus = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     total_gross = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    

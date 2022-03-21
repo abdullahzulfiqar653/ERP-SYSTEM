@@ -11,12 +11,15 @@ from .serializers import (
     AddEmployeeSerializer,
     ListEmployeeSerializer,
     UpdateEmployeeSerializer,
+    PayRollCreateSerializer,
+    PayRollListSerializer,
+    PayRollItemListSerializer,
 )
 from django_filters.rest_framework import DjangoFilterBackend
-from .models import Team, Employee
+from .models import Team, Employee, PayRoll, PayRollItem
 from utils.pagination import LimitOffsetPagination
 from Core.models import Company, CompanyAccessRecord
-from .filters import TeamFilter, EmployeeFilter
+from .filters import TeamFilter, EmployeeFilter, PayRollFilter
 
 
 #---------------------- Starting Crud for Team ---------------------------#
@@ -246,5 +249,115 @@ class EmployeeDestroyView(generics.DestroyAPIView):
             return response
         if Employee.objects.filter(pk=instance.id, company=company).exists():
             super().perform_destroy(instance)
+        else:
+            return response
+
+
+
+#---------------------- Starting Crud for PayRoll ---------------------------#
+class PayRollCreateAPIView(generics.CreateAPIView):
+    permission_classes = (permissions.IsAuthenticated,)
+    serializer_class = PayRollCreateSerializer
+    def post(self, request, *args, **kwargs):
+        serializer = PayRollCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        user = self.request.user
+        response = Response(status=status.HTTP_400_BAD_REQUEST)
+        company = get_company_if_authenticated(user, data['company'])
+        if not isinstance(company, Company):
+            return response
+
+        payroll = PayRoll.objects.create(company=company, created_at=data['created_at'])
+
+        for item in data['payroll_items']:
+            if Employee.objects.filter(pk=item['employee'], company=company).exists():
+                item['employee_id'] = item['employee']
+                del item['employee']
+                PayRollItem.objects.create(
+                    payroll=payroll,
+                    **item,
+                    )
+            continue
+        return Response({"message":"Payroll Created."}, status=status.HTTP_200_OK)
+
+
+
+class PayRollListAPIView(generics.ListAPIView):
+    permission_classes = (permissions.IsAuthenticated,)
+    serializer_class = PayRollListSerializer
+    pagination_class = LimitOffsetPagination
+    filter_backends = [DjangoFilterBackend,]
+    filterset_class = PayRollFilter
+    def get_queryset(self):
+        company_id = self.request.GET.get('company_id')
+        emptyPayRollQueryset = PayRoll.objects.none()
+        if not company_id:
+            return emptyPayRollQueryset
+        if not company_id.isdigit():
+            return emptyPayRollQueryset
+
+        user = self.request.user
+        
+        company = get_company_if_authenticated(user, company_id)
+        if not isinstance(company, Company):
+            return emptyPayRollQueryset
+        return PayRoll.objects.filter(company=company)
+
+
+class PayRollItemListAPIView(generics.ListAPIView):
+    permission_classes = (permissions.IsAuthenticated,)
+    serializer_class = PayRollItemListSerializer
+    pagination_class = LimitOffsetPagination
+    filter_backends = [DjangoFilterBackend,]
+    # filterset_class = PayRollFilter
+    def get_queryset(self):
+        company_id = self.request.GET.get('company_id')
+        payroll_id = self.request.GET.get('payroll_id')
+        emptyPayRollItemeQueryset = PayRollItem.objects.none()
+        if not (company_id or payroll_id):
+            return emptyPayRollItemeQueryset
+        if not company_id.isdigit():
+            return emptyPayRollItemeQueryset
+
+        user = self.request.user
+        company = get_company_if_authenticated(user, company_id)
+        if not isinstance(company, Company):
+            return emptyPayRollItemeQueryset
+        if PayRoll.objects.filter(pk=payroll_id, company=company).exists():
+            return PayRollItem.objects.filter(payroll_id=payroll_id)
+        return emptyPayRollItemeQueryset
+
+
+class PayRollDestroyView(generics.DestroyAPIView):
+    queryset = PayRoll.objects.all()
+    permission_class = (permissions.IsAuthenticated,)
+    def perform_destroy(self, instance):
+        company_id = self.request.GET.get('company_id')
+        user = self.request.user
+        response = {"message": "you are an unauthorized user to perform this action"}
+        company = get_company_if_authenticated(user, company_id)
+        if not isinstance(company, Company):
+            return response
+        if PayRoll.objects.filter(pk=instance.id, company=company).exists():
+            super().perform_destroy(instance)
+        else:
+            return response
+
+
+class PayRollItemDestroyView(generics.DestroyAPIView):
+    queryset = PayRollItem  .objects.all()
+    permission_class = (permissions.IsAuthenticated,)
+    def perform_destroy(self, instance):
+        company_id = self.request.GET.get('company_id')
+        payroll_id = self.request.GET.get('payroll_id')
+        user = self.request.user
+        response = {"message": "you are an unauthorized user to perform this action"}
+        company = get_company_if_authenticated(user, company_id)
+        if not isinstance(company, Company):
+            return response
+        if PayRoll.objects.filter(pk=payroll_id, company=company).exists():
+            if PayRollItem.objects.filter(pk=instance.id, payroll_id=payroll_id).exists():
+                super().perform_destroy(instance)
         else:
             return response

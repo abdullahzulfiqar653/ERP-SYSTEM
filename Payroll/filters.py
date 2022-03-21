@@ -1,5 +1,5 @@
 from django_filters import FilterSet
-from .models import Team, Employee
+from .models import Team, Employee, PayRoll
 
 class TeamFilter(FilterSet):
     class Meta:
@@ -30,4 +30,12 @@ class EmployeeFilter(FilterSet):
             "province": ['iexact'],
             "country": ['iexact'],
             "note": ['icontains'],
+        }
+
+
+class PayRollFilter(FilterSet):
+    class Meta:
+        model = PayRoll
+        fields = {
+            "created_at": ['year' , 'month'],
         }

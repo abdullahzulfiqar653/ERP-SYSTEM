@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Team, Employee
+from .models import Team, Employee, PayRoll, PayRollItem
 # Register your models here.
 
 
@@ -21,3 +21,5 @@ class EmployeeAdmin(admin.ModelAdmin):
 
 admin.site.register(Team, TeamAdmin)
 admin.site.register(Employee, EmployeeAdmin)
+admin.site.register(PayRollItem)
+admin.site.register(PayRoll)

@@ -7,7 +7,12 @@ from .views import (
     EmployeeUpdateView,
     EmployeeCreateAPIView,
     EmployeeListAPIView,
-    EmployeeDestroyView
+    EmployeeDestroyView,
+
+    PayRollCreateAPIView,
+    PayRollListAPIView,
+    PayRollItemListAPIView,
+    PayRollDestroyView,
 )
 
 
@@ -21,4 +26,10 @@ urlpatterns = [
     path('employee/update/<int:emp_id>/', EmployeeUpdateView.as_view()),
     path('employees/', EmployeeListAPIView.as_view()),
     path('employee/destroy/<pk>/', EmployeeDestroyView.as_view()),
+
+    path('create/', PayRollCreateAPIView.as_view()),
+    path('all/', PayRollListAPIView.as_view()),
+    path('items/', PayRollItemListAPIView.as_view()),
+    path('destroy/<pk>/', PayRollDestroyView.as_view()),
+
 ]
