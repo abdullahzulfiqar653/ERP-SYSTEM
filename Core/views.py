@@ -284,7 +284,7 @@ class ForgetPasswordView(APIView):
                     }
                 subject = 'Password Reset'
                 to_email = user.email
-                # send_email( email, subject, to_email, 'register.html') # sending email
+                send_email( email, subject, to_email, 'register.html') # sending email
                 reg_obj.activation_key = reset_password_token #saving token for furhter use 
                 reg_obj.is_activation_key_used = False #making activation key not used
                 reg_obj.save()
