@@ -361,3 +361,46 @@ class PayRollItemDestroyView(generics.DestroyAPIView):
                 super().perform_destroy(instance)
         else:
             return response
+
+
+class PayRollUpdateAPIView(generics.UpdateAPIView):
+    permission_classes = (permissions.IsAuthenticated,)
+    serializer_class = PayRollCreateSerializer
+    def post(self, request, *args, **kwargs):
+        serializer = PayRollCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        user = self.request.user
+        response = Response(status=status.HTTP_400_BAD_REQUEST)
+        company = get_company_if_authenticated(user, data['company'])
+        if not isinstance(company, Company):
+            return response
+        payroll = PayRoll.objects.create(company=company, created_at=data['created_at'])
+        return Response({"message":"Payroll Created."}, status=status.HTTP_200_OK)
+
+class PayRollUpdateAPIView(generics.UpdateAPIView):
+    permission_classes = (permissions.IsAuthenticated,)
+    serializer_class = UpdateEmployeeSerializer
+    def update(self, request, payroll_id):
+        serializer = UpdateEmployeeSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        user = self.request.user
+        response = Response(status=status.HTTP_400_BAD_REQUEST)
+        company = get_company_if_authenticated(user, data['company_id'])
+        if not isinstance(company, Company):
+            return response
+
+        if Employee.objects.filter(pk=emp_id, company=company).exists():
+            emp = Employee.objects.get(pk=emp_id, company=company)
+            
+            if not emp.nif == data['nif']:  #checking if nif is same as previous nif
+                if Employee.objects.filter(nif=data['nif']).exists(): #if nif is new then checking if no other employe have the same nif
+                    return Response({"message":"nif must be unique"}, status=status.HTTP_205_RESET_CONTENT)
+                else:
+                    emp = update_employee(emp, data) #calling function to update user
+            else:
+                data.pop('nif') # as user have same nif as previous so popping nif and then in next line updating Employee
+                emp = update_employee(emp, data)
+            return Response({'message': "Employee {} updated".format(emp.name)}, status=status.HTTP_200_OK)
+        return Response({'message': "You are unauthorized for the requested Employee"}, status=status.HTTP_401_UNAUTHORIZED)

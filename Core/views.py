@@ -112,7 +112,7 @@ class AdminRegisterAPIView(generics.GenericAPIView):
                 "title": "Thank your for registering with BoosterTech Portal",
                 "shortDescription": "These are the next steps.",
                 "subtitle": "BoosterTech Business handling solution in one go",
-                'link': settings.PASSWORD_RESET_PROTOCOL + '://'+ settings.PASSWORD_RESET_DOMAIN +'/activate/activation_key='+ email_activation_token,
+                'link': settings.PASSWORD_RESET_PROTOCOL + '://'+ settings.PASSWORD_RESET_DOMAIN +'/auth/account-activated/?activation_key='+ email_activation_token,
                 "message": '''You have successfully registered with BoosterTech. You can 
                         now login in to your profile and start. We have 
                         thousands of features just waiting for you to use. If you experience any 
