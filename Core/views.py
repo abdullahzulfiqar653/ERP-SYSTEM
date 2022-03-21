@@ -151,7 +151,7 @@ class UserRegisterAPIView(generics.GenericAPIView):
                 "title": "Thank your for registering with BoosterTech Portal",
                 "shortDescription": "These are the next steps.",
                 "subtitle": "BoosterTech Business handling solution in one go",
-                'link': settings.PASSWORD_RESET_PROTOCOL + '://'+ settings.PASSWORD_RESET_DOMAIN +'/api/core/email/activate/activation_key='+ email_activation_token,
+                'link': settings.PASSWORD_RESET_PROTOCOL + '://'+ settings.PASSWORD_RESET_DOMAIN +'/auth/account-activated/?activation_key='+ email_activation_token,
                 "message": '''You have successfully registered with BoosterTech. You can 
                         now login in to your profile and start. We have 
                         thousands of features just waiting for you to use. If you experience any 
@@ -279,7 +279,7 @@ class ForgetPasswordView(APIView):
                     "shortDescription": "You have requested password reset",
                     "subtitle": "BoosterTech Business handling solution in one go",
                     "message": '''With the given link you will be moved to booster tech portal and you will be popped to enter a new password''',
-                    'link': settings.PASSWORD_RESET_PROTOCOL + '://'+ settings.PASSWORD_RESET_DOMAIN +'/auth/reset-password/token='+ reset_password_token,
+                    'link': settings.PASSWORD_RESET_PROTOCOL + '://'+ settings.PASSWORD_RESET_DOMAIN +'/auth/reset-password/?token='+ reset_password_token,
                     'name': user.user_profile.first_name
                     }
                 subject = 'Password Reset'
