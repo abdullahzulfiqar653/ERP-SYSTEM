@@ -279,7 +279,7 @@ class ForgetPasswordView(APIView):
                     "shortDescription": "You have requested password reset",
                     "subtitle": "BoosterTech Business handling solution in one go",
                     "message": '''With the given link you will be moved to booster tech portal and you will be popped to enter a new password''',
-                    'link': settings.PASSWORD_RESET_PROTOCOL + '://'+ settings.PASSWORD_RESET_DOMAIN +'/auth/reset-password/token='+ reset_password_token,
+                    'link': settings.PASSWORD_RESET_PROTOCOL + '://'+ settings.PASSWORD_RESET_DOMAIN +'/auth/reset-password/?token='+ reset_password_token,
                     'name': user.user_profile.first_name
                     }
                 subject = 'Password Reset'
