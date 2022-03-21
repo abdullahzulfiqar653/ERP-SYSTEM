@@ -1,4 +1,5 @@
 
+from os import pardir
 from socket import NI_NOFQDN
 from django.db import models
 from django.contrib.auth.models import User
@@ -25,7 +26,7 @@ class ContractTypeEnum(models.IntegerChoices):
 
 class Employee(models.Model):
     company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='company_employee')
-    team = models.OneToOneField(Team, on_delete=models.PROTECT,  null=True, blank=True)
+    team = models.OneToOneField(Team, on_delete=models.SET_NULL,  null=True, blank=True)
     name = models.CharField(max_length=255)
     surname = models.CharField(max_length=255)
     nif = models.CharField(max_length=13, null=True, blank=True, unique=True)
@@ -38,3 +39,15 @@ class Employee(models.Model):
     province = models.CharField(max_length=130, null=True, blank=True)
     country = models.CharField(max_length=56, null=True, blank=True)
     note = models.TextField(null=True, blank=True)
+
+
+class PayRoll(models.Model):
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='company_payroll')
+    created_at = models.DateField(auto_now_add=True)
+
+class PayRollItem(models.Model):
+    payroll = models.ForeignKey(PayRoll, on_delete=models.CASCADE, related_name='company_payroll')
+    employee = models.ForeignKey(Employee, on_delete=models.SET_NULL, null=True, related_name='employee_payroll')
+    gross = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    bonus = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    total_gross = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)

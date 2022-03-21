@@ -9,7 +9,7 @@ from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth import authenticate
 from django.utils.translation import ugettext as _
 from .models import Company, UserProfile
-
+from .helper import generate_username
 
 jwt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER
 jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
@@ -31,11 +31,7 @@ class CustomJWTSerializer(JSONWebTokenSerializer):
             }
             if all(credentials.values()):
                 user = authenticate(**credentials)
-                print(user)
                 if user:
-                    if not user.is_active:
-                        msg = _('User account is disabled.')
-                        raise serializers.ValidationError(msg)
                     payload = jwt_payload_handler(user)
                     return {
                         'token': jwt_encode_handler(payload),
@@ -43,15 +39,11 @@ class CustomJWTSerializer(JSONWebTokenSerializer):
                         'email': user.email
                     }
                 else:
-                    msg = _('Unable to log in with provided credentials.')
-                    raise serializers.ValidationError(msg)
+                    raise serializers.ValidationError({"email":"Must be a valid email.", "password":"Must be a valid password."})
             else:
-                msg = _('Must include "{username_field}" and "password".')
-                msg = msg.format(username_field=self.username_field)
-                raise serializers.ValidationError(msg)
+                raise serializers.ValidationError({"email":"Must include Email.", "password":"Must include password"}, status.HTTP_400_BAD_REQUEST)
         else:
-            msg = _('Account with this email/username does not exists')
-            raise serializers.ValidationError(msg)
+            raise serializers.ValidationError({"email":"Must include valid Email."}, status.HTTP_400_BAD_REQUEST)
 
 
 '''This Serializer validating password with build in method validate password.
@@ -60,6 +52,7 @@ a user and also an profile for that user. Note:profile model name is UserProfile
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(max_length=128, min_length=8, write_only=True, validators=[validate_password])
     email = serializers.EmailField(validators=[UniqueValidator(queryset=User.objects.all())])
+    username = serializers.CharField(max_length=128, validators=[], required=True)
     class Meta:
         model = User
         fields = [
@@ -68,12 +61,21 @@ class RegisterSerializer(serializers.ModelSerializer):
             'password',
         ]
     def create(self, validated_data):
+        username = generate_username()
         user = User.objects.create_user(
-            username=validated_data['username'],
+            username=username,
             email=validated_data['email'],
         )
         user.set_password(validated_data['password'])
         user.save()
+        fullname = validated_data['username'].split()
+        if len(fullname) > 1:
+            user.user_profile.first_name = fullname[0]
+            user.user_profile.last_name = fullname[1]
+            user.user_profile.save()
+        else:
+            user.user_profile.first_name = fullname[0]
+            user.user_profile.save()
         return user
 
 '''This Change passswrod serialzer checking if new passwords are matched
@@ -108,8 +110,10 @@ class AdminChangeUserPasswordSerializer(serializers.Serializer):
 
 # this serialzer getting used in FetchUserProfileSerializer so we can return first and last name of user.
 class UpdateUserProfileSerializer(serializers.ModelSerializer):
-    user_id = serializers.IntegerField()
-    email = serializers.EmailField()
+    user_id = serializers.IntegerField(allow_null = True, required=False)
+    email = serializers.EmailField(validators=[],)
+    first_name = serializers.CharField(max_length=128, required=True)
+    last_name = serializers.CharField(max_length=128, required=True)
     class Meta:
         model = UserProfile
         fields = [
