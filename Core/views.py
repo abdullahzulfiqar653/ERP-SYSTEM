@@ -56,7 +56,7 @@ class CustomJWTView(ObtainJSONWebToken):
                 }
             }, status.HTTP_200_OK)
         else:
-            raise serializers.ValidationError({"message":"Account with provided credentials does not exists."}, status.HTTP_400_BAD_REQUEST)
+            raise serializers.ValidationError(serializer.errors, status.HTTP_400_BAD_REQUEST)
 
 
 '''
@@ -79,7 +79,14 @@ class RefreshJWTTokenView(APIView):
         return Response({
                 'token': valid_data['token'],
                 'is_admin': valid_data['user'].is_staff,
-                'email': valid_data['user'].email
+                'user': {
+                    'id': valid_data['user'].id,
+                    'email': valid_data['user'].email,
+                    'first_name' : valid_data['user'].user_profile.first_name,
+                    'last_name' : valid_data['user'].user_profile.last_name, 
+                    'image' : valid_data['user'].user_profile.picture,
+
+                }
             }, status.HTTP_200_OK)
 
 
@@ -209,12 +216,12 @@ class ChangePasswordView(generics.UpdateAPIView):
         if serializer.is_valid():
             # Checking if the old password is correct or not
             if not self.object.check_password(serializer.data.get("old_password")):
-                return Response({"message": "Wrong passwrod."}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"old_password": "Wrong password."}, status=status.HTTP_400_BAD_REQUEST)
             else:
                 self.object.set_password(serializer.data.get("new_password"))
                 self.object.save()
                 response = {
-                    'message': "Dear {} your password is updated successfully".format(self.object.username), 
+                    'message': "Dear {} your password is updated successfully".format(self.object.user_profile.first_name), 
                 }
                 return Response(response, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -236,12 +243,12 @@ class AdminChangeUserPasswordView(generics.UpdateAPIView):
         serializer.is_valid(raise_exception=True)
         if User.objects.filter(pk=serializer.data.get("user_id")).exists():
             user = User.objects.get(pk=serializer.data.get("user_id"))
-            if not user.user_profile.admin == self.request.user:
+            if not user.user_profile.admin == admin:
                 return Response({"message": "you are an unauthorized user to perform this action"}, status=status.HTTP_401_UNAUTHORIZED)
             user.set_password(serializer.data.get("new_password"))
             user.save()
             response = {
-                'message': "Dear {}, you successfully changed password for user named as {}.".format(admin.username, user.username), 
+                'message': "Dear {}, you successfully changed password for user named as {}.".format(admin.user_profile.first_name, user.user_profile.first_name), 
             }
             return Response(response, status=status.HTTP_200_OK)
         return Response(status=status.HTTP_400_BAD_REQUEST)
@@ -272,12 +279,12 @@ class ForgetPasswordView(APIView):
                     "shortDescription": "You have requested password reset",
                     "subtitle": "BoosterTech Business handling solution in one go",
                     "message": '''With the given link you will be moved to booster tech portal and you will be popped to enter a new password''',
-                    'link': settings.PASSWORD_RESET_PROTOCOL + '://'+ settings.PASSWORD_RESET_DOMAIN +'/api/core/password/reset/token='+ reset_password_token,
-                    'name': user.username
+                    'link': settings.PASSWORD_RESET_PROTOCOL + '://'+ settings.PASSWORD_RESET_DOMAIN +'/auth/reset-password/token='+ reset_password_token,
+                    'name': user.user_profile.first_name
                     }
                 subject = 'Password Reset'
                 to_email = user.email
-                send_email( email, subject, to_email, 'register.html') # sending email
+                # send_email( email, subject, to_email, 'register.html') # sending email
                 reg_obj.activation_key = reset_password_token #saving token for furhter use 
                 reg_obj.is_activation_key_used = False #making activation key not used
                 reg_obj.save()
@@ -285,7 +292,7 @@ class ForgetPasswordView(APIView):
             else:
                 return Response({'message':'User Not verified'},status.HTTP_406_NOT_ACCEPTABLE)
         else:
-            return Response({'message': 'Email Not Exist'}, status.HTTP_403_FORBIDDEN)
+            return Response({'message': 'Email Not Exist'}, status.HTTP_404_NOT_FOUND)
 
 
 '''
@@ -314,15 +321,15 @@ class ResetPasswordConfirmView(APIView):
                     "shortDescription": "You have requested password reset",
                     "subtitle": "Your Password has been reset successfully.",
                     "message": '''With the given link you will be moved to booster tech portal and you will be popped to enter a new password''',
-                    'name': user.username
+                    'name': user.user_profile.first_name
                     }
                 subject = 'Password Reset Confirm'
                 to_email = user.email
                 send_email( email, subject, to_email, 'register.html')
-                return Response({'message': 'Dear '+ user.username +', your Password Reset Successfully'},status.HTTP_202_ACCEPTED)
+                return Response({'message': 'Dear '+ user.user_profile.first_name +', your Password Reset Successfully'}, status=status.HTTP_202_ACCEPTED)
             else:
-                return Response({'message':"Link has been Expired"}, status.HTTP_400_BAD_REQUEST)
-        return Response(status.HTTP_203_NON_AUTHORITATIVE_INFORMATION)
+                return Response({'activation_key':"activation_key is expired or already used"}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(status=status.HTTP_404_NOT_FOUND)
 
 
 '''
@@ -351,39 +358,36 @@ class UpdateUserProfileView(APIView):
     permission_class = (permissions.IsAuthenticated,)
     serializer_class = UpdateUserProfileSerializer
     def patch(self, request, format=None):
-        
+        serializer = self.serializer_class(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
         user = self.request.user
-        message = "Dear {} your Profile has been updated successfully".format(user.username)
+        message = "Dear {} your Profile has been updated successfully".format(user.user_profile.first_name)
         if user.is_staff:
             try:
-                if request.data['user_id']:
-                    user = User.objects.get(pk=int(request.data['user_id']))
-                    message = "Dear admin, Profile of User named as {} has been updated successfully".format(user.username)
+                if serializer.validated_data['user_id']:
+                    user = User.objects.get(pk=int(serializer.validated_data['user_id']))
+                    message = "Dear admin, Profile of User named as {} has been updated successfully".format(user.user_profile.first_name)
             except:
                 pass
-        if ((request.data.get("first_name") or request.data.get("first_name")=="") and #checiking if first_name attribute exists if yes then its not necessary to have any value
-                (request.data.get("last_name") or request.data.get("last_name")=="") and #checiking if last_name attribute exists if yes then its not necessary to have any value
-                    (request.data.get("email") or request.data.get("email")=="")): #checiking if email attribute exists if yes then its not necessary to have any value as email field have its on checks right ahead
-            user.user_profile.first_name = request.data['first_name']
-            user.user_profile.last_name = request.data['last_name']
-            try:
-                validate_email(request.data['email'])
-                if user.email == request.data['email']:
-                    user.save()
-                    user.user_profile.save()
-                    return Response({"message": message}, status.HTTP_200_OK)
-                elif not User.objects.filter(email=request.data['email']).exists():
-                    user.email = request.data['email']
-                    user.user_profile.isactive = False
-                    user.save()
-                    user.user_profile.save()
-                    #here need to send activation email to user so he can confirm his new mail
-                    return Response({"message": message + " Also as you have updated email so kindly check mailbox and verify your email"}, status.HTTP_202_ACCEPTED)
-                else:
-                    return Response({"message": "Email should be unique."}, status.HTTP_205_RESET_CONTENT)
-            except ValidationError as e:
-                return Response({"message":e}, status.HTTP_205_RESET_CONTENT)
-        return Response({"message":"Some of data is missing"}, status.HTTP_205_RESET_CONTENT)
+        first_name = serializer.validated_data['first_name']
+        last_name = serializer.validated_data['last_name']
+        email = serializer.validated_data['email']
+
+        user.user_profile.first_name = first_name
+        user.user_profile.last_name = last_name
+        if user.email == email:
+            user.save()
+            user.user_profile.save()
+            return Response({"message": message}, status=   status.HTTP_200_OK)
+        elif not User.objects.filter(email=email).exists():
+            user.email = email
+            user.user_profile.isactive = False
+            user.save()
+            user.user_profile.save()
+            #here need to send activation email to user so he can confirm his new mail
+            return Response({"message": message + " Also as you have updated email so kindly check mailbox and verify your email"}, status=status.HTTP_202_ACCEPTED)
+        else:
+            return Response({"email": "Email should be unique."}, status=status.HTTP_400_BAD_REQUEST)
 
 
 '''
@@ -425,7 +429,7 @@ class CompanyAccessView(generics.CreateAPIView):
                     return Response({"message":"Permissions created."},status=status.HTTP_201_CREATED)
                         
                 return Response({"message":"you dont have permission for this user"}, status=status.HTTP_401_UNAUTHORIZED)
-            return Response({"message":"user not exists"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"message":"user not exists"}, status=status.HTTP_404_NOT_FOUND)
         return Response(serializer.errors, status=status.HTTP_205_RESET_CONTENT)
 
 
@@ -454,12 +458,12 @@ class UpdateCompanyAPIView(generics.UpdateAPIView):
     def update(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
-            if Company.objects.filter(pk=request.data['id'], user=self.request.user).exists():
-                company = Company.objects.get(pk=request.data['id'])
-                company.name = request.data['name']
+            if Company.objects.filter(pk=serializer.validated_data['id'], user=self.request.user).exists():
+                company = Company.objects.get(pk=serializer.validated_data['id'])
+                company.name = serializer.validated_data['name']
                 company.save()
                 return Response(status=status.HTTP_200_OK)
-            return Response(status=status.HTTP_406_NOT_ACCEPTABLE)
+            return Response(status=status.HTTP_404_NOT_FOUND)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -487,7 +491,7 @@ class CompaniesListAPIView(generics.ListAPIView):
             return Company.objects.filter(user=user)
 
 
-'''Listing al users related to admin who request'''
+'''Listing all users related to admin who request'''
 class UsersListAPIView(generics.ListAPIView):
     permission_classes = (permissions.IsAdminUser,)
     serializer_class = UsersListSerializer
@@ -511,12 +515,11 @@ class UserCompaniesListAPIView(generics.ListAPIView):
         try:
             user_id = int(request.query_params["user_id"])
         except: 
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+            return Response(status=status.HTTP_404_NOT_FOUND)
         if UserProfile.objects.filter(user__pk=user_id, admin=self.request.user).exists():
             user = User.objects.filter(pk=user_id).first()
             user_records = list(CompanyAccessRecord.objects.filter(user=user).values_list("company_id", flat=True))
             records = Company.objects.filter(pk__in=user_records)
-            print(records)
             records = CompaniesFetchSerializer(records, many=True)
             return Response(records.data, status=status.HTTP_200_OK)
         return Response(status=status.HTTP_203_NON_AUTHORITATIVE_INFORMATION)
@@ -534,7 +537,6 @@ class UserDeleteAPIView(generics.DestroyAPIView):
     permission_class = (permissions.IsAdminUser,)
 
     def perform_destroy(self, instance):
-        print(instance)
         if not UserProfile.objects.filter(user=instance.id, admin=self.request.user.id).exists():
             return {"message": "you are not allowed to perform this action"}
         else:

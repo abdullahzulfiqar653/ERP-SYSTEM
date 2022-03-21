@@ -14,7 +14,7 @@ class UserProfile(models.Model):
     admin = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
 
     def __str__(self) -> str:
-        return str(self.id) +"-"+ str(self.user.username)
+        return str(self.id) +"-"+ str(self.user.email)
 
 
 class Company(models.Model):
