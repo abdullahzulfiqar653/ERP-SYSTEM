@@ -14,6 +14,7 @@ from .serializers import (
     PayRollCreateSerializer,
     PayRollListSerializer,
     PayRollItemListSerializer,
+    PayRollItemUpdateSerializer
 )
 from django_filters.rest_framework import DjangoFilterBackend
 from .models import Team, Employee, PayRoll, PayRollItem
@@ -255,6 +256,12 @@ class EmployeeDestroyView(generics.DestroyAPIView):
 
 
 #---------------------- Starting Crud for PayRoll ---------------------------#
+'''
+In this View first of all view are validating the payload through calling the serializer and then after
+that we are calling method to check if current user have permissions to perform create payRoll if in return
+I get a instance of Company then we create Payroll and start loop to create its Items. In each iteration first
+it check if employee id belongs to current company if yes then Payroll Item will be created.
+'''
 class PayRollCreateAPIView(generics.CreateAPIView):
     permission_classes = (permissions.IsAuthenticated,)
     serializer_class = PayRollCreateSerializer
@@ -282,7 +289,10 @@ class PayRollCreateAPIView(generics.CreateAPIView):
         return Response({"message":"Payroll Created."}, status=status.HTTP_200_OK)
 
 
-
+'''Here this view is for returning all the payrolls related to the requested company only
+if user have permissions for the company or he/she owns the company then all related Payrolls
+will be returned. also pagination is attached to control pages or unlimited objects per page.
+'''
 class PayRollListAPIView(generics.ListAPIView):
     permission_classes = (permissions.IsAuthenticated,)
     serializer_class = PayRollListSerializer
@@ -305,6 +315,10 @@ class PayRollListAPIView(generics.ListAPIView):
         return PayRoll.objects.filter(company=company)
 
 
+'''
+This View is use for returning Payroll Items related to any One payroll this view also contain
+pagination and checks for checking if user have perssions to get payrolls of employees.
+'''
 class PayRollItemListAPIView(generics.ListAPIView):
     permission_classes = (permissions.IsAuthenticated,)
     serializer_class = PayRollItemListSerializer
@@ -328,7 +342,10 @@ class PayRollItemListAPIView(generics.ListAPIView):
             return PayRollItem.objects.filter(payroll_id=payroll_id)
         return emptyPayRollItemeQueryset
 
-
+'''
+This View get an id of payroll in the URL and check if user have permissions to delete that payroll.
+If yess then payroll and related all payroll Items will be deleted.
+'''
 class PayRollDestroyView(generics.DestroyAPIView):
     queryset = PayRoll.objects.all()
     permission_class = (permissions.IsAuthenticated,)
@@ -344,7 +361,9 @@ class PayRollDestroyView(generics.DestroyAPIView):
         else:
             return response
 
-
+'''
+Same as before but here we are deleting payroll item after veryfying the user permissions.
+'''
 class PayRollItemDestroyView(generics.DestroyAPIView):
     queryset = PayRollItem  .objects.all()
     permission_class = (permissions.IsAuthenticated,)
@@ -363,3 +382,48 @@ class PayRollItemDestroyView(generics.DestroyAPIView):
             return response
 
 
+# class PayRollUpdateAPIView(generics.UpdateAPIView):
+#     permission_classes = (permissions.IsAuthenticated,)
+#     serializer_class = PayRollCreateSerializer
+#     def post(self, request, *args, **kwargs):
+#         serializer = PayRollCreateSerializer(data=request.data)
+#         serializer.is_valid(raise_exception=True)
+#         data = serializer.validated_data
+#         user = self.request.user
+#         response = Response(status=status.HTTP_400_BAD_REQUEST)
+#         company = get_company_if_authenticated(user, data['company'])
+#         if not isinstance(company, Company):
+#             return response
+#         payroll = PayRoll.objects.create(company=company, created_at=data['created_at'])
+#         return Response({"message":"Payroll Created."}, status=status.HTTP_200_OK)
+
+
+'''
+Here updating payroll Item by firstly checking if payroll exists() then get pay roll and then check
+if payroll company permissions are assigned to current user or not if yess then it simply update all
+parameters related to the payroll item.
+'''
+class PayRollItemUpdateAPIView(generics.UpdateAPIView):
+    permission_classes = (permissions.IsAuthenticated,)
+    serializer_class = PayRollItemUpdateSerializer
+    def update(self, request, payroll_id, partial=True):
+        if PayRollItem.objects.filter(pk=payroll_id).exists():
+            payrollItem = PayRollItem.objects.filter(pk=payroll_id).first()
+            payroll = PayRoll.objects.filter(pk=payrollItem.payroll_id).first()
+            user = self.request.user
+
+            company = get_company_if_authenticated(user, payroll.company_id)
+            if not isinstance(company, Company):
+                return Response(status=status.HTTP_403_FORBIDDEN)
+            
+            serializer = PayRollItemUpdateSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            data = serializer.validated_data
+            payrollItem.gross = data['gross']
+            payrollItem.bonus = data['bonus']
+            payrollItem.total_gross = data['total_gross']
+            print(payrollItem.gross, "     ", payrollItem.id)
+            payrollItem.save()
+            return Response(status=status.HTTP_200_OK)
+            
+        return Response(status=status.HTTP_404_NOT_FOUND)
