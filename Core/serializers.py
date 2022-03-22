@@ -96,10 +96,11 @@ class UsersListSerializer(serializers.ModelSerializer):
         ]
 
 class UserProfileImageSerializer(serializers.ModelSerializer):
+    image = serializers.ImageField(source="picture")
     class Meta:
         model = UserProfile
         fields = [
-            'picture',
+            'image',
         ]
 
 
@@ -198,5 +199,25 @@ class CompanyAccessSerializer(serializers.ModelSerializer):
         model = Company
         fields = [
             'user_id',
+            'company_list'
+        ]
+
+
+'''
+Companies
+'''
+class UsersDeleteSerializer(serializers.ModelSerializer):
+    users_list = serializers.ListField(child=serializers.IntegerField(required=True) )
+    class Meta:
+        model = User
+        fields = [
+            'users_list'
+        ]
+
+class CompaniesDeleteSerializer(serializers.ModelSerializer):
+    company_list = serializers.ListField(child=serializers.IntegerField(required=True) )
+    class Meta:
+        model = Company
+        fields = [
             'company_list'
         ]

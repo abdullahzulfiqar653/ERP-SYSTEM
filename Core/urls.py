@@ -19,9 +19,9 @@ from .views import (
     AddCompanyAPIView,
     CompanyAccessView,
 
-    UserDeleteAPIView,
+    UsersDeleteAPIView,
     UsersListAPIView,
-    CompanyDeleteAPIView,
+    CompaniesDeleteAPIView,
 
     UpdateCompanyAPIView,
     ProfileImageUploadView,
@@ -52,12 +52,12 @@ urlpatterns = [
     path('password/update/', ChangePasswordView.as_view()),
     path('password/update/user/', AdminChangeUserPasswordView.as_view()),
 
-    path('user/destroy/<pk>/', UserDeleteAPIView.as_view()),
+    path('users/destroy/', UsersDeleteAPIView.as_view()),
 
     path('company/create/', AddCompanyAPIView.as_view()),
     path('company/update/', UpdateCompanyAPIView.as_view()),
     path('companies/', CompaniesListAPIView.as_view()),
     path('companies/user/', UserCompaniesListAPIView.as_view()),
-    path('company/destroy/<pk>/', CompanyDeleteAPIView.as_view()),
+    path('companies/destroy/', CompaniesDeleteAPIView.as_view()),
     path('company/permission/generate/', CompanyAccessView.as_view())
 ]

@@ -18,8 +18,6 @@ class Team(models.Model):
     def __str__(self):
         return self.team_name +"-   -"+ self.company.name
 
-
-
 class ContractTypeEnum(models.IntegerChoices):
     PERMANENT = 1, 'permanent'
     CONTRACT = 2, 'contract'
@@ -41,7 +39,6 @@ class Employee(models.Model):
     country = models.CharField(max_length=56, null=True, blank=True)
     note = models.TextField(null=True, blank=True)
 
-
 class PayRoll(models.Model):
     company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='company_payroll')
     created_at = models.DateField(auto_now_add=False)
@@ -53,3 +50,34 @@ class PayRollItem(models.Model):
     bonus = models.DecimalField(max_digits=10, decimal_places=2, )
     total_gross = models.DecimalField(max_digits=10, decimal_places=2,)
     
+
+class Contact(models.Model):
+    type = models.CharField(max_length=55) #option field
+    name = models.CharField(max_length=255)
+    account_id = models.CharField(max_length=12) #auto fill according to the type of account_type in PaymentSection
+    nif = models.CharField(max_length=13, null=True, blank=True, unique=True)
+
+
+class ContactTaxAddress(models.Model):
+    contact = models.OneToOneField(Contact, on_delete=models.CASCADE, related_name='contact_taxAddress')
+    address = models.TextField()
+    postcode = models.CharField(max_length=10, null=True, blank=True)
+    province = models.CharField(max_length=130, null=True, blank=True)
+    country = models.CharField(max_length=56, null=True, blank=True) #option fields
+
+
+class ContactShipAddress(models.Model):
+    contact = models.ForeignKey(Contact, on_delete=models.CASCADE, related_name='contact_shipAddress')
+    address = models.TextField()
+    postcode = models.CharField(max_length=10, null=True, blank=True)
+    province = models.CharField(max_length=130, null=True, blank=True)
+    country = models.CharField(max_length=56, null=True, blank=True) #option field
+
+
+class ContactPayment(models.Model):
+    contact = models.ForeignKey(Contact, on_delete=models.CASCADE, related_name='contact_payment')
+    account_type = models.CharField(max_length=55) #option field
+    vat = models.IntegerField() #option field
+    ret_or_re = models.CharField(max_length=55) #option field
+    payment_method = models.CharField(max_length=55) #option field
+    date = models.DateField()

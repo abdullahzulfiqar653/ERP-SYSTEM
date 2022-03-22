@@ -28,7 +28,9 @@ from .serializers import (
         CompanyUpdateSerializer,
         CompanyAccessSerializer,
         UsersListSerializer,
-        UserProfileImageSerializer
+        UserProfileImageSerializer,
+        UsersDeleteSerializer,
+        CompaniesDeleteSerializer,
     )
 
 
@@ -350,7 +352,7 @@ class ProfileImageUploadView(APIView):
         user.user_profile.picture.delete()
         user.user_profile.picture = data['picture']
         user.user_profile.save()
-        return Response({"messsage": "Profile picture updated"}, status=status.HTTP_200_OK)
+        return Response({"image": settings.MEDIA_URL+str(user.user_profile.picture)}, status=status.HTTP_200_OK)
 
 '''
 This View simply getting current user and then deleting the image of the current user from its profile.
@@ -562,25 +564,45 @@ related to Model we want to perform task. here we are querying User model and on
 user object. In this query we are filtering only those persons who is not admin to avoid accidental
 deletion of super user. This view just need an id of user in the URL and user will be deleted automatically
 '''
-class UserDeleteAPIView(generics.DestroyAPIView):
-    queryset = User.objects.filter(is_staff=False)
-    permission_class = (permissions.IsAdminUser,)
 
-    def perform_destroy(self, instance):
-        if not UserProfile.objects.filter(user=instance.id, admin=self.request.user.id).exists():
-            return {"message": "you are not allowed to perform this action"}
-        else:
-            super().perform_destroy(instance)
+class UsersDeleteAPIView(generics.DestroyAPIView):
+    permission_class = (permissions.IsAdminUser,)
+    def delete(self, request, format=None):
+        serializer = UsersDeleteSerializer(data=self.request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        if data['users_list']:
+            for id in data['users_list']:
+                if User.objects.filter(pk=id).exists():
+                    instance = User.objects.get(pk=id)
+                    if not UserProfile.objects.filter(user=instance.id, admin=self.request.user.id).exists():
+                        pass
+                    else:
+                        instance.delete()
+                continue
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response(status=status.HTTP_406_NOT_ACCEPTABLE)
+
+
 
 
 '''
 Taking an id of company in url of this and deleting that company after validating the owner.
 '''
-class CompanyDeleteAPIView(generics.DestroyAPIView):
-    queryset = Company.objects.all()
+class CompaniesDeleteAPIView(generics.DestroyAPIView):
     permission_class = (permissions.IsAdminUser,)
-    def perform_destroy(self, instance):
-        if not Company.objects.filter(user=self.request.user.id, id=instance.id).exists():
-            return {"message": "you are not allowed to perform this action"}
-        else:
-            super().perform_destroy(instance)
+    def delete(self, request, format=None):
+        serializer = CompaniesDeleteSerializer(data=self.request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        if data['company_list']:
+            for id in data['company_list']:
+                if Company.objects.filter(pk=id).exists():
+                    instance = Company.objects.get(pk=id)
+                    if not Company.objects.filter(user=self.request.user.id, pk=instance.id).exists():
+                        pass
+                    else:
+                        instance.delete()
+                continue
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response(status=status.HTTP_406_NOT_ACCEPTABLE)
