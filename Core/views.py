@@ -53,7 +53,8 @@ class CustomJWTView(ObtainJSONWebToken):
                     'email': user.email,
                     'first_name' : user.user_profile.first_name,
                     'last_name' : user.user_profile.last_name,
-                    'image' : settings.LINK_PROTOCOL + '://'+ settings.LINK_DOMAIN +settings.MEDIA_URL+str(user.user_profile.picture),
+                    
+                    'image' : settings.MEDIA_URL+str(user.user_profile.picture),
 
                 }
             }, status.HTTP_200_OK)
@@ -86,7 +87,7 @@ class RefreshJWTTokenView(APIView):
                     'email': valid_data['user'].email,
                     'first_name' : valid_data['user'].user_profile.first_name,
                     'last_name' : valid_data['user'].user_profile.last_name, 
-                    'image' : settings.LINK_PROTOCOL + '://'+ settings.LINK_DOMAIN +settings.MEDIA_URL+str(valid_data['user'].user_profile.picture),
+                    'image' : settings.MEDIA_URL+str(valid_data['user'].user_profile.picture),
 
                 }
             }, status.HTTP_200_OK)
