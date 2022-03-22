@@ -30,6 +30,7 @@ boostertech_backend/.env
 node_modules/
 dist/
 *.pyc
+mediafiles
 boostertech_backend/
 boostertech_backend/**/*.pyc
 boostertech_backend/__pycache__/*.pyc
