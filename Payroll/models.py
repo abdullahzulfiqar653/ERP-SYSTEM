@@ -49,7 +49,7 @@ class PayRoll(models.Model):
 class PayRollItem(models.Model):
     payroll = models.ForeignKey(PayRoll, on_delete=models.CASCADE, related_name='company_payroll')
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='employee_payroll')
-    gross = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    bonus = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    total_gross = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    gross = models.DecimalField(max_digits=10, decimal_places=2, )
+    bonus = models.DecimalField(max_digits=10, decimal_places=2, )
+    total_gross = models.DecimalField(max_digits=10, decimal_places=2,)
     
