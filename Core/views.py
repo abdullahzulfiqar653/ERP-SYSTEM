@@ -472,8 +472,8 @@ class AddCompanyAPIView(generics.CreateAPIView):
     def post(self, request, format=None):
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
-            Company.objects.create(user=self.request.user, name=request.data['name'])
-            return Response(status=status.HTTP_201_CREATED)
+            company = Company.objects.create(user=self.request.user, name=request.data['name'])
+            return Response({"id":company.id,"name":company.name, },status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -491,7 +491,7 @@ class UpdateCompanyAPIView(generics.UpdateAPIView):
                 company = Company.objects.get(pk=serializer.validated_data['id'])
                 company.name = serializer.validated_data['name']
                 company.save()
-                return Response(status=status.HTTP_200_OK)
+                return Response({"id":company.id,"name":company.name, },status=status.HTTP_200_OK)
             return Response(status=status.HTTP_404_NOT_FOUND)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
