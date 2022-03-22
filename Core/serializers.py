@@ -95,6 +95,14 @@ class UsersListSerializer(serializers.ModelSerializer):
             'last_name',
         ]
 
+class UserProfileImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserProfile
+        fields = [
+            'picture',
+        ]
+
+
 
 # This serialzer is for the view where admin changing the password of a user without putting old password.
 class AdminChangeUserPasswordSerializer(serializers.Serializer):
@@ -112,8 +120,8 @@ class AdminChangeUserPasswordSerializer(serializers.Serializer):
 class UpdateUserProfileSerializer(serializers.ModelSerializer):
     user_id = serializers.IntegerField(allow_null = True, required=False)
     email = serializers.EmailField(validators=[],)
-    first_name = serializers.CharField(max_length=128, required=True)
-    last_name = serializers.CharField(max_length=128, required=True)
+    # first_name = serializers.CharField(max_length=128, required=True)
+    # last_name = serializers.CharField(max_length=128, required=False)
     class Meta:
         model = UserProfile
         fields = [
