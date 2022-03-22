@@ -159,4 +159,11 @@ class PayRollItemListSerializer(serializers.ModelSerializer):
             'total_gross',
         ]
 
-
+class PayRollItemUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PayRollItem
+        fields = [
+            'gross',
+            'bonus',
+            'total_gross',
+        ]
