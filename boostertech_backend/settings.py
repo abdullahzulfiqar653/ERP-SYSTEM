@@ -155,7 +155,7 @@ if env('USE_S3') == 'TRUE':
 else:
     STATIC_URL = '/staticfiles/'
     STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-    MEDIA_URL = '/mediafiles/'
+    MEDIA_URL = 'http://localhost:8000/mediafiles/'
     MEDIA_ROOT = os.path.join(BASE_DIR, 'mediafiles')
 
 
