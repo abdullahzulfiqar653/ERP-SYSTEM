@@ -306,14 +306,11 @@ class PayRollListAPIView(generics.ListAPIView):
             return emptyPayRollQueryset
         if not company_id.isdigit():
             return emptyPayRollQueryset
-
         user = self.request.user
-        
         company = get_company_if_authenticated(user, company_id)
         if not isinstance(company, Company):
             return emptyPayRollQueryset
         return PayRoll.objects.filter(company=company)
-
 
 '''
 This View is use for returning Payroll Items related to any One payroll this view also contain
@@ -326,16 +323,21 @@ class PayRollItemListAPIView(generics.ListAPIView):
     filter_backends = [DjangoFilterBackend,]
     # filterset_class = PayRollFilter
     def get_queryset(self):
-        company_id = self.request.GET.get('company_id')
         payroll_id = self.request.GET.get('payroll_id')
         emptyPayRollItemeQueryset = PayRollItem.objects.none()
-        if not (company_id or payroll_id):
+        
+        if not payroll_id:
             return emptyPayRollItemeQueryset
-        if not company_id.isdigit():
+        if not payroll_id.isdigit():
+            return emptyPayRollItemeQueryset
+
+        if PayRoll.objects.filter(pk=payroll_id).exists():
+            payroll = PayRoll.objects.filter(pk=payroll_id).first()
+        else:
             return emptyPayRollItemeQueryset
 
         user = self.request.user
-        company = get_company_if_authenticated(user, company_id)
+        company = get_company_if_authenticated(user, payroll.company_id)
         if not isinstance(company, Company):
             return emptyPayRollItemeQueryset
         if PayRoll.objects.filter(pk=payroll_id, company=company).exists():
@@ -350,10 +352,9 @@ class PayRollDestroyView(generics.DestroyAPIView):
     queryset = PayRoll.objects.all()
     permission_class = (permissions.IsAuthenticated,)
     def perform_destroy(self, instance):
-        company_id = self.request.GET.get('company_id')
         user = self.request.user
         response = {"message": "you are an unauthorized user to perform this action"}
-        company = get_company_if_authenticated(user, company_id)
+        company = get_company_if_authenticated(user, instance.company_id)
         if not isinstance(company, Company):
             return response
         if PayRoll.objects.filter(pk=instance.id, company=company).exists():
@@ -365,38 +366,19 @@ class PayRollDestroyView(generics.DestroyAPIView):
 Same as before but here we are deleting payroll item after veryfying the user permissions.
 '''
 class PayRollItemDestroyView(generics.DestroyAPIView):
-    queryset = PayRollItem  .objects.all()
+    queryset = PayRollItem.objects.all()
     permission_class = (permissions.IsAuthenticated,)
     def perform_destroy(self, instance):
-        company_id = self.request.GET.get('company_id')
-        payroll_id = self.request.GET.get('payroll_id')
+        payroll = PayRoll.objects.filter(pk=instance.payroll_id).first()
         user = self.request.user
         response = {"message": "you are an unauthorized user to perform this action"}
-        company = get_company_if_authenticated(user, company_id)
+        company = get_company_if_authenticated(user, payroll.company_id)
         if not isinstance(company, Company):
             return response
-        if PayRoll.objects.filter(pk=payroll_id, company=company).exists():
-            if PayRollItem.objects.filter(pk=instance.id, payroll_id=payroll_id).exists():
-                super().perform_destroy(instance)
+        if PayRoll.objects.filter(pk=payroll.id, company=company).exists():
+            super().perform_destroy(instance)
         else:
             return response
-
-
-# class PayRollUpdateAPIView(generics.UpdateAPIView):
-#     permission_classes = (permissions.IsAuthenticated,)
-#     serializer_class = PayRollCreateSerializer
-#     def post(self, request, *args, **kwargs):
-#         serializer = PayRollCreateSerializer(data=request.data)
-#         serializer.is_valid(raise_exception=True)
-#         data = serializer.validated_data
-#         user = self.request.user
-#         response = Response(status=status.HTTP_400_BAD_REQUEST)
-#         company = get_company_if_authenticated(user, data['company'])
-#         if not isinstance(company, Company):
-#             return response
-#         payroll = PayRoll.objects.create(company=company, created_at=data['created_at'])
-#         return Response({"message":"Payroll Created."}, status=status.HTTP_200_OK)
-
 
 '''
 Here updating payroll Item by firstly checking if payroll exists() then get pay roll and then check
@@ -422,8 +404,7 @@ class PayRollItemUpdateAPIView(generics.UpdateAPIView):
             payrollItem.gross = data['gross']
             payrollItem.bonus = data['bonus']
             payrollItem.total_gross = data['total_gross']
-            print(payrollItem.gross, "     ", payrollItem.id)
             payrollItem.save()
-            return Response(status=status.HTTP_200_OK)
+            return Response({"message":"Paroll of {} has been updated".format(payrollItem.employee.name)},status=status.HTTP_200_OK)
             
         return Response(status=status.HTTP_404_NOT_FOUND)

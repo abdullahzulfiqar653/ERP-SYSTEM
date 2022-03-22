@@ -1,3 +1,4 @@
+from email.policy import default
 from django.db import models
 from django.dispatch import receiver
 from django.db.models.signals import post_save
@@ -5,9 +6,9 @@ from django.contrib.auth.models import User
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='user_profile')
-    first_name = models.CharField(max_length=255,null=True,blank=True)
-    last_name = models.CharField(max_length=255,null=True,blank=True)
-    picture = models.TextField(blank=True,null=True,)
+    first_name = models.CharField(max_length=255,null=True,blank=True, default="")
+    last_name = models.CharField(max_length=255,null=True,blank=True, default="")
+    picture = models.ImageField(blank=False,null=False, upload_to="profileImages", default="profileImages/image.jpg" )
     isactive = models.BooleanField(default=False,null=True)
     is_activation_key_used = models.BooleanField(default=True)
     activation_key = models.CharField(max_length=255, blank=True, null=True)

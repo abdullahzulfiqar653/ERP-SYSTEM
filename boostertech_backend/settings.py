@@ -129,8 +129,6 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
-MEDIA_URL = '/media/'
-
 if env('USE_S3') == 'TRUE':
     # S3 config
     AWS_ACCESS_KEY_ID = env('AWS_ACCESS_KEY_ID')
@@ -175,8 +173,9 @@ EMAIL_PORT = env('EMAIL_PORT')
 EMAIL_HOST_USER = env('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')
 
-PASSWORD_RESET_DOMAIN = 'apolo-finance.es'
-PASSWORD_RESET_PROTOCOL = "https"
+LINK_DOMAIN = env('LINK_DOMAIN')
+LINK_PROTOCOL =  env('LINK_PROTOCOL')
+
 DOMAIN = 'example.com'
 SITE_NAME = 'Foo Website'
 

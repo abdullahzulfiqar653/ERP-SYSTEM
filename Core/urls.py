@@ -24,6 +24,8 @@ from .views import (
     CompanyDeleteAPIView,
 
     UpdateCompanyAPIView,
+    ProfileImageUploadView,
+    ProfileImageDestroyView
 )
 
 
@@ -43,6 +45,9 @@ urlpatterns = [
 
     path('profile/', FetchUserProfileView.as_view()),
     path('profile/update/', UpdateUserProfileView.as_view()),
+    path('profile/update/image/', ProfileImageUploadView.as_view()),
+    path('profile/destroy/image/', ProfileImageDestroyView.as_view()),
+
 
     path('password/update/', ChangePasswordView.as_view()),
     path('password/update/user/', AdminChangeUserPasswordView.as_view()),

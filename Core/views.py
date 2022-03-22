@@ -28,6 +28,7 @@ from .serializers import (
         CompanyUpdateSerializer,
         CompanyAccessSerializer,
         UsersListSerializer,
+        UserProfileImageSerializer
     )
 
 
@@ -39,6 +40,7 @@ class CustomJWTView(ObtainJSONWebToken):
     serializer_class=CustomJWTSerializer
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data, context={'request': request})
+        
         if serializer.is_valid():
             user = User.objects.get(email=serializer.validated_data['email'])
             if not user.user_profile.isactive:
@@ -50,8 +52,8 @@ class CustomJWTView(ObtainJSONWebToken):
                     'id': user.id,
                     'email': user.email,
                     'first_name' : user.user_profile.first_name,
-                    'last_name' : user.user_profile.last_name, 
-                    'image' : user.user_profile.picture,
+                    'last_name' : user.user_profile.last_name,
+                    'image' : settings.LINK_PROTOCOL + '://'+ settings.LINK_DOMAIN +settings.MEDIA_URL+str(user.user_profile.picture),
 
                 }
             }, status.HTTP_200_OK)
@@ -84,7 +86,7 @@ class RefreshJWTTokenView(APIView):
                     'email': valid_data['user'].email,
                     'first_name' : valid_data['user'].user_profile.first_name,
                     'last_name' : valid_data['user'].user_profile.last_name, 
-                    'image' : valid_data['user'].user_profile.picture,
+                    'image' : settings.LINK_PROTOCOL + '://'+ settings.LINK_DOMAIN +settings.MEDIA_URL+str(valid_data['user'].user_profile.picture),
 
                 }
             }, status.HTTP_200_OK)
@@ -112,7 +114,7 @@ class AdminRegisterAPIView(generics.GenericAPIView):
                 "title": "Thank your for registering with BoosterTech Portal",
                 "shortDescription": "These are the next steps.",
                 "subtitle": "BoosterTech Business handling solution in one go",
-                'link': settings.PASSWORD_RESET_PROTOCOL + '://'+ settings.PASSWORD_RESET_DOMAIN +'/auth/account-activated/?activation_key='+ email_activation_token,
+                'link': settings.LINK_PROTOCOL + '://'+ settings.LINK_DOMAIN +'/auth/account-activated/?activation_key='+ email_activation_token,
                 "message": '''You have successfully registered with BoosterTech. You can 
                         now login in to your profile and start. We have 
                         thousands of features just waiting for you to use. If you experience any 
@@ -151,7 +153,7 @@ class UserRegisterAPIView(generics.GenericAPIView):
                 "title": "Thank your for registering with BoosterTech Portal",
                 "shortDescription": "These are the next steps.",
                 "subtitle": "BoosterTech Business handling solution in one go",
-                'link': settings.PASSWORD_RESET_PROTOCOL + '://'+ settings.PASSWORD_RESET_DOMAIN +'/auth/account-activated/?activation_key='+ email_activation_token,
+                'link': settings.LINK_PROTOCOL + '://'+ settings.LINK_DOMAIN +'/auth/account-activated/?activation_key='+ email_activation_token,
                 "message": '''You have successfully registered with BoosterTech. You can 
                         now login in to your profile and start. We have 
                         thousands of features just waiting for you to use. If you experience any 
@@ -279,7 +281,7 @@ class ForgetPasswordView(APIView):
                     "shortDescription": "You have requested password reset",
                     "subtitle": "BoosterTech Business handling solution in one go",
                     "message": '''With the given link you will be moved to booster tech portal and you will be popped to enter a new password''',
-                    'link': settings.PASSWORD_RESET_PROTOCOL + '://'+ settings.PASSWORD_RESET_DOMAIN +'/auth/reset-password/?token='+ reset_password_token,
+                    'link': settings.LINK_PROTOCOL + '://'+ settings.LINK_DOMAIN +'/auth/reset-password/?token='+ reset_password_token,
                     'name': user.user_profile.first_name
                     }
                 subject = 'Password Reset'
@@ -331,6 +333,34 @@ class ResetPasswordConfirmView(APIView):
                 return Response({'activation_key':"activation_key is expired or already used"}, status=status.HTTP_400_BAD_REQUEST)
         return Response(status=status.HTTP_404_NOT_FOUND)
 
+'''
+This view updating user image, accepting form data and only picture field in that after validating picture field
+view first delete the previous image of the user and then attach the new one, In this way our media folder will 
+get dirty with 100 of images by one user. So we will always have only one image of each user.
+'''
+class ProfileImageUploadView(APIView):
+    permission_class = (permissions.IsAuthenticated,)
+    serializer_class = UserProfileImageSerializer
+    def patch(self, request, format=None):
+        serializer = UserProfileImageSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        user = self.request.user
+        user.user_profile.picture.delete()
+        user.user_profile.picture = data['picture']
+        user.user_profile.save()
+        return Response({"messsage": "Profile picture updated"}, status=status.HTTP_200_OK)
+
+'''
+This View simply getting current user and then deleting the image of the current user from its profile.
+'''
+class ProfileImageDestroyView(APIView):
+    permission_class = (permissions.IsAuthenticated,)
+    def delete(self, request, format=None):
+        user = self.request.user
+        user.user_profile.picture.delete()
+        user.user_profile.save()
+        return Response({"messsage": "Profile Image deleted"}, status=status.HTTP_200_OK)
 
 '''
 Getting user profile. getting current user and return user data.
@@ -354,7 +384,6 @@ then we get that company and update that company profile else superuser profile.
 now if in start, request is not from superuser then current user will be updated.
 '''
 class UpdateUserProfileView(APIView):
-    # queryset = UserProfile.objects.all()
     permission_class = (permissions.IsAuthenticated,)
     serializer_class = UpdateUserProfileSerializer
     def patch(self, request, format=None):
@@ -443,8 +472,8 @@ class AddCompanyAPIView(generics.CreateAPIView):
     def post(self, request, format=None):
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
-            Company.objects.create(user=self.request.user, name=request.data['name'])
-            return Response(status=status.HTTP_201_CREATED)
+            company = Company.objects.create(user=self.request.user, name=request.data['name'])
+            return Response({"id":company.id,"name":company.name, },status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -462,7 +491,7 @@ class UpdateCompanyAPIView(generics.UpdateAPIView):
                 company = Company.objects.get(pk=serializer.validated_data['id'])
                 company.name = serializer.validated_data['name']
                 company.save()
-                return Response(status=status.HTTP_200_OK)
+                return Response({"id":company.id,"name":company.name, },status=status.HTTP_200_OK)
             return Response(status=status.HTTP_404_NOT_FOUND)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
