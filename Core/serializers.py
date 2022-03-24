@@ -87,13 +87,23 @@ class ChangePasswordSerializer(serializers.Serializer):
 
 
 class UsersListSerializer(serializers.ModelSerializer):
+    first_name = serializers.SerializerMethodField(method_name="get_userFirstName")
+    last_name = serializers.SerializerMethodField(method_name="get_userLastName")
+    def get_userFirstName(self, user: User):
+        return user.user_profile.first_name
+
+    def get_userLastName(self, user: User):
+        return user.user_profile.last_name
+
     class Meta:
-        model = UserProfile
+        model = User
         fields = [
-            'user',
+            'id',
+            'email',
             'first_name',
             'last_name',
         ]
+
 
 class UserProfileImageSerializer(serializers.ModelSerializer):
     image = serializers.ImageField(source="picture")
