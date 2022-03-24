@@ -52,7 +52,7 @@ a user and also an profile for that user. Note:profile model name is UserProfile
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(max_length=128, min_length=8, write_only=True, validators=[validate_password])
     email = serializers.EmailField(validators=[UniqueValidator(queryset=User.objects.all())])
-    username = serializers.CharField(max_length=128, validators=[], required=True)
+    username = serializers.CharField(max_length=128, validators=[], required=True, write_only=True)
     class Meta:
         model = User
         fields = [
@@ -71,7 +71,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         fullname = validated_data['username'].split()
         if len(fullname) > 1:
             user.user_profile.first_name = fullname[0]
-            user.user_profile.last_name = fullname[1]
+            user.user_profile.last_name = ' '.join([ x for x in fullname[1:] ])
             user.user_profile.save()
         else:
             user.user_profile.first_name = fullname[0]
@@ -204,7 +204,7 @@ class CompanyAccessSerializer(serializers.ModelSerializer):
 
 
 '''
-Companies
+serializer to accept list of user id's 
 '''
 class UsersDeleteSerializer(serializers.ModelSerializer):
     users_list = serializers.ListField(child=serializers.IntegerField(required=True) )
@@ -213,7 +213,9 @@ class UsersDeleteSerializer(serializers.ModelSerializer):
         fields = [
             'users_list'
         ]
-
+'''
+serializer to accept list of company id's 
+'''
 class CompaniesDeleteSerializer(serializers.ModelSerializer):
     company_list = serializers.ListField(child=serializers.IntegerField(required=True) )
     class Meta:
