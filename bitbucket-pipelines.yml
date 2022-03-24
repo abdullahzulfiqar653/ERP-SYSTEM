@@ -7,5 +7,6 @@ pipelines:
     staging:
       - step:
           script:
+            - ls
             - apt-get update
             - ssh ubuntu@54.215.41.158 /home/ubuntu/booster-tech-backend/devCdScript_backend.sh
