@@ -533,7 +533,8 @@ class UsersListAPIView(generics.ListAPIView):
     def get_queryset(self):
         user = self.request.user
         # associated_profiles_list = UserProfile.objects.filter(admin=user).values_list("user_id", flat=True)
-        return UserProfile.objects.filter(admin=user)
+        users = User.objects.filter(pk__in=list(UserProfile.objects.filter(admin=user).values_list('user_id', flat=True)))
+        return users
 
 '''
 Endpoint returning companies which are assigned by admin to his sub user.
