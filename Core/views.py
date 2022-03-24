@@ -558,13 +558,11 @@ class UserCompaniesListAPIView(generics.ListAPIView):
 
 
 '''
-In this View we are using magic view of Django rest frame work named as DestroyAPIView in this we we
-just need to pass permissions first that onlty admin user can do activity in this view and a query set
-related to Model we want to perform task. here we are querying User model and only admin can delete any
-user object. In this query we are filtering only those persons who is not admin to avoid accidental
-deletion of super user. This view just need an id of user in the URL and user will be deleted automatically
+In this View we just need to pass permissions first that only admin user can do activity to perform delete action.
+Also admin user will have a list of his user id's only to delete users if it contain ids of other users those will
+be simply ignored. Here we are querying User model and only admin can delete any user object. So users list will be
+looped and each user will be checked if it exist in current admin hirerchy then it will be deleted.
 '''
-
 class UsersDeleteAPIView(generics.DestroyAPIView):
     permission_class = (permissions.IsAdminUser,)
     def delete(self, request, format=None):
@@ -584,10 +582,9 @@ class UsersDeleteAPIView(generics.DestroyAPIView):
         return Response(status=status.HTTP_406_NOT_ACCEPTABLE)
 
 
-
-
 '''
-Taking an id of company in url of this and deleting that company after validating the owner.
+Taking a list of company id's even a one id or more then one id's List. List will be looped and each company
+after veryfying if admin owns the company then deleting and all company related data will be deleted.
 '''
 class CompaniesDeleteAPIView(generics.DestroyAPIView):
     permission_class = (permissions.IsAdminUser,)
