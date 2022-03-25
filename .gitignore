@@ -114,3 +114,4 @@ coverage.xml
 *.cover
 .hypothesis/
 echosystem.config.json
+.vscode/settings.json
