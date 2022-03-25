@@ -1,13 +1,12 @@
+from attr import field
 from rest_framework import serializers
-from .models import PayRoll, PayRollItem, Team, Employee
+from .models import PayRoll, PayRollItem, Team, Employee, Contact
 
 #---------------------- Serializers for Team Views ---------------------------#
 class AddTeamSerializer(serializers.ModelSerializer):
-    company_id = serializers.IntegerField()
     class Meta:
         model = Team
         fields = [
-            'company_id',
             'team_name',
             'address',
             'postcode',
@@ -166,4 +165,45 @@ class PayRollItemUpdateSerializer(serializers.ModelSerializer):
             'gross',
             'bonus',
             'total_gross',
+        ]
+
+
+# Contact, ContactTaxAddress, ContactShipAddress, ContactPayment
+#---------------------- Serializers for Contact Module ---------------------------#
+class ContactSerializer(serializers.ModelSerializer):
+    id  = serializers.IntegerField(read_only=True)
+    class Meta:
+        model = Contact
+        fields = [
+            'id',
+            'type',
+            'name',
+            'account_id',
+            'nif',
+            'tax_address',
+            'tax_postcode',
+            'tax_province',
+            'tax_country',
+            'shipping_address',
+            'shipping_postcode',
+            'shipping_province',
+            'shipping_country',
+            'account_type',
+            'vat',
+            'ret_or_re',
+            'payment_method',
+            'date',
+        ]
+
+
+
+'''
+serializer to accept list of company id's 
+'''
+class ContactDeleteSerializer(serializers.ModelSerializer):
+    contact_list = serializers.ListField(child=serializers.IntegerField(required=True) )
+    class Meta:
+        model = Contact
+        fields = [
+            'contact_list'
         ]
