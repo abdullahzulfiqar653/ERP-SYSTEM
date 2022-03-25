@@ -533,7 +533,7 @@ class UsersListAPIView(generics.ListAPIView):
     def get_queryset(self):
         user = self.request.user
         # associated_profiles_list = UserProfile.objects.filter(admin=user).values_list("user_id", flat=True)
-        users = User.objects.filter(pk__in=list(UserProfile.objects.filter(admin=user).values_list('user_id', flat=True)))
+        users = User.objects.filter(pk__in=list(UserProfile.objects.filter(admin=user).values_list('user_id', flat=True)), is_staff=False)
         return users
 
 '''
