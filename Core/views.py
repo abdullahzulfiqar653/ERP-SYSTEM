@@ -75,7 +75,7 @@ class RefreshJWTTokenView(APIView):
     def get(self, request, *args, **kwargs):
         auth_token = request.META.get('HTTP_AUTHORIZATION')
         if not auth_token:
-            return Response({"message":"Something bad hapend"})
+            return Response({"message":"Something bad hapend"}, status=status.HTTP_400_BAD_REQUEST)
         auth_token = auth_token.split(" ")
         data = {'token': auth_token[1]}
         # verified_data = VerifyJSONWebTokenSerializer().validate(data)

@@ -12,7 +12,7 @@ class Team(models.Model):
     address = models.CharField(max_length=255, null=True, blank=True)
     postcode = models.CharField(max_length=10, null=True, blank=True)
     province = models.CharField(max_length=130, null=True, blank=True)
-    country = models.CharField(max_length=56, null=True, blank=True)
+    country = models.CharField(max_length=60, null=True, blank=True)
     note = models.TextField(null=True, blank=True)
 
     def __str__(self):
@@ -33,7 +33,7 @@ class Employee(models.Model):
     contract_type = models.SmallIntegerField(choices=ContractTypeEnum.choices)
     address = models.TextField(null=True, blank=True)
     enddate = models.DateField()
-    current_salary = models.DecimalField(max_digits=8, decimal_places=2)
+    current_salary = models.DecimalField(max_digits=10, decimal_places=2)
     postcode = models.CharField(max_length=10, null=True, blank=True)
     province = models.CharField(max_length=130, null=True, blank=True)
     country = models.CharField(max_length=56, null=True, blank=True)
@@ -52,32 +52,22 @@ class PayRollItem(models.Model):
     
 
 class Contact(models.Model):
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='company_contact')
     type = models.CharField(max_length=55) #option field
     name = models.CharField(max_length=255)
     account_id = models.CharField(max_length=12) #auto fill according to the type of account_type in PaymentSection
-    nif = models.CharField(max_length=13, null=True, blank=True, unique=True)
-
-
-class ContactTaxAddress(models.Model):
-    contact = models.OneToOneField(Contact, on_delete=models.CASCADE, related_name='contact_taxAddress')
-    address = models.TextField()
-    postcode = models.CharField(max_length=10, null=True, blank=True)
-    province = models.CharField(max_length=130, null=True, blank=True)
-    country = models.CharField(max_length=56, null=True, blank=True) #option fields
-
-
-class ContactShipAddress(models.Model):
-    contact = models.ForeignKey(Contact, on_delete=models.CASCADE, related_name='contact_shipAddress')
-    address = models.TextField()
-    postcode = models.CharField(max_length=10, null=True, blank=True)
-    province = models.CharField(max_length=130, null=True, blank=True)
-    country = models.CharField(max_length=56, null=True, blank=True) #option field
-
-
-class ContactPayment(models.Model):
-    contact = models.ForeignKey(Contact, on_delete=models.CASCADE, related_name='contact_payment')
-    account_type = models.CharField(max_length=55) #option field
+    nif = models.CharField(max_length=13, unique=True)
+    tax_address = models.TextField()
+    tax_postcode = models.CharField(max_length=10,)
+    tax_province = models.CharField(max_length=130,)
+    tax_country = models.CharField(max_length=256,) #option fields
+    shipping_address = models.TextField()
+    shipping_postcode = models.CharField(max_length=10,)
+    shipping_province = models.CharField(max_length=130,)
+    shipping_country = models.CharField(max_length=255,) #option field
+    account_type = models.CharField(max_length=130) #option field
     vat = models.IntegerField() #option field
-    ret_or_re = models.CharField(max_length=55) #option field
+    ret_or_re = models.DecimalField(max_digits=5, decimal_places=2) #option field
     payment_method = models.CharField(max_length=55) #option field
     date = models.DateField()
+

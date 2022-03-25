@@ -10,7 +10,12 @@ and to remove duplication this method created.
 Method recieving compani_id and current user and we are checing if user have permissions for the requested company.
 '''
 def get_company_if_authenticated(user, company_id):
-    response = Response(status=status.HTTP_400_BAD_REQUEST)
+    response = Response({"message":"Company not found"}, status=status.HTTP_404_NOT_FOUND)
+    if not company_id:
+        return response
+    if not str(company_id).isdigit():
+        return response
+    
     if Company.objects.filter(pk=company_id).exists():  #check if Company exist or not
         if user.is_staff and Company.objects.filter(pk=company_id).filter(user=user).exists(): #if user is admin then check user own the company
             company = Company.objects.get(pk=company_id)

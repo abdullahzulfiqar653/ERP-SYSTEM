@@ -14,13 +14,15 @@ from .serializers import (
     PayRollCreateSerializer,
     PayRollListSerializer,
     PayRollItemListSerializer,
-    PayRollItemUpdateSerializer
+    PayRollItemUpdateSerializer,
+    ContactSerializer,
+    ContactDeleteSerializer,
 )
 from django_filters.rest_framework import DjangoFilterBackend
-from .models import Team, Employee, PayRoll, PayRollItem
+from .models import Team, Employee, PayRoll, PayRollItem, Contact
 from utils.pagination import LimitOffsetPagination
 from Core.models import Company, CompanyAccessRecord
-from .filters import TeamFilter, EmployeeFilter, PayRollFilter
+from .filters import TeamFilter, EmployeeFilter, PayRollFilter, ContactFilter
 
 
 #---------------------- Starting Crud for Team ---------------------------#
@@ -37,16 +39,15 @@ class AddTeamView(generics.CreateAPIView):
     permission_classes = (permissions.IsAuthenticated,)
     serializer_class = AddTeamSerializer
     def post(self, request, *args, **kwargs):
+        company_id = self.request.GET.get('company_id')
         serializer = AddTeamSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
-        data = self.request.data
         user = self.request.user
-        response = Response(status=status.HTTP_400_BAD_REQUEST)
 
-        company = get_company_if_authenticated(user, data['company_id'])
+        company = get_company_if_authenticated(user, company_id)
         if not isinstance(company, Company):
-            return response
+            return Response({"message":"Company not found"}, status=status.HTTP_404_NOT_FOUND)
         
         if not Team.objects.filter(company=company).filter(team_name=data["team_name"]).exists():
             team = Team.objects.create(
@@ -75,19 +76,16 @@ class UpdateTeamView(generics.UpdateAPIView):
         user = self.request.user
 
         if Team.objects.filter(pk=team_id).exists(): #Checking if Team Exists in database.
-            team = Team.objects.get(pk=team_id)  #getting Current Team.    
-            company = Company.objects.filter(pk=team.company.id) #Getting company related to current team for next use
-            if user.is_staff:   #checking if user is a admin user.
-                if not company.filter(user=user).exists():  #veryfying if admin owns the company or not
-                    return Response(status=status.HTTP_401_UNAUTHORIZED)   
-            elif not CompanyAccessRecord.objects.filter(user=user, company=company.first()).exists():   #veryfying if sub_user owns the company or not
-                return Response(status=status.HTTP_401_UNAUTHORIZED)
+            team = Team.objects.get(pk=team_id)  #getting Current Team.
+            company = get_company_if_authenticated(user, team.company.id)
+            if not isinstance(company, Company):
+                return Response({"message":"Company not found"}, status=status.HTTP_404_NOT_FOUND)
         else:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+            return Response({"message":"Team no Found"},status=status.HTTP_404_NOT_FOUND)
 
         if data.get("team_name"): #checking if team name exists()
             if not team.team_name == data.get("team_name"): # Checking if current team has the same name then ignoring next conditions
-                if Team.objects.filter(company=company.first(), team_name=data.get("team_name")).exists(): #veryfying uniqness in current company
+                if Team.objects.filter(company=company, team_name=data.get("team_name")).exists(): #veryfying uniqness in current company
                     return Response({"messgae": "Team name must be unique"}, status=status.HTTP_205_RESET_CONTENT)
             team.team_name = data.get("team_name")
             team.address = data.get("address")
@@ -114,17 +112,12 @@ class TeamListView(generics.ListAPIView):
     def get_queryset(self):
         company_id = self.request.GET.get('company_id')
         empty_queryset = Team.objects.none()
-        if not company_id:
-            return empty_queryset
-        if not company_id.isdigit():
-            return Response(status=status.HTTP_404_NOT_FOUND)
+
         user = self.request.user
-        if user.is_staff and Company.objects.filter(pk=int(company_id)).filter(user=user).exists():
-            return Team.objects.filter(company=company_id)
-        elif CompanyAccessRecord.objects.filter(user=user, company_id=company_id).exists():
-            return Team.objects.filter(company=company_id)
-        else:
+        company = get_company_if_authenticated(user, company_id)
+        if not isinstance(company, Company):
             return empty_queryset
+        return Team.objects.filter(company=company_id)
 
 
 '''
@@ -137,16 +130,13 @@ class TeamDestroyView(generics.DestroyAPIView):
 
         user = self.request.user
         team = Team.objects.filter(pk=instance.id).first()
-        if user.is_staff and team.company.user==user:
-            super().perform_destroy(instance)
-        elif CompanyAccessRecord.objects.filter(user=user, company=team.company).exists():
-            super().perform_destroy(instance)
-        else:
+        company = get_company_if_authenticated(user, team.company.id)
+        if not isinstance(company, Company):
             return {"message": "you are an unauthorized user to perform this action"}
+        super().perform_destroy(instance)
 
 
 #---------------------- Starting Crud for Employee ---------------------------#
-
 '''
 This view is For creating an employee. After request this view firstly validate data through serializer and
 then check if user request is valid to create an employee in requested company by calling method get_company_if_authenticated
@@ -186,18 +176,11 @@ class EmployeeListAPIView(generics.ListAPIView):
     def get_queryset(self):
         company_id = self.request.GET.get('company_id')
         emptyEmployeeQueryset = Employee.objects.none()
-        if not company_id:
-            return emptyEmployeeQueryset
-        if not company_id.isdigit():
-            return emptyEmployeeQueryset
-
         user = self.request.user
-        if user.is_staff and Company.objects.filter(pk=int(company_id)).filter(user=user).exists():
-            return Employee.objects.filter(company=company_id)
-        elif CompanyAccessRecord.objects.filter(user=user, company_id=company_id).exists():
-            return Employee.objects.filter(company=company_id)
-        else:
+        company = get_company_if_authenticated(user, company_id)
+        if not isinstance(company, Company):
             return emptyEmployeeQueryset
+        return Employee.objects.filter(company=company_id)
 
 
 '''
@@ -253,8 +236,6 @@ class EmployeeDestroyView(generics.DestroyAPIView):
         else:
             return response
 
-
-
 #---------------------- Starting Crud for PayRoll ---------------------------#
 '''
 In this View first of all view are validating the payload through calling the serializer and then after
@@ -288,8 +269,8 @@ class PayRollCreateAPIView(generics.CreateAPIView):
             continue
         return Response({"message":"Payroll Created."}, status=status.HTTP_200_OK)
 
-
-'''Here this view is for returning all the payrolls related to the requested company only
+'''
+Here this view is for returning all the payrolls related to the requested company only
 if user have permissions for the company or he/she owns the company then all related Payrolls
 will be returned. also pagination is attached to control pages or unlimited objects per page.
 '''
@@ -407,4 +388,77 @@ class PayRollItemUpdateAPIView(generics.UpdateAPIView):
             payrollItem.save()
             return Response({"message":"Paroll of {} has been updated".format(payrollItem.employee.name)},status=status.HTTP_200_OK)
             
-        return Response(status=status.HTTP_404_NOT_FOUND)
+        return Response({"message":"Payroll not found"}, status=status.HTTP_404_NOT_FOUND)
+
+
+#---------------------- Starting Crud for Contact ---------------------------#
+class ContactCreateAPIView(generics.CreateAPIView):
+    permission_classes = [permissions.IsAuthenticated,]
+    serializer_class = ContactSerializer
+    def post(self, request, *args, **kwargs):
+        company_id = self.request.GET.get('company_id')
+        serializer = ContactSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        user = self.request.user
+        company = get_company_if_authenticated(user, company_id)
+        if not isinstance(company, Company):
+            return Response({"message":"Company not found"}, status=status.HTTP_404_NOT_FOUND)
+        contact = Contact(company=company, **data)
+        contact.save()
+        return Response({"message":"Contact Created."}, status=status.HTTP_200_OK)
+
+class ContactUpdateAPIView(generics.UpdateAPIView):
+    permission_classes = [permissions.IsAuthenticated,]
+    serializer_class = ContactSerializer
+    def update(self, request, *args, **kwargs):
+        company_id = self.request.GET.get('company_id')
+        contact_id = self.request.GET.get('contact_id')
+        serializer = ContactSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        user = self.request.user
+        company = get_company_if_authenticated(user, company_id)
+        if not isinstance(company, Company):
+            return Response({"message":"Company not found"}, status=status.HTTP_404_NOT_FOUND)
+        
+        contact = Contact(company=company, **data)
+        contact.save()
+        return Response({"message":"Contact Created."}, status=status.HTTP_200_OK)
+
+class ContactListAPIView(generics.ListAPIView):
+    permission_classes = (permissions.IsAuthenticated,)
+    serializer_class = ContactSerializer
+    pagination_class = LimitOffsetPagination
+    filter_backends = [DjangoFilterBackend,]
+    filterset_class = ContactFilter
+    def get_queryset(self):
+        company_id = self.request.GET.get('company_id')
+        emptyContactQueryset = Contact.objects.none()
+        user = self.request.user
+        company = get_company_if_authenticated(user, company_id)
+        if not isinstance(company, Company):
+            return emptyContactQueryset
+        return Contact.objects.filter(company=company)
+
+class ContactsdeleteAPIView(generics.DestroyAPIView):
+    permission_class = (permissions.IsAuthenticated,)
+    def delete(self, request, format=None):
+        serializer = ContactDeleteSerializer(data=self.request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        if data['contact_list']:
+            company_id = self.request.GET.get('company_id')
+            user = self.request.user
+            company = get_company_if_authenticated(user, company_id)
+            if not isinstance(company, Company):
+                return Response({"message":"Company not found"}, status=status.HTTP_404_NOT_FOUND)
+
+            for id in data['contact_list']:
+                if Contact.objects.filter(pk=id).filter(company=company).exists():
+                    instance = Contact.objects.get(pk=id)
+                    instance.delete()
+                continue
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response(status=status.HTTP_406_NOT_ACCEPTABLE)
