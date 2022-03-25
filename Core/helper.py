@@ -1,4 +1,5 @@
-import random, string
+import string
+import random
 from django.contrib.auth.models import User
 from .models import UserProfile
 
@@ -13,7 +14,7 @@ def generate_token():
     while (UserProfile.objects.filter(activation_key=token).exists()):
         token = ''.join(
             random.SystemRandom().choice(
-                string.ascii_uppercase + 
+                string.ascii_uppercase +
                 string.digits +
                 string.ascii_lowercase
                 )for _ in range(150))
@@ -30,7 +31,7 @@ def generate_username():
     while (User.objects.filter(username=username).exists()):
         username = ''.join(
             random.SystemRandom().choice(
-                string.ascii_uppercase + 
+                string.ascii_uppercase +
                 string.digits +
                 string.ascii_lowercase
                 )for _ in range(20))
