@@ -1,30 +1,26 @@
 from rest_framework import status
 from rest_framework.response import Response
 from Core.models import Company, CompanyAccessRecord
-
+from django.shortcuts import get_object_or_404
 
 
 '''
-This method is due to because at 4 places same functionality was getting used so to make code more readable
-and to remove duplication this method created.
-Method recieving compani_id and current user and we are checing if user have permissions for the requested company.
+This method is due to because at 4 places same functionality was getting
+used so to make code more readable and to remove duplication this method
+created. Method recieving compani_id and current user and we are checing
+if user have permissions for the requested company.
 '''
+
+
 def get_company_if_authenticated(user, company_id):
-    response = Response({"message":"Company not found"}, status=status.HTTP_404_NOT_FOUND)
-    if not company_id:
-        return response
-    if not str(company_id).isdigit():
-        return response
-    
-    if Company.objects.filter(pk=company_id).exists():  #check if Company exist or not
-        if user.is_staff and Company.objects.filter(pk=company_id).filter(user=user).exists(): #if user is admin then check user own the company
-            company = Company.objects.get(pk=company_id)
-            return company
-        elif CompanyAccessRecord.objects.filter(user=user, company_id=company_id):#if user is not admin then checking if user have access to the requested company
-            company = Company.objects.get(pk=company_id)
-            return company
-        else:
-            return response
+    response = Response(
+        {"message": "Company not found"},
+        status=status.HTTP_404_NOT_FOUND)
+    if (user.is_staff and Company.objects.filter(
+            pk=company_id, user=user).exists()) or \
+        CompanyAccessRecord.objects.filter(
+            user=user, company_id=company_id):
+        return get_object_or_404(Company, pk=company_id)
     else:
         return response
 
@@ -32,6 +28,8 @@ def get_company_if_authenticated(user, company_id):
 '''
 Method updating employee instance.
 '''
+
+
 def update_employee(emp, data):
     '''
     if user has previous and new nif as same then in data there will be no
@@ -39,8 +37,8 @@ def update_employee(emp, data):
     '''
     try:
         emp.nif = data['nif']
-    except:
-        pass
+    except Exception as e:
+        print(e)
     emp.name = data['name']
     emp.surname = data['surname']
     emp.social_security = data['social_security']

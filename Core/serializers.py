@@ -1,6 +1,5 @@
 from rest_framework import status
 from rest_framework import serializers
-from rest_framework.response import Response
 from rest_framework.validators import UniqueValidator
 from rest_framework_jwt.serializers import JSONWebTokenSerializer
 from rest_framework_jwt.settings import api_settings
@@ -16,11 +15,15 @@ jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
 jwt_decode_handler = api_settings.JWT_DECODE_HANDLER
 jwt_get_username_from_payload = api_settings.JWT_PAYLOAD_GET_USERNAME_HANDLER
 
+
 '''Here we are overriding JSONWEBTokenSerializer because we want our users to login with email
 and username both also here in response we are adding is_admin so on client side it will be
 evaluated if the user is admin or a normal user'''
-class CustomJWTSerializer(JSONWebTokenSerializer):          
+
+
+class CustomJWTSerializer(JSONWebTokenSerializer):
     username_field = 'email'
+
     def validate(self, attrs):
         password = attrs.get("password")
         user_obj = User.objects.filter(email=attrs.get("email")).first() or User.objects.filter(username=attrs.get("email")).first()
@@ -39,11 +42,11 @@ class CustomJWTSerializer(JSONWebTokenSerializer):
                         'email': user.email
                     }
                 else:
-                    raise serializers.ValidationError({"email":"Must be a valid email.", "password":"Must be a valid password."})
+                    raise serializers.ValidationError({"email": "Must be a valid email.", "password": "Must be a valid password."})
             else:
-                raise serializers.ValidationError({"email":"Must include Email.", "password":"Must include password"}, status.HTTP_400_BAD_REQUEST)
+                raise serializers.ValidationError({"email": "Must include Email.", "password": "Must include password"}, status.HTTP_400_BAD_REQUEST)
         else:
-            raise serializers.ValidationError({"email":"Must include valid Email."}, status.HTTP_400_BAD_REQUEST)
+            raise serializers.ValidationError({"email": "Must include valid Email."}, status.HTTP_400_BAD_REQUEST)
 
 
 '''This Serializer validating password with build in method validate password.

@@ -1,6 +1,7 @@
 from django_filters import FilterSet
 from .models import Team, Employee, PayRoll, Contact
 
+
 class TeamFilter(FilterSet):
     class Meta:
         model = Team
@@ -37,7 +38,7 @@ class PayRollFilter(FilterSet):
     class Meta:
         model = PayRoll
         fields = {
-            "created_at": ['year' , 'month'],
+            "created_at": ['year', 'month'],
         }
 
 
@@ -64,5 +65,5 @@ class ContactFilter(FilterSet):
             "vat": ['exact'],
             "ret_or_re": ['exact'],
             "payment_method": ['icontains'],
-            "date": ['year' , 'month', 'day'],
+            "date": ['year', 'month', 'day'],
         }
