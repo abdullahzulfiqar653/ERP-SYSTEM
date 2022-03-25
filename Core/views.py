@@ -456,8 +456,7 @@ class UpdateUserProfileView(APIView):
                 if serializer.validated_data['user_id']:
                     user = User.objects.get(pk=int(serializer.validated_data['user_id']))
                     message = "Dear admin, Profile of User named as {} has been updated successfully".format(user.user_profile.first_name)
-            except exception as e:
-                print(e)
+            except:
                 pass
         first_name = serializer.validated_data['first_name']
         last_name = serializer.validated_data['last_name']
