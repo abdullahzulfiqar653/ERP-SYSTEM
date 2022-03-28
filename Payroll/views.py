@@ -64,7 +64,7 @@ class AddTeamView(generics.CreateAPIView):
                 province=data["province"],
                 country=data["country"],
                 note=data["note"]
-                )
+            )
             return Response({'message': "Team {} created against {}.".format(
                 team.team_name, company.name)}, status=status.HTTP_201_CREATED)
         return Response(
@@ -100,8 +100,10 @@ class UpdateTeamView(generics.UpdateAPIView):
                 status=status.HTTP_404_NOT_FOUND)
 
         if data.get("team_name"):  # checking if team name exists()
-            if not team.team_name == data.get("team_name"):  # Checking if current team has the same name then ignoring next conditions
-                if Team.objects.filter(company=company, team_name=data.get("team_name")).exists():  # veryfying uniqness in current company
+            # Checking if current team has the same name then ignoring next conditions
+            if not team.team_name == data.get("team_name"):
+                # veryfying uniqness in current company
+                if Team.objects.filter(company=company, team_name=data.get("team_name")).exists():
                     return Response({"messgae": "Team name must be unique"}, status=status.HTTP_205_RESET_CONTENT)
             team.team_name = data.get("team_name")
             team.address = data.get("address")
@@ -253,7 +255,8 @@ class EmployeeUpdateView(generics.UpdateAPIView):
                 else:
                     emp = update_employee(emp, data)  # calling function to update user
             else:
-                data.pop('nif')  # as user have same nif as previous so popping nif and then in next line updating Employee
+                # as user have same nif as previous so popping nif and then in next line updating Employee
+                data.pop('nif')
                 emp = update_employee(emp, data)
             return Response({'message': "Employee {} updated".format(emp.name)}, status=status.HTTP_200_OK)
         return Response({'message': "You are unauthorized for the requested Employee"}, status=status.HTTP_401_UNAUTHORIZED)
@@ -317,7 +320,7 @@ class PayRollCreateAPIView(generics.CreateAPIView):
                 PayRollItem.objects.create(
                     payroll=payroll,
                     **item,
-                    )
+                )
             continue
         return Response({"message": "Payroll Created."}, status=status.HTTP_200_OK)
 
