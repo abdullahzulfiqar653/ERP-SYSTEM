@@ -1,12 +1,22 @@
+image: python:3.8
 pipelines:
   default:
-    - step:
-        caches:
-          - pip
-  branches:
-    staging:
+    - parallel:
       - step:
+          name: Test
+          caches:
+            - pip
           script:
-            - ls
+            - if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+            - pip install pytest
+            - python -m pytest -v backend/tests/* --junitxml=test-reports/report.xml
+      - step:
+          name: Lint code
+          script:
+            # Enforce style consistency across Python projects https://flake8.pycqa.org/en/latest/manpage.html
+            - pip install flake8
+            - flake8 . --extend-exclude=dist,build --show-source --statistics
+    - step:
+          script:
             - apt-get update
             - ssh ubuntu@54.215.41.158 /home/ubuntu/booster-tech-backend/devCdScript_backend.sh
