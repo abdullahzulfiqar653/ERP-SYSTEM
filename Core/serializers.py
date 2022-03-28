@@ -26,10 +26,11 @@ class CustomJWTSerializer(JSONWebTokenSerializer):
 
     def validate(self, attrs):
         password = attrs.get("password")
-        user_obj = User.objects.filter(email=attrs.get("email")).first() or User.objects.filter(username=attrs.get("email")).first()
+        user_obj = User.objects.filter(email=attrs.get("email")).first(
+        ) or User.objects.filter(username=attrs.get("email")).first()
         if user_obj is not None:
             credentials = {
-                'username':user_obj.username,
+                'username': user_obj.username,
                 'password': password
             }
             if all(credentials.values()):
@@ -42,20 +43,27 @@ class CustomJWTSerializer(JSONWebTokenSerializer):
                         'email': user.email
                     }
                 else:
-                    raise serializers.ValidationError({"email": "Must be a valid email.", "password": "Must be a valid password."})
+                    raise serializers.ValidationError(
+                        {"email": "Must be a valid email.", "password": "Must be a valid password."})
             else:
-                raise serializers.ValidationError({"email": "Must include Email.", "password": "Must include password"}, status.HTTP_400_BAD_REQUEST)
+                raise serializers.ValidationError(
+                    {"email": "Must include Email.", "password": "Must include password"}, status.HTTP_400_BAD_REQUEST)
         else:
-            raise serializers.ValidationError({"email": "Must include valid Email."}, status.HTTP_400_BAD_REQUEST)
+            raise serializers.ValidationError(
+                {"email": "Must include valid Email."}, status.HTTP_400_BAD_REQUEST)
 
 
 '''This Serializer validating password with build in method validate password.
 Also verfying uniqueness of email requested to register. if is_valid() comes true then creating
 a user and also an profile for that user. Note:profile model name is UserProfile'''
+
+
 class RegisterSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(max_length=128, min_length=8, write_only=True, validators=[validate_password])
+    password = serializers.CharField(max_length=128, min_length=8,
+                                     write_only=True, validators=[validate_password])
     email = serializers.EmailField(validators=[UniqueValidator(queryset=User.objects.all())])
     username = serializers.CharField(max_length=128, validators=[], required=True, write_only=True)
+
     class Meta:
         model = User
         fields = [
@@ -63,6 +71,7 @@ class RegisterSerializer(serializers.ModelSerializer):
             'username',
             'password',
         ]
+
     def create(self, validated_data):
         username = generate_username()
         user = User.objects.create_user(
@@ -74,15 +83,18 @@ class RegisterSerializer(serializers.ModelSerializer):
         fullname = validated_data['username'].split()
         if len(fullname) > 1:
             user.user_profile.first_name = fullname[0]
-            user.user_profile.last_name = ' '.join([ x for x in fullname[1:] ])
+            user.user_profile.last_name = ' '.join([x for x in fullname[1:]])
             user.user_profile.save()
         else:
             user.user_profile.first_name = fullname[0]
             user.user_profile.save()
         return user
 
+
 '''This Change passswrod serialzer checking if new passwords are matched
 and if not matched then generating validation Error'''
+
+
 class ChangePasswordSerializer(serializers.Serializer):
     model = User
     old_password = serializers.CharField(required=True)
@@ -92,6 +104,7 @@ class ChangePasswordSerializer(serializers.Serializer):
 class UsersListSerializer(serializers.ModelSerializer):
     first_name = serializers.SerializerMethodField(method_name="get_userFirstName")
     last_name = serializers.SerializerMethodField(method_name="get_userLastName")
+
     def get_userFirstName(self, user: User):
         return user.user_profile.first_name
 
@@ -110,12 +123,12 @@ class UsersListSerializer(serializers.ModelSerializer):
 
 class UserProfileImageSerializer(serializers.ModelSerializer):
     image = serializers.ImageField(source="picture")
+
     class Meta:
         model = UserProfile
         fields = [
             'image',
         ]
-
 
 
 # This serialzer is for the view where admin changing the password of a user without putting old password.
@@ -132,10 +145,11 @@ class AdminChangeUserPasswordSerializer(serializers.Serializer):
 
 # this serialzer getting used in FetchUserProfileSerializer so we can return first and last name of user.
 class UpdateUserProfileSerializer(serializers.ModelSerializer):
-    user_id = serializers.IntegerField(allow_null = True, required=False)
+    user_id = serializers.IntegerField(allow_null=True, required=False)
     email = serializers.EmailField(validators=[],)
     # first_name = serializers.CharField(max_length=128, required=True)
     # last_name = serializers.CharField(max_length=128, required=False)
+
     class Meta:
         model = UserProfile
         fields = [
@@ -173,6 +187,8 @@ class UserProfileSerializer(serializers.ModelSerializer):
 This Serilizer is a simplest serializer for Company model insuring the field name
 so admins set a valueable name for their companies
 '''
+
+
 class CompanyCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Company
@@ -180,18 +196,21 @@ class CompanyCreateSerializer(serializers.ModelSerializer):
             'name',
         ]
 
+
 class CompanyUpdateSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField()
+
     class Meta:
         model = Company
         fields = [
             'id',
             'name',
         ]
-    
 
 
 '''Serializer to return only id and username fields as needed for frontend'''
+
+
 class CompaniesFetchSerializer(serializers.ModelSerializer):
     class Meta:
         model = Company
@@ -205,9 +224,12 @@ class CompaniesFetchSerializer(serializers.ModelSerializer):
 This serializer is recieving user_id and a list of company id's so we can assign
 permission to that user for the requested companies.
 '''
+
+
 class CompanyAccessSerializer(serializers.ModelSerializer):
     user_id = serializers.IntegerField()
-    company_list = serializers.ListField(child=serializers.IntegerField(required=True) )
+    company_list = serializers.ListField(child=serializers.IntegerField(required=True))
+
     class Meta:
         model = Company
         fields = [
@@ -219,18 +241,26 @@ class CompanyAccessSerializer(serializers.ModelSerializer):
 '''
 serializer to accept list of user id's 
 '''
+
+
 class UsersDeleteSerializer(serializers.ModelSerializer):
-    users_list = serializers.ListField(child=serializers.IntegerField(required=True) )
+    users_list = serializers.ListField(child=serializers.IntegerField(required=True))
+
     class Meta:
         model = User
         fields = [
             'users_list'
         ]
+
+
 '''
 serializer to accept list of company id's 
 '''
+
+
 class CompaniesDeleteSerializer(serializers.ModelSerializer):
-    company_list = serializers.ListField(child=serializers.IntegerField(required=True) )
+    company_list = serializers.ListField(child=serializers.IntegerField(required=True))
+
     class Meta:
         model = Company
         fields = [
