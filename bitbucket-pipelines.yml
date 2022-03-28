@@ -16,8 +16,10 @@ pipelines:
             # Enforce style consistency across Python projects https://flake8.pycqa.org/en/latest/manpage.html
             - pip install flake8
             - flake8 . --extend-exclude=dist,build --show-source --statistics
-    - step:
-          name: deploy
-          script:
-            - apt-get update
-            - ssh ubuntu@54.215.41.158 /home/ubuntu/booster-tech-backend/devCdScript_backend.sh
+  branches:
+    staging:
+      - step:
+            name: deploy
+            script:
+              - apt-get update
+              - ssh ubuntu@54.215.41.158 /home/ubuntu/booster-tech-backend/devCdScript_backend.sh
