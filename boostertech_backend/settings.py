@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django_filters',
 
     # developer started apps:
+    'Middleware',
     'Core',
     'Payroll',
 ]
@@ -50,6 +51,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+
+    'Middleware.custommiddleware.CompanyAccessMiddleWare',
 ]
 
 ROOT_URLCONF = 'boostertech_backend.urls'
@@ -147,7 +150,7 @@ if env('USE_S3') == 'TRUE':
     STATICFILES_STORAGE = 'boostertech_backend.storage_backends.StaticStorage'
     # s3 public media settings
     PUBLIC_MEDIA_LOCATION = 'media'
-    MEDIA_URL =  f'https://{AWS_S3_CUSTOM_DOMAIN}/{PUBLIC_MEDIA_LOCATION}/'
+    MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/{PUBLIC_MEDIA_LOCATION}/'
     DEFAULT_FILE_STORAGE = 'boostertech_backend.storage_backends.PublicMediaStorage'
     # s3 private media settings
     PRIVATE_MEDIA_LOCATION = 'private'
@@ -163,7 +166,7 @@ else:
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-LOGIN_REDIRECT_URL ='/'
+LOGIN_REDIRECT_URL = '/'
 
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
@@ -174,7 +177,7 @@ EMAIL_HOST_USER = env('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')
 
 LINK_DOMAIN = env('LINK_DOMAIN')
-LINK_PROTOCOL =  env('LINK_PROTOCOL')
+LINK_PROTOCOL = env('LINK_PROTOCOL')
 
 DOMAIN = 'example.com'
 SITE_NAME = 'Foo Website'

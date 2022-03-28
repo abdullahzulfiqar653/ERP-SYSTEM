@@ -10,6 +10,7 @@ class TeamAdmin(admin.ModelAdmin):
         'company'
     ]
 
+
 class EmployeeAdmin(admin.ModelAdmin):
     list_display = [
         'id',
