@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django_filters',
 
     # developer started apps:
+    'Middleware',
     'Core',
     'Payroll',
 ]
@@ -50,6 +51,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+
+    'Middleware.custommiddleware.CompanyAccessMiddleWare',
 ]
 
 ROOT_URLCONF = 'boostertech_backend.urls'

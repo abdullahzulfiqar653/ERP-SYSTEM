@@ -10,7 +10,7 @@ is the subject of the email and 3rd is an email that whom we want to send the em
 
 
 def send_email(email, subject, to_email, templateName):
-    html_content = render_to_string("core/" + templateName, {'subject': subject, 'content': email})
+    html_content = render_to_string("core/"+templateName, {'subject': subject, 'content': email})
     text_content = strip_tags(html_content)
     email = EmailMultiAlternatives(
         subject, text_content, settings.EMAIL_HOST_USER, [to_email, ]

@@ -1,5 +1,8 @@
+<<<<<<< HEAD
 
 from logging import exception
+=======
+>>>>>>> feature/authsetup
 from django.conf import settings
 from rest_framework import serializers
 from rest_framework import generics
@@ -9,13 +12,17 @@ from rest_framework.views import APIView
 from rest_framework_jwt.views import ObtainJSONWebToken
 from rest_framework_jwt.serializers import RefreshJSONWebTokenSerializer
 from rest_framework.response import Response
-from rest_framework.filters import SearchFilter
+from rest_framework.filters import SearchFilter, OrderingFilter
 from django.contrib.auth.models import User
 from utils.pagination import LimitOffsetPagination
 from utils.email import send_email
 from .models import UserProfile, Company, CompanyAccessRecord
 from .helper import generate_token
+from Middleware.permissions import IsCompanyAccess
+from Middleware.CustomMixin import CompanyPermissionsMixin
+
 from .serializers import (
+<<<<<<< HEAD
     RegisterSerializer,
     ChangePasswordSerializer,
     CustomJWTSerializer,
@@ -30,6 +37,21 @@ from .serializers import (
     UsersDeleteSerializer,
     CompaniesDeleteSerializer,
 )
+=======
+        RegisterSerializer,
+        ChangePasswordSerializer,
+        CustomJWTSerializer,
+        UpdateUserProfileSerializer,
+        CompaniesFetchSerializer,
+        AdminChangeUserPasswordSerializer,
+        CompanyCreateSerializer,
+        CompanyAccessSerializer,
+        UsersListSerializer,
+        UserProfileImageSerializer,
+        UsersDeleteSerializer,
+        CompaniesDeleteSerializer,
+    )
+>>>>>>> feature/authsetup
 
 
 '''
@@ -120,36 +142,36 @@ class AdminRegisterAPIView(generics.GenericAPIView):
     serializer_class = RegisterSerializer
 
     def post(self, request, format='json'):
-        serializer = self.serializer_class(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            user = User.objects.get(email=serializer.validated_data['email'])
-            user.is_staff = True
+        serializer = RegisterSerializer(data=self.request.data)
+        serializer.is_valid(raise_exception=True)
 
-            email_activation_token = generate_token()
-            # Content we need to send for email after registration process
-            email = {
-                "title": "Thank your for registering with BoosterTech Portal",
-                "shortDescription": "These are the next steps.",
-                "subtitle": "BoosterTech Business handling solution in one go",
-                'link': settings.LINK_PROTOCOL + '://' + settings.LINK_DOMAIN +
-                '/auth/account-activated/?activation_key=' +
-                email_activation_token,
-                "message": '''You have successfully registered with BoosterTech.
-                        You can now login in to your profile and start. We have
-                        thousands of features just waiting for you to use. If
-                        you experience any issues feel free to contact our
-                        support at support@boostertech.com>'''
-            }
-            subject = 'Welcome to Booster Tech'
-            to_email = serializer.validated_data['email']
-            send_email(email, subject, to_email, 'register.html')
-            user.user_profile.activation_key = email_activation_token
-            user.user_profile.is_activation_key_used = False
-            user.save()
-            user.user_profile.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer.save()
+        user = User.objects.get(email=serializer.validated_data['email'])
+        user.is_staff = True
+
+        email_activation_token = generate_token()
+        # Content we need to send for email after registration process
+        email = {
+            "title": "Thank your for registering with BoosterTech Portal",
+            "shortDescription": "These are the next steps.",
+            "subtitle": "BoosterTech Business handling solution in one go",
+            'link': settings.LINK_PROTOCOL + '://' + settings.LINK_DOMAIN +
+            '/auth/account-activated/?activation_key=' +
+            email_activation_token,
+            "message": '''You have successfully registered with BoosterTech.
+                    You can now login in to your profile and start. We have
+                    thousands of features just waiting for you to use. If
+                    you experience any issues feel free to contact our
+                    support at support@boostertech.com>'''
+                }
+        subject = 'Welcome to Booster Tech'
+        to_email = serializer.validated_data['email']
+        send_email(email, subject, to_email, 'register.html')
+        user.user_profile.activation_key = email_activation_token
+        user.user_profile.is_activation_key_used = False
+        user.save()
+        user.user_profile.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 '''
@@ -163,7 +185,7 @@ verify his email through that link.
 
 
 class UserRegisterAPIView(generics.GenericAPIView):
-    permission_classes = (permissions.IsAdminUser,)
+    permission_classes = [permissions.IsAdminUser, ]
     serializer_class = RegisterSerializer
 
     def post(self, request, format='json'):
@@ -420,23 +442,6 @@ class ProfileImageDestroyView(APIView):
 
 
 '''
-Getting user profile. getting current user and return user data.
-'''
-
-
-class FetchUserProfileView(APIView):
-    permission_class = (permissions.IsAuthenticated,)
-
-    def get(self, request):
-        user = self.request.user
-        return Response({
-            'email': user.email,
-            'first_name': user.user_profile.first_name,
-            'last_name': user.user_profile.last_name
-        }, status.HTTP_200_OK)
-
-
-'''
 This view is for updating user profile. In view first of all we are checking if user
 exists if yes then we check if user is superuser? if yes its mean he have permissions
 to update his profile as well as companies profiles. That is why now we check if he
@@ -460,10 +465,9 @@ class UpdateUserProfileView(APIView):
             try:
                 if serializer.validated_data['user_id']:
                     user = User.objects.get(pk=int(serializer.validated_data['user_id']))
-                    message = "Dear admin, Profile of User named as {} has been updated successfully".format(
-                        user.user_profile.first_name)
-            except:
-                pass
+                    message = "Dear admin, Profile of User named as {} has been updated successfully".format(user.user_profile.first_name)
+            except Exception as e:
+                print(e)
         first_name = serializer.validated_data['first_name']
         last_name = serializer.validated_data['last_name']
         email = serializer.validated_data['email']
@@ -473,22 +477,27 @@ class UpdateUserProfileView(APIView):
         if user.email == email:
             user.save()
             user.user_profile.save()
-            return Response({"message": message}, status=status.HTTP_200_OK)
+            return Response(
+                {"message": message},
+                status=status.HTTP_200_OK)
         elif not User.objects.filter(email=email).exists():
             user.email = email
             user.user_profile.isactive = False
             user.save()
             user.user_profile.save()
             # here need to send activation email to user so he can confirm his new mail
-            return Response({"message": message + " Also as you have updated email so kindly check mailbox and verify your email"}, status=status.HTTP_202_ACCEPTED)
+            return Response(
+                {"message": message + " Also as you have updated email so kindly check mailbox and verify your email"},
+                status=status.HTTP_202_ACCEPTED)
         else:
             return Response({"email": "Email should be unique."}, status=status.HTTP_400_BAD_REQUEST)
 
 
 '''
-This View in post request recieving user_id and a list of companies after that view check if user is the subuser
-of current user if yes then verify the company if company is of the current user then check if it is alreaedy
-assigned to the same user or someone else under the same admin If not then create a new permission for the user
+This View in post request recieving user_id and a list of companies after that view
+check if user is the subuser of current user if yes then verify the company if company
+is of the current user then check if it is alreaedy assigned to the same user or
+someone else under the same admin If not then create a new permission for the user
 to access all those companies and remove any removed requested company
 '''
 
@@ -502,14 +511,12 @@ class CompanyAccessView(generics.CreateAPIView):
         serializer = self.get_serializer(data=request.data)
         companies_list = list(map(int, request.data['company_list']))
         if serializer.is_valid():  # checking if coming data is valid
-            # checking if user requested esist in data base
-            if User.objects.filter(pk=int(request.data['user_id'])).exists():
-                # getting user instance so we can assign permissions to him
-                user = User.objects.filter(pk=int(request.data['user_id'])).first()
+            if User.objects.filter(pk=int(request.data['user_id'])).exists():  # checking if user requested esist in data base
+                user = User.objects.filter(pk=int(request.data['user_id'])).first()  # getting user instance so we can assign permissions to him
                 # checking if user is subuser of current admin user else without performing actions HTTP_401 returned
                 if user.user_profile.admin == adminUser:
-                    already_assigned_list = list(CompanyAccessRecord.objects.filter(user=user).values_list(
-                        'company_id', flat=True))  # getting list of previously assigned companies
+                    # getting list of previously assigned companies
+                    already_assigned_list = list(CompanyAccessRecord.objects.filter(user=user).values_list('company_id', flat=True))
                     # subtracting old list from new so we can remove permissions which are not allowed
                     permission_remove_list = list(set(already_assigned_list) - set(companies_list))
                     for company_id in companies_list:  # looping on list of companies
@@ -518,7 +525,8 @@ class CompanyAccessView(generics.CreateAPIView):
                             # here checking if company permissions are already assigned to someone
                             if company_id in list(CompanyAccessRecord.objects.all().values_list('company', flat=True)):
                                 continue
-                                # if CompanyAccessRecord.objects.get(company=company_id).id in list(CompanyAccessRecord.objects.filter(user=user).values_list('id', flat=True)):
+                                # if CompanyAccessRecord.objects.get(company=company_id).id in\
+                                #   list(CompanyAccessRecord.objects.filter(user=user).values_list('id', flat=True)):
                                 #     continue
                                 # else:
                                 #     continue
@@ -540,8 +548,8 @@ class CompanyAccessView(generics.CreateAPIView):
 
 
 '''
-This View getting post request with data and validating name field for company after
-that creating company with that name or raise errors if any
+This View getting post request with data and validating name field for
+company after that creating company with that name or raise errors if any
 '''
 
 
@@ -550,11 +558,11 @@ class AddCompanyAPIView(generics.CreateAPIView):
     serializer_class = CompanyCreateSerializer
 
     def post(self, request, format=None):
-        serializer = self.get_serializer(data=request.data)
-        if serializer.is_valid():
-            company = Company.objects.create(user=self.request.user, name=request.data['name'])
-            return Response({"id": company.id, "name": company.name, }, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer = CompanyCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        company = Company.objects.create(user=self.request.user, name=data['name'].lower())
+        return Response({"id": company.id, "name": company.name}, status=status.HTTP_201_CREATED)
 
 
 '''
@@ -562,28 +570,26 @@ This View simply taking id argument and after ensuring permission updating the n
 '''
 
 
-class UpdateCompanyAPIView(generics.UpdateAPIView):
-    permission_classes = (permissions.IsAdminUser, )
-    serializer_class = CompanyUpdateSerializer
+class UpdateCompanyAPIView(CompanyPermissionsMixin, generics.UpdateAPIView):
+    permission_classes = (permissions.IsAdminUser, IsCompanyAccess)
 
     def update(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        if serializer.is_valid():
-            if Company.objects.filter(pk=serializer.validated_data['id'], user=self.request.user).exists():
-                company = Company.objects.get(pk=serializer.validated_data['id'])
-                company.name = serializer.validated_data['name']
-                company.save()
-                return Response({"id": company.id, "name": company.name, }, status=status.HTTP_200_OK)
-            return Response(status=status.HTTP_404_NOT_FOUND)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer = CompanyCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        company = self.request.company
+        company.name = data['name']
+        company.save()
+        return Response({"id": company.id, "name": company.name, }, status=status.HTTP_200_OK)
 
 
 '''
-This view is just accessible by the admin user and authenticated user here we are returning the list companies
-associated with the current user. Firstly, we check if user is authenticated and not an admin so we get the list
-of companies he is allowed to access from Company Access table record and then query for the list of those companies
-and returned to user. Else we check if user is admin then if he want to see the companies he assigned to any of his user
-then in payload there will be an user_id So if there is user id then companies allowed to that user will be returned.
+This view is just accessible by the admin user and authenticated user here we are returning the
+list companies associated with the current user. Firstly, we check if user is authenticated and
+not an admin so we get the list of companies he is allowed to access from Company Access table
+record and then query for the list of those companies and returned to user. Else we check if user
+is admin then if he want to see the companies he assigned to any of his user then in payload there
+will be an user_id So if there is user id then companies allowed to that user will be returned.
 If admin dont have any id then all of his companies will be returned. Also we are attaching the
 pagination class to this view so user can limit result from client side.
 '''
@@ -593,8 +599,9 @@ class CompaniesListAPIView(generics.ListAPIView):
     permission_classes = (permissions.IsAuthenticated,)
     serializer_class = CompaniesFetchSerializer
     pagination_class = LimitOffsetPagination
-    filter_backends = [SearchFilter, ]
+    filter_backends = [SearchFilter, OrderingFilter]
     search_fields = ['name', ]
+    ordering_fields = ['id', 'name']
 
     def get_queryset(self):
         user = self.request.user
@@ -606,19 +613,21 @@ class CompaniesListAPIView(generics.ListAPIView):
             return Company.objects.filter(user=user)
 
 
-'''Listing all users related to admin who request'''
+'''
+Listing all users related to admin who request
+'''
 
 
 class UsersListAPIView(generics.ListAPIView):
     permission_classes = (permissions.IsAdminUser,)
     serializer_class = UsersListSerializer
     pagination_class = LimitOffsetPagination
-    filter_backends = [SearchFilter, ]
-    search_fields = ['first_name', ]
+    filter_backends = [SearchFilter, OrderingFilter]
+    search_fields = ['user_profile__first_name', ]
+    ordering_fields = ['id', 'email']
 
     def get_queryset(self):
         user = self.request.user
-        # associated_profiles_list = UserProfile.objects.filter(admin=user).values_list("user_id", flat=True)
         users = User.objects.filter(pk__in=list(UserProfile.objects.filter(
             admin=user).values_list('user_id', flat=True)), is_staff=False)
         return users
@@ -626,8 +635,9 @@ class UsersListAPIView(generics.ListAPIView):
 
 '''
 Endpoint returning companies which are assigned by admin to his sub user.
-Enpoint have user_id of subuser in his params if no user_id then HTTP_400 generated
-after that check is verifying if user is subuser of current admin if yes then companies access record will be returned. 
+Enpoint have user_id of subuser in his params if no user_id then HTTP_400
+generated after that check is verifying if user is subuser of current admin
+if yes then companies access record will be returned.
 '''
 
 
@@ -636,25 +646,22 @@ class UserCompaniesListAPIView(generics.ListAPIView):
 
     def get(self, request):
         user = self.request.user
-        try:
-            user_id = int(request.query_params["user_id"])
-        except:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+        user_id = self.request.GET.get('user_id')
         if UserProfile.objects.filter(user__pk=user_id, admin=self.request.user).exists():
             user = User.objects.filter(pk=user_id).first()
             user_records = list(CompanyAccessRecord.objects.filter(
                 user=user).values_list("company_id", flat=True))
             records = Company.objects.filter(pk__in=user_records).values_list("id", flat=True)
-            # records = CompaniesFetchSerializer(records, many=True)
             return Response(records, status=status.HTTP_200_OK)
         return Response(status=status.HTTP_203_NON_AUTHORITATIVE_INFORMATION)
 
 
 '''
-In this View we just need to pass permissions first that only admin user can do activity to perform delete action.
-Also admin user will have a list of his user id's only to delete users if it contain ids of other users those will
-be simply ignored. Here we are querying User model and only admin can delete any user object. So users list will be
-looped and each user will be checked if it exist in current admin hirerchy then it will be deleted.
+In this View we just need to pass permissions first that only admin user can do activity
+to perform delete action. Also admin user will have a list of his user id's only to delete
+users if it contain ids of other users those will be simply ignored. Here we are querying
+User model and only admin can delete any user object. So users list will be looped and each
+user will be checked if it exist in current admin hirerchy then it will be deleted.
 '''
 
 
@@ -669,9 +676,7 @@ class UsersDeleteAPIView(generics.DestroyAPIView):
             for id in data['users_list']:
                 if User.objects.filter(pk=id).exists():
                     instance = User.objects.get(pk=id)
-                    if not UserProfile.objects.filter(user=instance.id, admin=self.request.user.id).exists():
-                        pass
-                    else:
+                    if UserProfile.objects.filter(user=instance.id, admin=self.request.user.id).exists():
                         instance.delete()
                 continue
             return Response(status=status.HTTP_204_NO_CONTENT)
@@ -679,8 +684,9 @@ class UsersDeleteAPIView(generics.DestroyAPIView):
 
 
 '''
-Taking a list of company id's even a one id or more then one id's List. List will be looped and each company
-after veryfying if admin owns the company then deleting and all company related data will be deleted.
+Taking a list of company id's even a one id or more then one id's List. List will
+be looped and each company after veryfying if admin owns the company then deleting
+and all company related data will be deleted.
 '''
 
 
@@ -695,9 +701,7 @@ class CompaniesDeleteAPIView(generics.DestroyAPIView):
             for id in data['company_list']:
                 if Company.objects.filter(pk=id).exists():
                     instance = Company.objects.get(pk=id)
-                    if not Company.objects.filter(user=self.request.user.id, pk=instance.id).exists():
-                        pass
-                    else:
+                    if Company.objects.filter(user=self.request.user.id, pk=instance.id).exists():
                         instance.delete()
                 continue
             return Response(status=status.HTTP_204_NO_CONTENT)

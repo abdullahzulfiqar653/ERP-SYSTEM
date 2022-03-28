@@ -23,32 +23,3 @@ def get_company_if_authenticated(user, company_id):
         return get_object_or_404(Company, pk=company_id)
     else:
         return response
-
-
-'''
-Method updating employee instance.
-'''
-
-
-def update_employee(emp, data):
-    '''
-    if user has previous and new nif as same then in data there will be no
-    nif that is why we are trying if nif is new then update else leaving
-    '''
-    try:
-        emp.nif = data['nif']
-    except Exception as e:
-        print(e)
-    emp.name = data['name']
-    emp.surname = data['surname']
-    emp.social_security = data['social_security']
-    emp.contract_type = data['contract_type']
-    emp.address = data['address']
-    emp.enddate = data['enddate']
-    emp.current_salary = data['current_salary']
-    emp.postcode = data['postcode']
-    emp.province = data['province']
-    emp.country = data['country']
-    emp.note = data['note']
-    emp.save()
-    return emp

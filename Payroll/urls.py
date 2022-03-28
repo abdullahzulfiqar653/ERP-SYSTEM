@@ -18,13 +18,14 @@ from .views import (
     ContactCreateAPIView,
     ContactListAPIView,
     ContactsdeleteAPIView,
+    ContactUpdateAPIView,
 )
 
 
 urlpatterns = [
     path('team/add/', AddTeamView.as_view()),
     path('teams/', TeamListView.as_view()),
-    path('team/update/<int:id>/', UpdateTeamView.as_view()),
+    path('team/update/<int:team_id>/', UpdateTeamView.as_view()),
     path('team/destroy/<pk>/', TeamDestroyView.as_view()),
 
     path('employee/add/', EmployeeCreateAPIView.as_view()),
@@ -40,6 +41,7 @@ urlpatterns = [
     path('item/destroy/<pk>/', PayRollItemDestroyView.as_view()),
 
     path('contact/add/', ContactCreateAPIView.as_view()),
+    path('contact/update/<int:contact_id>/', ContactUpdateAPIView.as_view()),
     path('contacts/', ContactListAPIView.as_view()),
     path('contacts/destroy/', ContactsdeleteAPIView.as_view()),
 ]

@@ -1,23 +1,9 @@
 from rest_framework import serializers
 from .models import PayRoll, PayRollItem, Team, Employee, Contact
 
-#---------------------- Serializers for Team Views ---------------------------#
 
-
-class AddTeamSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Team
-        fields = [
-            'team_name',
-            'address',
-            'postcode',
-            'province',
-            'country',
-            'note',
-        ]
-
-
-class UpdateTeamSerializer(serializers.ModelSerializer):
+# ---------------------- Serializers for Team Views ---------------------------#
+class TeamSerializer(serializers.ModelSerializer):
     class Meta:
         model = Team
         fields = [
@@ -44,14 +30,12 @@ class RetriveTeamSerializer(serializers.ModelSerializer):
         ]
 
 
-#---------------------- Serializers for Employee Views ---------------------------#
+# ---------------------- Serializers for Employee Views ---------------------------#
 class AddEmployeeSerializer(serializers.ModelSerializer):
-    company_id = serializers.IntegerField()
 
     class Meta:
         model = Employee
         fields = [
-            'company_id',
             'name',
             'surname',
             'nif',
@@ -69,12 +53,10 @@ class AddEmployeeSerializer(serializers.ModelSerializer):
 
 class UpdateEmployeeSerializer(serializers.ModelSerializer):
     nif = serializers.CharField(validators=[], )
-    company_id = serializers.IntegerField()
 
     class Meta:
         model = Employee
         fields = [
-            'company_id',
             'name',
             'surname',
             'nif',
@@ -109,8 +91,7 @@ class ListEmployeeSerializer(serializers.ModelSerializer):
         ]
 
 
-#---------------------- Serializers for Payroll Views ---------------------------#
-
+# ---------------------- Serializers for Payroll Views ---------------------------#
 class PayRollItemSerializer(serializers.ModelSerializer):
     employee_id = serializers.IntegerField(required=True, write_only=True, source='employee')
 
@@ -179,7 +160,7 @@ class PayRollItemUpdateSerializer(serializers.ModelSerializer):
 
 
 # Contact, ContactTaxAddress, ContactShipAddress, ContactPayment
-#---------------------- Serializers for Contact Module ---------------------------#
+# ---------------------- Serializers for Contact Module ---------------------------#
 class ContactSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=True)
 
@@ -208,7 +189,7 @@ class ContactSerializer(serializers.ModelSerializer):
 
 
 '''
-serializer to accept list of company id's 
+serializer to accept list of company id's
 '''
 
 

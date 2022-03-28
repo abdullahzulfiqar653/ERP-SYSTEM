@@ -6,7 +6,6 @@ from rest_framework_jwt.settings import api_settings
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth import authenticate
-from django.utils.translation import ugettext as _
 from .models import Company, UserProfile
 from .helper import generate_username
 
@@ -16,9 +15,11 @@ jwt_decode_handler = api_settings.JWT_DECODE_HANDLER
 jwt_get_username_from_payload = api_settings.JWT_PAYLOAD_GET_USERNAME_HANDLER
 
 
-'''Here we are overriding JSONWEBTokenSerializer because we want our users to login with email
+'''
+Here we are overriding JSONWEBTokenSerializer because we want our users to login with email
 and username both also here in response we are adding is_admin so on client side it will be
-evaluated if the user is admin or a normal user'''
+evaluated if the user is admin or a normal user
+'''
 
 
 class CustomJWTSerializer(JSONWebTokenSerializer):
@@ -47,15 +48,29 @@ class CustomJWTSerializer(JSONWebTokenSerializer):
                         {"email": "Must be a valid email.", "password": "Must be a valid password."})
             else:
                 raise serializers.ValidationError(
+<<<<<<< HEAD
                     {"email": "Must include Email.", "password": "Must include password"}, status.HTTP_400_BAD_REQUEST)
+=======
+                    {"email": "Must include Email.", "password": "Must include password"},
+                    status.HTTP_400_BAD_REQUEST)
+>>>>>>> feature/authsetup
         else:
             raise serializers.ValidationError(
                 {"email": "Must include valid Email."}, status.HTTP_400_BAD_REQUEST)
 
 
+<<<<<<< HEAD
 '''This Serializer validating password with build in method validate password.
 Also verfying uniqueness of email requested to register. if is_valid() comes true then creating
 a user and also an profile for that user. Note:profile model name is UserProfile'''
+=======
+'''
+This Serializer validating password with build in method validate password.
+Also verfying uniqueness of email requested to register. if is_valid() comes
+true then creating a user and also an profile for that user. Note:profile
+model name is UserProfile
+'''
+>>>>>>> feature/authsetup
 
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -91,8 +106,15 @@ class RegisterSerializer(serializers.ModelSerializer):
         return user
 
 
+<<<<<<< HEAD
 '''This Change passswrod serialzer checking if new passwords are matched
 and if not matched then generating validation Error'''
+=======
+'''
+This Change passswrod serialzer checking if new passwords are matched
+and if not matched then generating validation Error
+'''
+>>>>>>> feature/authsetup
 
 
 class ChangePasswordSerializer(serializers.Serializer):
@@ -139,7 +161,7 @@ class AdminChangeUserPasswordSerializer(serializers.Serializer):
 
     def validate(self, attrs):
         if not attrs['user_id']:
-            raise serializers.ValidationError({'user_id': "company id required."})
+            raise serializers.ValidationError({'user_id': "user id required."})
         return attrs
 
 
@@ -147,8 +169,6 @@ class AdminChangeUserPasswordSerializer(serializers.Serializer):
 class UpdateUserProfileSerializer(serializers.ModelSerializer):
     user_id = serializers.IntegerField(allow_null=True, required=False)
     email = serializers.EmailField(validators=[],)
-    # first_name = serializers.CharField(max_length=128, required=True)
-    # last_name = serializers.CharField(max_length=128, required=False)
 
     class Meta:
         model = UserProfile
@@ -158,29 +178,6 @@ class UpdateUserProfileSerializer(serializers.ModelSerializer):
             'email',
             'user_id'
         ]
-
-
-# this serialzer getting used in FetchUserProfileSerializer so we can return first and last name of user.
-class UserProfileSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = UserProfile
-        fields = [
-            'first_name',
-            'last_name',
-        ]
-
-# #This Serializer returning profile to the user and also using UserProfileSerializer
-# class FetchUserProfileSerializer(serializers.ModelSerializer):
-#     profile = serializers.SerializerMethodField()
-#     class Meta:
-#         model = User
-#         fields = [
-#             'email',
-#             'profile',
-#         ]
-#     def get_profile(self, user):
-#         profile = UserProfile.objects.filter(user=user).first()
-#         return UserProfileSerializer(profile).data if profile is not None else None
 
 
 '''
@@ -196,19 +193,15 @@ class CompanyCreateSerializer(serializers.ModelSerializer):
             'name',
         ]
 
-
-class CompanyUpdateSerializer(serializers.ModelSerializer):
-    id = serializers.IntegerField()
-
-    class Meta:
-        model = Company
-        fields = [
-            'id',
-            'name',
-        ]
+    def validate(self, attrs):
+        if Company.objects.filter(name=attrs['name'].lower()).exists():
+            raise serializers.ValidationError({'name': "company with this name already exists."})
+        return super().validate(attrs)
 
 
-'''Serializer to return only id and username fields as needed for frontend'''
+'''
+Serializer to return only id and username fields as needed for frontend
+'''
 
 
 class CompaniesFetchSerializer(serializers.ModelSerializer):
@@ -239,7 +232,7 @@ class CompanyAccessSerializer(serializers.ModelSerializer):
 
 
 '''
-serializer to accept list of user id's 
+serializer to accept list of user id's
 '''
 
 
@@ -254,7 +247,7 @@ class UsersDeleteSerializer(serializers.ModelSerializer):
 
 
 '''
-serializer to accept list of company id's 
+serializer to accept list of company id's
 '''
 
 
