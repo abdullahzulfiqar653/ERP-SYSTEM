@@ -1,8 +1,3 @@
-<<<<<<< HEAD
-
-from logging import exception
-=======
->>>>>>> feature/authsetup
 from django.conf import settings
 from rest_framework import serializers
 from rest_framework import generics
@@ -22,7 +17,6 @@ from Middleware.permissions import IsCompanyAccess
 from Middleware.CustomMixin import CompanyPermissionsMixin
 
 from .serializers import (
-<<<<<<< HEAD
     RegisterSerializer,
     ChangePasswordSerializer,
     CustomJWTSerializer,
@@ -30,28 +24,12 @@ from .serializers import (
     CompaniesFetchSerializer,
     AdminChangeUserPasswordSerializer,
     CompanyCreateSerializer,
-    CompanyUpdateSerializer,
     CompanyAccessSerializer,
     UsersListSerializer,
     UserProfileImageSerializer,
     UsersDeleteSerializer,
     CompaniesDeleteSerializer,
 )
-=======
-        RegisterSerializer,
-        ChangePasswordSerializer,
-        CustomJWTSerializer,
-        UpdateUserProfileSerializer,
-        CompaniesFetchSerializer,
-        AdminChangeUserPasswordSerializer,
-        CompanyCreateSerializer,
-        CompanyAccessSerializer,
-        UsersListSerializer,
-        UserProfileImageSerializer,
-        UsersDeleteSerializer,
-        CompaniesDeleteSerializer,
-    )
->>>>>>> feature/authsetup
 
 
 '''
@@ -163,7 +141,7 @@ class AdminRegisterAPIView(generics.GenericAPIView):
                     thousands of features just waiting for you to use. If
                     you experience any issues feel free to contact our
                     support at support@boostertech.com>'''
-                }
+        }
         subject = 'Welcome to Booster Tech'
         to_email = serializer.validated_data['email']
         send_email(email, subject, to_email, 'register.html')
@@ -465,7 +443,8 @@ class UpdateUserProfileView(APIView):
             try:
                 if serializer.validated_data['user_id']:
                     user = User.objects.get(pk=int(serializer.validated_data['user_id']))
-                    message = "Dear admin, Profile of User named as {} has been updated successfully".format(user.user_profile.first_name)
+                    message = "Dear admin, Profile of User named as {} has been updated successfully".format(
+                        user.user_profile.first_name)
             except Exception as e:
                 print(e)
         first_name = serializer.validated_data['first_name']
@@ -512,7 +491,8 @@ class CompanyAccessView(generics.CreateAPIView):
         companies_list = list(map(int, request.data['company_list']))
         if serializer.is_valid():  # checking if coming data is valid
             if User.objects.filter(pk=int(request.data['user_id'])).exists():  # checking if user requested esist in data base
-                user = User.objects.filter(pk=int(request.data['user_id'])).first()  # getting user instance so we can assign permissions to him
+                # getting user instance so we can assign permissions to him
+                user = User.objects.filter(pk=int(request.data['user_id'])).first()
                 # checking if user is subuser of current admin user else without performing actions HTTP_401 returned
                 if user.user_profile.admin == adminUser:
                     # getting list of previously assigned companies
