@@ -48,29 +48,19 @@ class CustomJWTSerializer(JSONWebTokenSerializer):
                         {"email": "Must be a valid email.", "password": "Must be a valid password."})
             else:
                 raise serializers.ValidationError(
-<<<<<<< HEAD
-                    {"email": "Must include Email.", "password": "Must include password"}, status.HTTP_400_BAD_REQUEST)
-=======
                     {"email": "Must include Email.", "password": "Must include password"},
                     status.HTTP_400_BAD_REQUEST)
->>>>>>> feature/authsetup
         else:
             raise serializers.ValidationError(
                 {"email": "Must include valid Email."}, status.HTTP_400_BAD_REQUEST)
 
 
-<<<<<<< HEAD
-'''This Serializer validating password with build in method validate password.
-Also verfying uniqueness of email requested to register. if is_valid() comes true then creating
-a user and also an profile for that user. Note:profile model name is UserProfile'''
-=======
 '''
 This Serializer validating password with build in method validate password.
 Also verfying uniqueness of email requested to register. if is_valid() comes
 true then creating a user and also an profile for that user. Note:profile
 model name is UserProfile
 '''
->>>>>>> feature/authsetup
 
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -106,15 +96,10 @@ class RegisterSerializer(serializers.ModelSerializer):
         return user
 
 
-<<<<<<< HEAD
-'''This Change passswrod serialzer checking if new passwords are matched
-and if not matched then generating validation Error'''
-=======
 '''
 This Change passswrod serialzer checking if new passwords are matched
 and if not matched then generating validation Error
 '''
->>>>>>> feature/authsetup
 
 
 class ChangePasswordSerializer(serializers.Serializer):
