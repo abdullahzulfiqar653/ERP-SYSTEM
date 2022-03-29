@@ -130,21 +130,13 @@ class AdminRegisterAPIView(generics.GenericAPIView):
         email_activation_token = generate_token()
         # Content we need to send for email after registration process
         email = {
-            "title": "Thank your for registering with BoosterTech Portal",
-            "shortDescription": "These are the next steps.",
-            "subtitle": "BoosterTech Business handling solution in one go",
             'link': settings.LINK_PROTOCOL + '://' + settings.LINK_DOMAIN +
             '/auth/account-activated/?activation_key=' +
             email_activation_token,
-            "message": '''You have successfully registered with BoosterTech.
-                    You can now login in to your profile and start. We have
-                    thousands of features just waiting for you to use. If
-                    you experience any issues feel free to contact our
-                    support at support@boostertech.com>'''
                 }
         subject = 'Welcome to Booster Tech'
         to_email = serializer.validated_data['email']
-        send_email(email, subject, to_email, 'register.html')
+        send_email(email, subject, to_email, 'email_activate.html')
         user.user_profile.activation_key = email_activation_token
         user.user_profile.is_activation_key_used = False
         user.save()
@@ -176,22 +168,13 @@ class UserRegisterAPIView(generics.GenericAPIView):
             email_activation_token = generate_token()
             # Content we need to send for email after registration process
             email = {
-                "title": "Thank your for registering with BoosterTech Portal",
-                "shortDescription": "These are the next steps.",
-                "subtitle": "BoosterTech Business handling solution in one go",
                 'link': settings.LINK_PROTOCOL + '://' + settings.LINK_DOMAIN +
                 '/auth/account-activated/?activation_key=' +
                 email_activation_token,
-                "message": '''
-                You have successfully registered with BoosterTech. You can
-                        now login in to your profile and start. We have
-                        thousands of features just waiting for you to use.
-                        If you experience any issues feel free to contact
-                        our support at support@boostertech.com>'''
                     }
             subject = 'Welcome to Booster Tech'
             to_email = serializer.validated_data['email']
-            send_email(email, subject, to_email, 'register.html')
+            send_email(email, subject, to_email, 'email_activate.html')
             user.user_profile.activation_key = email_activation_token
             user.user_profile.is_activation_key_used = False
             user.save()
@@ -311,19 +294,13 @@ class ForgetPasswordView(APIView):
                 reset_password_token = generate_token()
                 # This is Content we need to send upon user password reset request
                 email = {
-                    "title": "Thank your for using BoosterTech.",
-                    "shortDescription": "You have requested password reset",
-                    "subtitle": "BoosterTech Business handling solution in one go",
-                    "message": '''With the given link you will be moved to booster tech
-                    portal and you will be popped to enter a new password''',
                     'link': settings.LINK_PROTOCOL + '://' +
                     settings.LINK_DOMAIN +
                     '/auth/reset-password/?token=' + reset_password_token,
-                    'name': user.user_profile.first_name
                     }
                 subject = 'Password Reset'
                 to_email = user.email
-                send_email(email, subject, to_email, 'register.html')  # sending email
+                send_email(email, subject, to_email, 'reset_forgot_password.html')  # sending email
                 reg_obj.activation_key = reset_password_token  # saving token for furhter use
                 reg_obj.is_activation_key_used = False  # making activation key not used
                 reg_obj.save()

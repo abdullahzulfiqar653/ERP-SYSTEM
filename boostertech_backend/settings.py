@@ -156,7 +156,7 @@ if env('USE_S3') == 'TRUE':
     PRIVATE_MEDIA_LOCATION = 'private'
     PRIVATE_FILE_STORAGE = 'boostertech_backend.storage_backends.PrivateMediaStorage'
 else:
-    STATIC_URL = '/staticfiles/'
+    STATIC_URL = 'http://localhost:8000/staticfiles/'
     STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
     MEDIA_URL = 'http://localhost:8000/mediafiles/'
     MEDIA_ROOT = os.path.join(BASE_DIR, 'mediafiles')
