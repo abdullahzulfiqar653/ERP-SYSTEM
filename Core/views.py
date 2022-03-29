@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.conf import settings
 from rest_framework import serializers
 from rest_framework import generics
 from rest_framework import status
@@ -133,7 +134,7 @@ class AdminRegisterAPIView(generics.GenericAPIView):
             'link': settings.LINK_PROTOCOL + '://' + settings.LINK_DOMAIN +
             '/auth/account-activated/?activation_key=' +
             email_activation_token,
-                }
+        }
         subject = 'Welcome to Booster Tech'
         to_email = serializer.validated_data['email']
         send_email(email, subject, to_email, 'email_activate.html')
@@ -171,7 +172,7 @@ class UserRegisterAPIView(generics.GenericAPIView):
                 'link': settings.LINK_PROTOCOL + '://' + settings.LINK_DOMAIN +
                 '/auth/account-activated/?activation_key=' +
                 email_activation_token,
-                    }
+            }
             subject = 'Welcome to Booster Tech'
             to_email = serializer.validated_data['email']
             send_email(email, subject, to_email, 'email_activate.html')
@@ -297,7 +298,7 @@ class ForgetPasswordView(APIView):
                     'link': settings.LINK_PROTOCOL + '://' +
                     settings.LINK_DOMAIN +
                     '/auth/reset-password/?token=' + reset_password_token,
-                    }
+                }
                 subject = 'Password Reset'
                 to_email = user.email
                 send_email(email, subject, to_email, 'reset_forgot_password.html')  # sending email
@@ -420,7 +421,8 @@ class UpdateUserProfileView(APIView):
             try:
                 if serializer.validated_data['user_id']:
                     user = User.objects.get(pk=int(serializer.validated_data['user_id']))
-                    message = "Dear admin, Profile of User named as {} has been updated successfully".format(user.user_profile.first_name)
+                    message = "Dear admin, Profile of User named as {} has been updated successfully".format(
+                        user.user_profile.first_name)
             except Exception as e:
                 print(e)
         first_name = serializer.validated_data['first_name']
