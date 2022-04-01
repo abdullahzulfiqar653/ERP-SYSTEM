@@ -1,22 +1,9 @@
 from rest_framework import serializers
-from .models import PayRoll, PayRollItem, Team, Employee, Contact
+from .models import PayRoll, PayRollItem, Team, Employee, Contact, LookupType, LookupName, Tax
 
 
 # ---------------------- Serializers for Team Views ---------------------------#
 class TeamSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Team
-        fields = [
-            'team_name',
-            'address',
-            'postcode',
-            'province',
-            'country',
-            'note',
-        ]
-
-
-class RetriveTeamSerializer(serializers.ModelSerializer):
     class Meta:
         model = Team
         fields = [
@@ -32,31 +19,13 @@ class RetriveTeamSerializer(serializers.ModelSerializer):
 
 # ---------------------- Serializers for Employee Views ---------------------------#
 class AddEmployeeSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = Employee
-        fields = [
-            'name',
-            'surname',
-            'nif',
-            'social_security',
-            'address',
-            'contract_type',
-            'enddate',
-            'current_salary',
-            'postcode',
-            'province',
-            'country',
-            'note',
-        ]
-
-
-class UpdateEmployeeSerializer(serializers.ModelSerializer):
+    team = serializers.IntegerField(required=True)
     nif = serializers.CharField(validators=[], )
 
     class Meta:
         model = Employee
         fields = [
+            'team',
             'name',
             'surname',
             'nif',
@@ -75,68 +44,54 @@ class UpdateEmployeeSerializer(serializers.ModelSerializer):
 class ListEmployeeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Employee
-        fields = [
-            'name',
-            'surname',
-            'nif',
-            'social_security',
-            'address',
-            'contract_type',
-            'enddate',
-            'current_salary',
-            'postcode',
-            'province',
-            'country',
-            'note',
-        ]
+        exclude = ['company', ]
 
 
 # ---------------------- Serializers for Payroll Views ---------------------------#
 class PayRollItemSerializer(serializers.ModelSerializer):
-    employee_id = serializers.IntegerField(required=True, write_only=True, source='employee')
+    employee = serializers.IntegerField(required=True)
 
     class Meta:
         model = PayRollItem
         fields = [
-            'employee_id',
+            'employee',
             'gross',
             'bonus',
             'total_gross',
+            'irfp',
+            'irfp_total',
+            'ss_employee',
+            'net',
+            'ss_company',
+            'discount',
+            'company_cost'
         ]
 
 
 class PayRollCreateSerializer(serializers.ModelSerializer):
-    company_id = serializers.IntegerField(required=True, write_only=True, source='company')
     payroll_items = PayRollItemSerializer(many=True)
 
     class Meta:
         model = PayRoll
         fields = [
-            'company_id',
             'created_at',
+            'gross',
+            'bonus',
+            'total_gross',
+            'irfp',
+            'irfp_total',
+            'ss_employee',
+            'net',
+            'ss_company',
+            'discount',
+            'company_cost',
             'payroll_items'
         ]
 
 
-class PayRollListSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = PayRoll
-        fields = [
-            'id',
-            'created_at',
-        ]
-
-
-class EmployeeSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Employee
-        fields = [
-            'name',
-        ]
-
-
-class PayRollItemListSerializer(serializers.ModelSerializer):
-    employee = EmployeeSerializer(read_only=True)
+class PayRollItemUpdateSerializer(serializers.ModelSerializer):
+    employee = serializers.IntegerField(required=True)
+    id = serializers.IntegerField(required=True)
 
     class Meta:
         model = PayRollItem
@@ -146,20 +101,61 @@ class PayRollItemListSerializer(serializers.ModelSerializer):
             'gross',
             'bonus',
             'total_gross',
+            'irfp',
+            'irfp_total',
+            'ss_employee',
+            'net',
+            'ss_company',
+            'discount',
+            'company_cost'
         ]
 
 
-class PayRollItemUpdateSerializer(serializers.ModelSerializer):
+class PayRollUpdateSerializer(serializers.ModelSerializer):
+    payroll_items = PayRollItemUpdateSerializer(many=True)
+    id = serializers.IntegerField(required=True)
+
     class Meta:
-        model = PayRollItem
+        model = PayRoll
         fields = [
+            'id',
+            'created_at',
             'gross',
             'bonus',
             'total_gross',
+            'irfp',
+            'irfp_total',
+            'ss_employee',
+            'net',
+            'ss_company',
+            'discount',
+            'company_cost',
+            'payroll_items'
         ]
 
 
-# Contact, ContactTaxAddress, ContactShipAddress, ContactPayment
+class PayrollRelatedPayRollItemListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PayRollItem
+        exclude = ['payroll', ]
+
+
+# This Serializer is to return payroll instance including the related payroll Items.
+class FetchPayrollSerializer(serializers.ModelSerializer):
+    payroll_items = PayrollRelatedPayRollItemListSerializer(read_only=True, many=True)
+
+    class Meta:
+        model = PayRoll
+        exclude = ['company']
+
+
+# This Serializer is to return only payroll instances not the related payroll Items.
+class PayRollListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PayRoll
+        exclude = ['company', ]
+
+
 # ---------------------- Serializers for Contact Module ---------------------------#
 class ContactSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=True)
@@ -201,3 +197,27 @@ class ContactDeleteSerializer(serializers.ModelSerializer):
         fields = [
             'contact_list'
         ]
+
+
+# ---------------------------------------------------------------------------------#
+# ---------------------- Serializers for Lookups Module ---------------------------#
+# ---------------------------------------------------------------------------------#
+class LookupTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LookupType
+        fields = ['lookup_type']
+
+
+class LookupSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LookupName
+        fields = [
+            'id',
+            'lookup_name',
+        ]
+
+
+class TaxSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Tax
+        exclude = ['lookup_name', ]
