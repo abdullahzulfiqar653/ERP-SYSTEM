@@ -518,7 +518,7 @@ class AddCompanyAPIView(generics.CreateAPIView):
         serializer = CompanyCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
-        company = Company.objects.create(user=self.request.user, name=data['name'].lower())
+        company = Company.objects.create(user=self.request.user, name=data['name'])
         return Response({"id": company.id, "name": company.name}, status=status.HTTP_201_CREATED)
 
 
