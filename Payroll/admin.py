@@ -1,15 +1,15 @@
 from django.contrib import admin
 from .models import (
-        Team,
-        Employee,
-        PayRoll,
-        PayRollItem,
-        Contact,
-        LookupType,
-        LookupName,
-        Tax,
-        Payment_Day,
-        AccountType,
+    Team,
+    Employee,
+    PayRoll,
+    PayRollItem,
+    Contact,
+    LookupType,
+    LookupName,
+    Tax,
+    Payment_Day,
+    AccountType,
 )
 # Register your models here.
 

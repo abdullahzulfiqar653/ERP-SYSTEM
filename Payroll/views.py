@@ -92,7 +92,7 @@ class UpdateTeamView(CompanyPermissionsMixin, generics.UpdateAPIView):
         return Response(
             {'message': "Team {} updated".format(team.team_name),
                 "team": TeamSerializer(team).data}, status=status.HTTP_200_OK
-                )
+        )
 
 
 '''
@@ -161,7 +161,7 @@ class EmployeeCreateAPIView(CompanyPermissionsMixin, generics.CreateAPIView):
         return Response({'message': "Employee {} created against {}.".format(
             employee.name, company.name), "employee": ListEmployeeSerializer(employee).data},
             status=status.HTTP_201_CREATED
-            )
+        )
 
 
 '''
@@ -339,7 +339,7 @@ class PayRollItemUpdateAPIView(CompanyPermissionsMixin, generics.UpdateAPIView):
         return Response(
             {"message": "Payroll Updated.", "payroll": PayRollListSerializer(payroll).data},
             status=status.HTTP_200_OK
-            )
+        )
 
 
 '''
