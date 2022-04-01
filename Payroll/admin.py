@@ -10,7 +10,7 @@ from .models import (
         Tax,
         Payment_Day,
         AccountType,
-    )
+)
 # Register your models here.
 
 
