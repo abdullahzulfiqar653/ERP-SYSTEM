@@ -38,7 +38,7 @@ urlpatterns = [
     path('employee/destroy/<pk>/', EmployeeDestroyView.as_view()),
 
     path('create/', PayRollCreateAPIView.as_view()),
-    path('items/update/', PayRollItemUpdateAPIView.as_view()),
+    path('items/update/<int:payroll_id>/', PayRollItemUpdateAPIView.as_view()),
     path('all/', PayRollListAPIView.as_view()),
     path('items/<pk>/', PayRollItemListAPIView.as_view()),
     path('destroy/<pk>/', PayRollDestroyView.as_view()),
