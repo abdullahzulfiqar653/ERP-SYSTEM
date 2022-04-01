@@ -176,7 +176,7 @@ and Filters to filter specific data.
 
 
 class EmployeeListAPIView(CompanyPermissionsMixin, generics.ListAPIView):
-    permission_classes = [permissions.IsAuthenticated, ]
+    permission_classes = [permissions.IsAuthenticated, IsCompanyAccess]
     serializer_class = ListEmployeeSerializer
     pagination_class = LimitOffsetPagination
     filter_backends = [DjangoFilterBackend, OrderingFilter]
