@@ -112,6 +112,7 @@ class UsersListSerializer(serializers.ModelSerializer):
     first_name = serializers.SerializerMethodField(method_name="get_userFirstName")
     last_name = serializers.SerializerMethodField(method_name="get_userLastName")
     is_active = serializers.BooleanField(source="user_profile.isactive")
+    image = serializers.ImageField(source="user_profile.picture")
 
     def get_userFirstName(self, user: User):
         return user.user_profile.first_name
@@ -126,7 +127,8 @@ class UsersListSerializer(serializers.ModelSerializer):
             'email',
             'first_name',
             'last_name',
-            'is_active'
+            'is_active',
+            'image'
         ]
 
 
@@ -179,11 +181,6 @@ class CompanyCreateSerializer(serializers.ModelSerializer):
         fields = [
             'name',
         ]
-
-    # def validate(self, attrs):
-    #     if Company.objects.filter(name=attrs['name'].lower()).exists():
-    #         raise serializers.ValidationError({'name': "company with this name already exists."})
-    #     return super().validate(attrs)
 
 
 '''
