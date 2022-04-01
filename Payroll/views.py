@@ -7,18 +7,19 @@ from django_filters.rest_framework import DjangoFilterBackend
 from .utils import get_company_if_authenticated
 from .serializers import (
     TeamSerializer,
-    RetriveTeamSerializer,
     AddEmployeeSerializer,
     ListEmployeeSerializer,
-    UpdateEmployeeSerializer,
     PayRollCreateSerializer,
+    FetchPayrollSerializer,
     PayRollListSerializer,
-    PayRollItemListSerializer,
-    PayRollItemUpdateSerializer,
+    PayRollUpdateSerializer,
     ContactSerializer,
     ContactDeleteSerializer,
+    LookupTypeSerializer,
+    LookupSerializer,
+    TaxSerializer,
 )
-from .models import Team, Employee, PayRoll, PayRollItem, Contact
+from .models import Tax, Team, Employee, PayRoll, PayRollItem, Contact, LookupType, LookupName
 from utils.pagination import LimitOffsetPagination
 from Core.models import Company
 from .filters import TeamFilter, EmployeeFilter, PayRollFilter, ContactFilter
@@ -100,7 +101,7 @@ related to those users.
 
 class TeamListView(CompanyPermissionsMixin, generics.ListAPIView):
     permission_classes = (permissions.IsAuthenticated, IsCompanyAccess)
-    serializer_class = RetriveTeamSerializer
+    serializer_class = TeamSerializer
     pagination_class = LimitOffsetPagination
     filter_backends = [DjangoFilterBackend, OrderingFilter]
     filterset_class = TeamFilter
@@ -121,8 +122,7 @@ class TeamDestroyView(CompanyPermissionsMixin, generics.DestroyAPIView):
     permission_classes = (permissions.IsAuthenticated, IsCompanyAccess)
 
     def get_queryset(self):
-        company = self.request.company
-        return Team.objects.filter(company=company)
+        return Team.objects.filter(company=self.request.company)
 
 
 # ---------------------- Starting Crud for Employee ---------------------------#
@@ -142,11 +142,17 @@ class EmployeeCreateAPIView(CompanyPermissionsMixin, generics.CreateAPIView):
     serializer_class = AddEmployeeSerializer
 
     def post(self, request, *args, **kwargs):
-        serializer = AddEmployeeSerializer(data=request.data)
+        serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
         company = self.request.company
-        employee = Employee(company=company, **data)
+        if not Team.objects.filter(pk=data["team"], company=company).exists():
+            return Response({"message": "Team not Found"}, status=status.HTTP_404_NOT_FOUND)
+        if Employee.objects.filter(nif=data['nif']).exists():
+            return Response({"message": "nif must be unique"}, status=status.HTTP_205_RESET_CONTENT)
+        team_id = data["team"]
+        del data["team"]
+        employee = Employee(company=company, team_id=team_id, **data)
         employee.save()
         return Response({'message': "Employee {} created against {}.".format(
             employee.name, company.name)}, status=status.HTTP_201_CREATED)
@@ -164,11 +170,12 @@ and Filters to filter specific data.
 
 
 class EmployeeListAPIView(CompanyPermissionsMixin, generics.ListAPIView):
-    permission_classes = [permissions.IsAuthenticated, IsCompanyAccess]
+    permission_classes = [permissions.IsAuthenticated, ]
     serializer_class = ListEmployeeSerializer
     pagination_class = LimitOffsetPagination
-    filter_backends = [DjangoFilterBackend, ]
+    filter_backends = [DjangoFilterBackend, OrderingFilter]
     filterset_class = EmployeeFilter
+    ordering_fields = ['id', 'name']
 
     def get_queryset(self):
         return Employee.objects.filter(company=self.request.company)
@@ -186,24 +193,28 @@ updated.
 
 class EmployeeUpdateView(CompanyPermissionsMixin, generics.UpdateAPIView):
     permission_classes = (permissions.IsAuthenticated, IsCompanyAccess)
-    serializer_class = UpdateEmployeeSerializer
+    serializer_class = AddEmployeeSerializer
 
     def update(self, request, emp_id):
-        serializer = UpdateEmployeeSerializer(data=request.data)
+        serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
         company = self.request.company
+        if not (Employee.objects.filter(pk=emp_id, company=company).exists()
+                and Team.objects.filter(pk=data["team"], company=company).exists()):
+            return Response(
+                {'message': "team or employee not found"}, status=status.HTTP_404_NOT_FOUND)
 
-        if Employee.objects.filter(pk=emp_id, company=company).exists():
-            emp = Employee.objects.get(pk=emp_id, company=company)
-            if not emp.nif == data['nif']:  # checking if nif is same as previous nif
-                # if nif is new then checking if no other employe have the same nif
-                if Employee.objects.filter(nif=data['nif']).exists():
-                    return Response({"message": "nif must be unique"}, status=status.HTTP_205_RESET_CONTENT)
-            emp = Employee(pk=emp.id, company=company, team=emp.team, **data)
-            emp.save()
-            return Response({'message': "Employee {} updated".format(emp.name)}, status=status.HTTP_200_OK)
-        return Response({'message': "You are unauthorized for the requested Employee"}, status=status.HTTP_401_UNAUTHORIZED)
+        emp = Employee.objects.get(pk=emp_id, company=company)
+        team_id = data["team"]
+        del data["team"]
+        if not emp.nif == data['nif']:  # checking if nif is same as previous nif
+            # if nif is new then checking if no other employe have the same nif
+            if Employee.objects.filter(nif=data['nif']).exists():
+                return Response({"message": "nif must be unique"}, status=status.HTTP_205_RESET_CONTENT)
+        emp = Employee(pk=emp.id, company=company, team_id=team_id, **data)
+        emp.save()
+        return Response({'message': "Employee {} updated".format(emp.name)}, status=status.HTTP_200_OK)
 
 
 '''
@@ -231,23 +242,20 @@ Payroll Item will be created.
 '''
 
 
-class PayRollCreateAPIView(generics.CreateAPIView):
-    permission_classes = (permissions.IsAuthenticated,)
+class PayRollCreateAPIView(CompanyPermissionsMixin, generics.CreateAPIView):
+    permission_classes = (permissions.IsAuthenticated, IsCompanyAccess)
     serializer_class = PayRollCreateSerializer
 
     def post(self, request, *args, **kwargs):
-        serializer = PayRollCreateSerializer(data=request.data)
+        serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
-        user = self.request.user
-        response = Response(status=status.HTTP_400_BAD_REQUEST)
-        company = get_company_if_authenticated(user, data['company'])
-        if not isinstance(company, Company):
-            return response
+        company = self.request.company
+        payroll_items = data['payroll_items']
+        del data['payroll_items']
+        payroll = PayRoll.objects.create(company=company, **data)
 
-        payroll = PayRoll.objects.create(company=company, created_at=data['created_at'])
-
-        for item in data['payroll_items']:
+        for item in payroll_items:
             if Employee.objects.filter(pk=item['employee'], company=company).exists():
                 item['employee_id'] = item['employee']
                 del item['employee']
@@ -256,7 +264,7 @@ class PayRollCreateAPIView(generics.CreateAPIView):
                     **item,
                 )
             continue
-        return Response({"message": "Payroll Created."}, status=status.HTTP_200_OK)
+        return Response({"message": "Payroll Created."}, status=status.HTTP_201_CREATED)
 
 
 '''
@@ -267,62 +275,28 @@ unlimited objects per page.
 '''
 
 
-class PayRollListAPIView(generics.ListAPIView):
-    permission_classes = (permissions.IsAuthenticated,)
+class PayRollListAPIView(CompanyPermissionsMixin, generics.ListAPIView):
+    permission_classes = (permissions.IsAuthenticated, IsCompanyAccess)
     serializer_class = PayRollListSerializer
     pagination_class = LimitOffsetPagination
     filter_backends = [DjangoFilterBackend, ]
     filterset_class = PayRollFilter
 
     def get_queryset(self):
-        company_id = self.request.GET.get('company_id')
-        emptyPayRollQueryset = PayRoll.objects.none()
-        if not company_id:
-            return emptyPayRollQueryset
-        if not company_id.isdigit():
-            return emptyPayRollQueryset
-        user = self.request.user
-        company = get_company_if_authenticated(user, company_id)
-        if not isinstance(company, Company):
-            return emptyPayRollQueryset
-        return PayRoll.objects.filter(company=company)
+        return PayRoll.objects.all()
 
 
 '''
-This View is use for returning Payroll Items related to any One payroll this view
-also contain pagination and checks for checking if user have perssions to get
-payrolls of employees.
+This View is use for returning Payroll Items related to any One payroll.
 '''
 
 
-class PayRollItemListAPIView(generics.ListAPIView):
-    permission_classes = (permissions.IsAuthenticated,)
-    serializer_class = PayRollItemListSerializer
-    pagination_class = LimitOffsetPagination
-    filter_backends = [DjangoFilterBackend, ]
-    # filterset_class = PayRollFilter
+class PayRollItemListAPIView(CompanyPermissionsMixin, generics.RetrieveAPIView):
+    permission_classes = (permissions.IsAuthenticated, IsCompanyAccess)
+    serializer_class = FetchPayrollSerializer
 
     def get_queryset(self):
-        payroll_id = self.request.GET.get('payroll_id')
-        emptyPayRollItemeQueryset = PayRollItem.objects.none()
-
-        if not payroll_id:
-            return emptyPayRollItemeQueryset
-        if not payroll_id.isdigit():
-            return emptyPayRollItemeQueryset
-
-        if PayRoll.objects.filter(pk=payroll_id).exists():
-            payroll = PayRoll.objects.filter(pk=payroll_id).first()
-        else:
-            return emptyPayRollItemeQueryset
-
-        user = self.request.user
-        company = get_company_if_authenticated(user, payroll.company_id)
-        if not isinstance(company, Company):
-            return emptyPayRollItemeQueryset
-        if PayRoll.objects.filter(pk=payroll_id, company=company).exists():
-            return PayRollItem.objects.filter(payroll_id=payroll_id)
-        return emptyPayRollItemeQueryset
+        return PayRoll.objects.filter(company=self.request.company)
 
 
 '''
@@ -332,20 +306,11 @@ will be deleted.
 '''
 
 
-class PayRollDestroyView(generics.DestroyAPIView):
-    queryset = PayRoll.objects.all()
-    permission_class = (permissions.IsAuthenticated,)
+class PayRollDestroyView(CompanyPermissionsMixin, generics.DestroyAPIView):
+    permission_classes = (permissions.IsAuthenticated, IsCompanyAccess)
 
-    def perform_destroy(self, instance):
-        user = self.request.user
-        response = {"message": "you are an unauthorized user to perform this action"}
-        company = get_company_if_authenticated(user, instance.company_id)
-        if not isinstance(company, Company):
-            return response
-        if PayRoll.objects.filter(pk=instance.id, company=company).exists():
-            super().perform_destroy(instance)
-        else:
-            return response
+    def get_queryset(self):
+        return PayRoll.objects.filter(company=self.request.company)
 
 
 '''
@@ -353,21 +318,15 @@ Same as before but here we are deleting payroll item after veryfying the user pe
 '''
 
 
-class PayRollItemDestroyView(generics.DestroyAPIView):
+class PayRollItemDestroyView(CompanyPermissionsMixin, generics.DestroyAPIView):
     queryset = PayRollItem.objects.all()
-    permission_class = (permissions.IsAuthenticated,)
+    permission_classes = (permissions.IsAuthenticated, IsCompanyAccess)
 
     def perform_destroy(self, instance):
         payroll = PayRoll.objects.filter(pk=instance.payroll_id).first()
-        user = self.request.user
-        response = {"message": "you are an unauthorized user to perform this action"}
-        company = get_company_if_authenticated(user, payroll.company_id)
-        if not isinstance(company, Company):
-            return response
+        company = self.request.company
         if PayRoll.objects.filter(pk=payroll.id, company=company).exists():
             super().perform_destroy(instance)
-        else:
-            return response
 
 
 '''
@@ -377,35 +336,37 @@ or not if yess then it simply update all parameters related to the payroll item.
 '''
 
 
-class PayRollItemUpdateAPIView(generics.UpdateAPIView):
-    permission_classes = (permissions.IsAuthenticated,)
-    serializer_class = PayRollItemUpdateSerializer
+class PayRollItemUpdateAPIView(CompanyPermissionsMixin, generics.UpdateAPIView):
+    permission_classes = (permissions.IsAuthenticated, IsCompanyAccess)
+    serializer_class = PayRollUpdateSerializer
 
-    def update(self, request, payroll_id, partial=True):
-        if PayRollItem.objects.filter(pk=payroll_id).exists():
-            payrollItem = PayRollItem.objects.filter(pk=payroll_id).first()
-            payroll = PayRoll.objects.filter(pk=payrollItem.payroll_id).first()
-            user = self.request.user
+    def update(self, request, partial=True):
+        company = self.request.company
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        company = self.request.company
+        payroll_items = data['payroll_items']
+        del data['payroll_items']
+        if not PayRoll.objects.filter(pk=data['id'], company=company).exists():
+            return Response({"message": "Payroll not found"}, status=status.HTTP_404_NOT_FOUND)
+        payroll = PayRoll(pk=data['id'], company=company, **data)
+        payroll.save()
 
-            company = get_company_if_authenticated(user, payroll.company_id)
-            if not isinstance(company, Company):
-                return Response(status=status.HTTP_403_FORBIDDEN)
-
-            serializer = PayRollItemUpdateSerializer(data=request.data)
-            serializer.is_valid(raise_exception=True)
-            data = serializer.validated_data
-            payrollItem.gross = data['gross']
-            payrollItem.bonus = data['bonus']
-            payrollItem.total_gross = data['total_gross']
-            payrollItem.save()
-            return Response({"message": "Paroll of {} has been updated".format(
-                payrollItem.employee.name)}, status=status.HTTP_200_OK)
-        return Response({"message": "Payroll not found"}, status=status.HTTP_404_NOT_FOUND)
+        for item in payroll_items:
+            if Employee.objects.filter(pk=item['employee'], company=company).exists() and \
+                    PayRollItem.objects.filter(pk=item['id'], payroll=payroll).exists():
+                item['employee_id'] = item['employee']
+                del item['employee']
+                payrollItem = PayRollItem(pk=item['id'], payroll=payroll, **item,)
+                payrollItem.save()
+            continue
+        return Response({"message": "Payroll Updated."}, status=status.HTTP_200_OK)
 
 
 # ---------------------- Starting Crud for Contact ---------------------------#
-class ContactCreateAPIView(generics.CreateAPIView):
-    permission_classes = [permissions.IsAuthenticated, ]
+class ContactCreateAPIView(CompanyPermissionsMixin, generics.CreateAPIView):
+    permission_classes = [permissions.IsAuthenticated, IsCompanyAccess]
     serializer_class = ContactSerializer
 
     def post(self, request, *args, **kwargs):
@@ -494,7 +455,7 @@ Contact delete API View
 
 
 class ContactsdeleteAPIView(generics.DestroyAPIView):
-    permission_class = (permissions.IsAuthenticated,)
+    permission_classes = (permissions.IsAuthenticated,)
 
     def delete(self, request, format=None):
         serializer = ContactDeleteSerializer(data=self.request.data)
@@ -515,3 +476,34 @@ class ContactsdeleteAPIView(generics.DestroyAPIView):
                 continue
             return Response(status=status.HTTP_204_NO_CONTENT)
         return Response(status=status.HTTP_406_NOT_ACCEPTABLE)
+
+
+# ---------------------------------------------------------------------------------#
+# ---------------------- Views for Lookups Module ---------------------------------#
+# ---------------------------------------------------------------------------------#
+class LookupTypeListAPIView(generics.ListAPIView):
+    permission_classes = (permissions.AllowAny,)
+    serializer_class = LookupTypeSerializer
+    queryset = LookupType.objects.all()
+
+
+class LookupListAPIView(generics.ListAPIView):
+    permission_classes = (permissions.AllowAny,)
+    serializer_class = LookupSerializer
+
+    def get_queryset(self):
+        return LookupName.objects.filter(lookup_type__lookup_type=self.kwargs['lookup'])
+
+
+class TaxListAPIView(generics.ListAPIView):
+    permission_classes = (permissions.AllowAny,)
+    serializer_class = TaxSerializer
+
+    def get_queryset(self):
+        if "client" == self.kwargs['lookup'].lower() or "debitor" == self.kwargs['lookup'].lower():
+            return Tax.objects.filter(lookup_name__lookup_name=self.kwargs['lookup'].lower()).values('id', 'vat', 'equiv')
+        if "provider" == self.kwargs['lookup'].lower() or "creditor" == self.kwargs['lookup'].lower():
+            return Tax.objects.filter(lookup_name__lookup_name=self.kwargs['lookup'].lower()).values('id', 'vat', 'ret')
+        if "payrolltax" == self.kwargs['lookup'].lower():
+            return Tax.objects.filter(lookup_name__lookup_name=self.kwargs['lookup'].lower()).values('id', 'irfp')
+        return Tax.objects.all()
