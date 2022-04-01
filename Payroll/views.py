@@ -53,7 +53,7 @@ class AddTeamView(CompanyPermissionsMixin, generics.CreateAPIView):
             team = Team(company=company, **data)
             team.save()
             return Response({'message': "Team {} created against {}.".format(
-                team.team_name, company.name)}, status=status.HTTP_201_CREATED)
+                team.team_name, company.name), "team": TeamSerializer(team).data}, status=status.HTTP_201_CREATED)
         return Response(
             {"message": "Enter Unique Team name"},
             status=status.HTTP_205_RESET_CONTENT)
@@ -89,7 +89,10 @@ class UpdateTeamView(CompanyPermissionsMixin, generics.UpdateAPIView):
                 return Response({"messgae": "Team name must be unique"}, status=status.HTTP_205_RESET_CONTENT)
         team = Team(pk=team.id, company=company, **data)
         team.save()
-        return Response({'message': "Team {} updated".format(team.team_name)}, status=status.HTTP_200_OK)
+        return Response(
+            {'message': "Team {} updated".format(team.team_name),
+                "team": TeamSerializer(team).data}, status=status.HTTP_200_OK
+                )
 
 
 '''
@@ -154,8 +157,11 @@ class EmployeeCreateAPIView(CompanyPermissionsMixin, generics.CreateAPIView):
         del data["team"]
         employee = Employee(company=company, team_id=team_id, **data)
         employee.save()
+
         return Response({'message': "Employee {} created against {}.".format(
-            employee.name, company.name)}, status=status.HTTP_201_CREATED)
+            employee.name, company.name), "employee": ListEmployeeSerializer(employee).data},
+            status=status.HTTP_201_CREATED
+            )
 
 
 '''
@@ -170,7 +176,7 @@ and Filters to filter specific data.
 
 
 class EmployeeListAPIView(CompanyPermissionsMixin, generics.ListAPIView):
-    permission_classes = [permissions.IsAuthenticated, ]
+    permission_classes = [permissions.IsAuthenticated, IsCompanyAccess]
     serializer_class = ListEmployeeSerializer
     pagination_class = LimitOffsetPagination
     filter_backends = [DjangoFilterBackend, OrderingFilter]
@@ -229,9 +235,8 @@ class EmployeeDestroyView(CompanyPermissionsMixin, generics.DestroyAPIView):
     def get_queryset(self):
         return Employee.objects.filter(company=self.request.company)
 
+
 # ---------------------- Starting Crud for PayRoll ---------------------------#
-
-
 '''
 In this View first of all view are validating the payload through calling
 the serializer and then after that we are calling method to check if current
@@ -264,7 +269,7 @@ class PayRollCreateAPIView(CompanyPermissionsMixin, generics.CreateAPIView):
                     **item,
                     )
             continue
-        return Response({"message": "Payroll Created."}, status=status.HTTP_201_CREATED)
+        return Response({"payroll": PayRollListSerializer(payroll).data}, status=status.HTTP_201_CREATED)
 
 
 '''
@@ -300,6 +305,44 @@ class PayRollItemListAPIView(CompanyPermissionsMixin, generics.RetrieveAPIView):
 
 
 '''
+Here updating payroll Item by firstly checking if payroll exists() then get pay
+roll and then check if payroll company permissions are assigned to current user
+or not if yess then it simply update all parameters related to the payroll item.
+'''
+
+
+class PayRollItemUpdateAPIView(CompanyPermissionsMixin, generics.UpdateAPIView):
+    permission_classes = (permissions.IsAuthenticated, IsCompanyAccess)
+    serializer_class = PayRollUpdateSerializer
+
+    def update(self, request, payroll_id, partial=True):
+        company = self.request.company
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        company = self.request.company
+        payroll_items = data['payroll_items']
+        del data['payroll_items']
+        if not PayRoll.objects.filter(pk=payroll_id, company=company).exists():
+            return Response({"message": "Payroll not found"}, status=status.HTTP_404_NOT_FOUND)
+        payroll = PayRoll(pk=payroll_id, company=company, **data)
+        payroll.save()
+
+        for item in payroll_items:
+            if Employee.objects.filter(pk=item['employee'], company=company).exists() and \
+                    PayRollItem.objects.filter(pk=item['id'], payroll=payroll).exists():
+                item['employee_id'] = item['employee']
+                del item['employee']
+                payrollItem = PayRollItem(pk=item['id'], payroll=payroll, **item,)
+                payrollItem.save()
+            continue
+        return Response(
+            {"message": "Payroll Updated.", "payroll": PayRollListSerializer(payroll).data},
+            status=status.HTTP_200_OK
+            )
+
+
+'''
 This View get an id of payroll in the URL and check if user have permissions
 to delete that payroll. If yess then payroll and related all payroll Items
 will be deleted.
@@ -327,41 +370,6 @@ class PayRollItemDestroyView(CompanyPermissionsMixin, generics.DestroyAPIView):
         company = self.request.company
         if PayRoll.objects.filter(pk=payroll.id, company=company).exists():
             super().perform_destroy(instance)
-
-
-'''
-Here updating payroll Item by firstly checking if payroll exists() then get pay
-roll and then check if payroll company permissions are assigned to current user
-or not if yess then it simply update all parameters related to the payroll item.
-'''
-
-
-class PayRollItemUpdateAPIView(CompanyPermissionsMixin, generics.UpdateAPIView):
-    permission_classes = (permissions.IsAuthenticated, IsCompanyAccess)
-    serializer_class = PayRollUpdateSerializer
-
-    def update(self, request, partial=True):
-        company = self.request.company
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        data = serializer.validated_data
-        company = self.request.company
-        payroll_items = data['payroll_items']
-        del data['payroll_items']
-        if not PayRoll.objects.filter(pk=data['id'], company=company).exists():
-            return Response({"message": "Payroll not found"}, status=status.HTTP_404_NOT_FOUND)
-        payroll = PayRoll(pk=data['id'], company=company, **data)
-        payroll.save()
-
-        for item in payroll_items:
-            if Employee.objects.filter(pk=item['employee'], company=company).exists() and \
-                    PayRollItem.objects.filter(pk=item['id'], payroll=payroll).exists():
-                item['employee_id'] = item['employee']
-                del item['employee']
-                payrollItem = PayRollItem(pk=item['id'], payroll=payroll, **item,)
-                payrollItem.save()
-            continue
-        return Response({"message": "Payroll Updated."}, status=status.HTTP_200_OK)
 
 
 # ---------------------- Starting Crud for Contact ---------------------------#

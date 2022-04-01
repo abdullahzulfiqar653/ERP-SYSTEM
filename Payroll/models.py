@@ -32,7 +32,7 @@ class Tax(models.Model):  # Ret is a tax type like VAT
     irfp = models.DecimalField(max_digits=5, decimal_places=3, default=0.0)
 
     def __str__(self):
-        return str(self.lookup_name)
+        return str(self.id)
 
 
 class AccountType(models.Model):  # This relate to chart of account.
@@ -103,6 +103,9 @@ class Employee(models.Model):
         LookupName, on_delete=models.SET_NULL,
         related_name='country_lookup_name', null=True, blank=True)
     note = models.TextField(null=True, blank=True)
+
+    def __str__(self):
+        return str(self.id) + "-   -" + self.name
 
 
 class PayRoll(models.Model):

@@ -1,15 +1,15 @@
 from django.contrib import admin
 from .models import (
-    Team,
-    Employee,
-    PayRoll,
-    PayRollItem,
-    Contact,
-    LookupType,
-    LookupName,
-    Tax,
-    Payment_Day,
-    AccountType,
+        Team,
+        Employee,
+        PayRoll,
+        PayRollItem,
+        Contact,
+        LookupType,
+        LookupName,
+        Tax,
+        Payment_Day,
+        AccountType,
     )
 # Register your models here.
 
@@ -36,10 +36,19 @@ class TaxAdmin(admin.ModelAdmin):
     list_display = ['id', 'lookup_name', 'vat', 'ret', 'equiv', 'irfp']
 
 
+class PayRollItemAdmin(admin.TabularInline):
+    model = PayRollItem
+    extra = 0
+
+
+class PayRollAdmin(admin.ModelAdmin):
+    inlines = [PayRollItemAdmin, ]
+    list_display = ['id', 'created_at']
+
+
 admin.site.register(Team, TeamAdmin)
 admin.site.register(Employee, EmployeeAdmin)
-admin.site.register(PayRollItem)
-admin.site.register(PayRoll)
+admin.site.register(PayRoll, PayRollAdmin)
 admin.site.register(Contact)
 
 admin.site.register(LookupName)
