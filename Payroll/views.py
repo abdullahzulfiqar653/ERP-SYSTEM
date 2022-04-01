@@ -200,8 +200,8 @@ class EmployeeUpdateView(CompanyPermissionsMixin, generics.UpdateAPIView):
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
         company = self.request.company
-        if not (Employee.objects.filter(pk=emp_id, company=company).exists()
-                and Team.objects.filter(pk=data["team"], company=company).exists()):
+        if not (Employee.objects.filter(pk=emp_id, company=company).exists() and
+                Team.objects.filter(pk=data["team"], company=company).exists()):
             return Response(
                 {'message': "team or employee not found"}, status=status.HTTP_404_NOT_FOUND)
 
