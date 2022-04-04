@@ -164,9 +164,8 @@ class ContactSerializer(serializers.ModelSerializer):
         model = Contact
         fields = [
             'id',
-            'type',
+            'contact_type',
             'name',
-            'account_id',
             'nif',
             'tax_address',
             'tax_postcode',
@@ -178,9 +177,34 @@ class ContactSerializer(serializers.ModelSerializer):
             'shipping_country',
             'account_type',
             'vat',
-            'ret_or_re',
+            'ret_or_equiv',
             'payment_method',
-            'date',
+            'payment_extension',
+        ]
+
+
+class ContactUpdateSerializer(serializers.ModelSerializer):
+    nif = serializers.CharField(validators=[],)
+
+    class Meta:
+        model = Contact
+        fields = [
+            'contact_type',
+            'name',
+            'nif',
+            'tax_address',
+            'tax_postcode',
+            'tax_province',
+            'tax_country',
+            'shipping_address',
+            'shipping_postcode',
+            'shipping_province',
+            'shipping_country',
+            'account_type',
+            'vat',
+            'ret_or_equiv',
+            'payment_method',
+            'payment_extension',
         ]
 
 
