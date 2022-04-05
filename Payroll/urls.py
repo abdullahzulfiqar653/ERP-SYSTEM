@@ -4,6 +4,8 @@ from .views import (
     TeamListView,
     UpdateTeamView,
     TeamDestroyView,
+    TeamRetrieveAPIView,
+
     EmployeeUpdateView,
     EmployeeCreateAPIView,
     EmployeeListAPIView,
@@ -11,7 +13,7 @@ from .views import (
 
     PayRollCreateAPIView,
     PayRollListAPIView,
-    PayRollItemListAPIView,
+    PayRollRetrieveAPIView,
     PayRollDestroyView,
     PayRollItemDestroyView,
     PayRollItemUpdateAPIView,
@@ -29,6 +31,7 @@ from .views import (
 urlpatterns = [
     path('team/add/', AddTeamView.as_view()),
     path('teams/', TeamListView.as_view()),
+    path('team/<pk>/', TeamRetrieveAPIView.as_view()),
     path('team/update/<int:team_id>/', UpdateTeamView.as_view()),
     path('team/destroy/<pk>/', TeamDestroyView.as_view()),
 
@@ -40,7 +43,7 @@ urlpatterns = [
     path('create/', PayRollCreateAPIView.as_view()),
     path('items/update/<int:payroll_id>/', PayRollItemUpdateAPIView.as_view()),
     path('all/', PayRollListAPIView.as_view()),
-    path('items/<pk>/', PayRollItemListAPIView.as_view()),
+    path('items/<pk>/', PayRollRetrieveAPIView.as_view()),
     path('destroy/<pk>/', PayRollDestroyView.as_view()),
     path('item/destroy/<pk>/', PayRollItemDestroyView.as_view()),
 

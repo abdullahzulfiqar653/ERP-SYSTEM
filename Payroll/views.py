@@ -4,7 +4,7 @@ from rest_framework import permissions
 from rest_framework.response import Response
 from rest_framework.filters import OrderingFilter
 from django_filters.rest_framework import DjangoFilterBackend
-from .utils import get_company_if_authenticated
+from .utils import get_contact_id
 from .serializers import (
     TeamSerializer,
     AddEmployeeSerializer,
@@ -14,6 +14,7 @@ from .serializers import (
     PayRollListSerializer,
     PayRollUpdateSerializer,
     ContactSerializer,
+    ContactUpdateSerializer,
     ContactDeleteSerializer,
     LookupTypeSerializer,
     LookupSerializer,
@@ -21,7 +22,6 @@ from .serializers import (
 )
 from .models import Tax, Team, Employee, PayRoll, PayRollItem, Contact, LookupType, LookupName
 from utils.pagination import LimitOffsetPagination
-from Core.models import Company
 from .filters import TeamFilter, EmployeeFilter, PayRollFilter, ContactFilter
 from Middleware.CustomMixin import CompanyPermissionsMixin
 from Middleware.permissions import IsCompanyAccess
@@ -92,7 +92,7 @@ class UpdateTeamView(CompanyPermissionsMixin, generics.UpdateAPIView):
         return Response(
             {'message': "Team {} updated".format(team.team_name),
                 "team": TeamSerializer(team).data}, status=status.HTTP_200_OK
-                )
+        )
 
 
 '''
@@ -113,6 +113,14 @@ class TeamListView(CompanyPermissionsMixin, generics.ListAPIView):
     def get_queryset(self):
         company = self.request.company
         return Team.objects.filter(company=company)
+
+
+class TeamRetrieveAPIView(CompanyPermissionsMixin, generics.RetrieveAPIView):
+    permission_classes = (permissions.IsAuthenticated, IsCompanyAccess)
+    serializer_class = TeamSerializer
+
+    def get_queryset(self):
+        return Team.objects.filter(company=self.request.company)
 
 
 '''
@@ -161,7 +169,7 @@ class EmployeeCreateAPIView(CompanyPermissionsMixin, generics.CreateAPIView):
         return Response({'message': "Employee {} created against {}.".format(
             employee.name, company.name), "employee": ListEmployeeSerializer(employee).data},
             status=status.HTTP_201_CREATED
-            )
+        )
 
 
 '''
@@ -267,7 +275,7 @@ class PayRollCreateAPIView(CompanyPermissionsMixin, generics.CreateAPIView):
                 PayRollItem.objects.create(
                     payroll=payroll,
                     **item,
-                    )
+                )
             continue
         return Response({"payroll": PayRollListSerializer(payroll).data}, status=status.HTTP_201_CREATED)
 
@@ -296,7 +304,7 @@ This View is use for returning Payroll Items related to any One payroll.
 '''
 
 
-class PayRollItemListAPIView(CompanyPermissionsMixin, generics.RetrieveAPIView):
+class PayRollRetrieveAPIView(CompanyPermissionsMixin, generics.RetrieveAPIView):
     permission_classes = (permissions.IsAuthenticated, IsCompanyAccess)
     serializer_class = FetchPayrollSerializer
 
@@ -339,7 +347,7 @@ class PayRollItemUpdateAPIView(CompanyPermissionsMixin, generics.UpdateAPIView):
         return Response(
             {"message": "Payroll Updated.", "payroll": PayRollListSerializer(payroll).data},
             status=status.HTTP_200_OK
-            )
+        )
 
 
 '''
@@ -378,14 +386,11 @@ class ContactCreateAPIView(CompanyPermissionsMixin, generics.CreateAPIView):
     serializer_class = ContactSerializer
 
     def post(self, request, *args, **kwargs):
-        company_id = self.request.GET.get('company_id')
-        serializer = ContactSerializer(data=request.data)
+        company = self.request.company
+        serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
-        user = self.request.user
-        company = get_company_if_authenticated(user, company_id)
-        if not isinstance(company, Company):
-            return Response({"message": "Company not found"}, status=status.HTTP_404_NOT_FOUND)
+        data['contact_id'] = get_contact_id(data['contact_type'])
         contact = Contact(company=company, **data)
         contact.save()
         return Response({"message": "Contact Created."}, status=status.HTTP_201_CREATED)
@@ -401,34 +406,26 @@ class ContactUpdateAPIView(generics.UpdateAPIView):
     serializer_class = ContactSerializer
 
     def update(self, request, contact_id, partial=True):
-        company_id = self.request.GET.get('company_id')
-        # contact_id = self.request.GET.get('contact_id')
-        user = self.request.user
-        company = get_company_if_authenticated(user, company_id)
-        if not isinstance(company, Company):
-            return Response({"message": "Company not found"}, status=status.HTTP_404_NOT_FOUND)
-        serializer = ContactSerializer(data=request.data)
+        company = self.request.company
+        serializer = ContactUpdateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
+
         if Contact.objects.filter(pk=contact_id, company=company).exists():
-            contact = Contact.objects.filter(pk=contact_id, company=company).first()
-            contact.type = data["type"]
-            contact.name = data["name"]
-            contact.account_id = data["account_id"]
-            contact.nif = data["nif"]
-            contact.tax_address = data["tax_address"]
-            contact.tax_postcode = data["tax_postcode"]
-            contact.tax_province = data["tax_province"]
-            contact.tax_country = data["tax_country"]
-            contact.shipping_address = data["shipping_address"]
-            contact.shipping_postcode = data["shipping_postcode"]
-            contact.shipping_province = data["shipping_province"]
-            contact.shipping_country = data["shipping_country"]
-            contact.account_type = data["account_type"]
-            contact.vat = data["vat"]
-            contact.ret_or_re = data["ret_or_re"]
-            contact.payment_method = data["payment_method"]
-            contact.date = data["date"]
+            oldContact = Contact.objects.filter(pk=contact_id, company=company).first()
+            if not oldContact.contact_type.id == data['contact_type'].id:
+                if Contact.objects.filter(nif=data['nif']).exists():
+                    return Response({"message": "nif must be unique"}, status=status.HTTP_205_RESET_CONTENT)
+                data['contact_id'] = get_contact_id(data['contact_type'])
+                contact = Contact(company=company, **data)
+                contact.save()
+                oldContact.delete()
+                return Response({"message": "Contact Updated"}, status=status.HTTP_200_OK)
+            if not oldContact.nif == data['nif']:  # checking if nif is same as previous nif
+                # if nif is new then checking if no other employe have the same nif
+                if Employee.objects.filter(nif=data['nif']).exists():
+                    return Response({"message": "nif must be unique"}, status=status.HTTP_205_RESET_CONTENT)
+            contact = Contact(pk=contact_id, company=company, **data)
             contact.save()
             return Response({"message": "Contact Updated"}, status=status.HTTP_200_OK)
         else:
@@ -440,21 +437,15 @@ update
 '''
 
 
-class ContactListAPIView(generics.ListAPIView):
-    permission_classes = (permissions.IsAuthenticated,)
+class ContactListAPIView(CompanyPermissionsMixin, generics.ListAPIView):
+    permission_classes = (permissions.IsAuthenticated, IsCompanyAccess)
     serializer_class = ContactSerializer
     pagination_class = LimitOffsetPagination
     filter_backends = [DjangoFilterBackend, ]
     filterset_class = ContactFilter
 
     def get_queryset(self):
-        company_id = self.request.GET.get('company_id')
-        emptyContactQueryset = Contact.objects.none()
-        user = self.request.user
-        company = get_company_if_authenticated(user, company_id)
-        if not isinstance(company, Company):
-            return emptyContactQueryset
-        return Contact.objects.filter(company=company)
+        return Contact.objects.filter(company=self.request.company)
 
 
 '''
@@ -462,28 +453,21 @@ Contact delete API View
 '''
 
 
-class ContactsdeleteAPIView(generics.DestroyAPIView):
-    permission_classes = (permissions.IsAuthenticated,)
+class ContactsdeleteAPIView(CompanyPermissionsMixin, generics.DestroyAPIView):
+    permission_classes = (permissions.IsAuthenticated, IsCompanyAccess)
+    serializer_class = ContactDeleteSerializer
 
     def delete(self, request, format=None):
-        serializer = ContactDeleteSerializer(data=self.request.data)
+        serializer = self.get_serializer(data=self.request.data)
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
 
-        if data['contact_list']:
-            company_id = self.request.GET.get('company_id')
-            user = self.request.user
-            company = get_company_if_authenticated(user, company_id)
-            if not isinstance(company, Company):
-                return Response({"message": "Company not found"}, status=status.HTTP_404_NOT_FOUND)
-
-            for id in data['contact_list']:
-                if Contact.objects.filter(pk=id).filter(company=company).exists():
-                    instance = Contact.objects.get(pk=id)
-                    instance.delete()
-                continue
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        return Response(status=status.HTTP_406_NOT_ACCEPTABLE)
+        for id in data['contact_list']:
+            if Contact.objects.filter(pk=id).filter(company=self.request.company).exists():
+                instance = Contact.objects.get(pk=id)
+                instance.delete()
+            continue
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 # ---------------------------------------------------------------------------------#

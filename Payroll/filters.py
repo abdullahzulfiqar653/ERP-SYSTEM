@@ -59,7 +59,7 @@ class ContactFilter(FilterSet):
         fields = {
             "contact_type__lookup_name": ['iexact'],
             "name": ['iexact'],
-            "account_id": ['exact'],
+            "contact_id": ['exact'],
             "nif": ['exact'],
 
             "tax_address": ['icontains'],
@@ -72,9 +72,9 @@ class ContactFilter(FilterSet):
             "shipping_province": ['iexact'],
             "shipping_country__lookup_name": ['iexact'],
 
-            "account_type__name": ['iexact'],
+            "account_type__english_name": ['iexact'],
             "vat": ['exact'],
-            "ret_or_re": ['exact'],
+            "ret_or_equiv": ['exact'],
             "payment_method__lookup_name": ['iexact'],
             "payment_extension__day": ['iexact'],
         }
