@@ -70,7 +70,7 @@ class UpdateTeamView(CompanyPermissionsMixin, generics.UpdateAPIView):
     permission_classes = (permissions.IsAuthenticated, IsCompanyAccess)
     serializer_class = TeamSerializer
 
-    def update(self, request, team_id):
+    def update(self, request, team_id, partial=True):
         serializer = TeamSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
@@ -113,6 +113,11 @@ class TeamListView(CompanyPermissionsMixin, generics.ListAPIView):
     def get_queryset(self):
         company = self.request.company
         return Team.objects.filter(company=company)
+
+
+'''
+This View just recieving an id of team and returning its data
+'''
 
 
 class TeamRetrieveAPIView(CompanyPermissionsMixin, generics.RetrieveAPIView):
