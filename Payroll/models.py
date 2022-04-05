@@ -39,11 +39,16 @@ class AccountType(models.Model):  # This relate to chart of account.
     lookup_name = models.ForeignKey(
         LookupName, on_delete=models.SET_NULL,
         related_name='account_type_lookup_name', null=True)
-    account_id = models.CharField(max_length=12, unique=True)
-    name = models.CharField(max_length=256, unique=True)
+    account_number = models.CharField(max_length=12, unique=True)
+    english_name = models.CharField(max_length=256, unique=True)
+    chart = models.CharField(max_length=128,)
+    category = models.ForeignKey(
+        LookupName, on_delete=models.SET_NULL,
+        related_name='account_category_lookup_name', null=True)
+    financial_statement = models.CharField(max_length=128, )
 
     def __str__(self):
-        return str(self.lookup_name) + " - Ret:" + str(self.ret) + " -Equiv:" + str(self.equiv) + " -Vat:" + str(self.vat)
+        return str(self.english_name)
 
 
 class Payment_Day(models.Model):  # This relate to chart of account.
@@ -51,7 +56,7 @@ class Payment_Day(models.Model):  # This relate to chart of account.
         LookupType, on_delete=models.CASCADE,
         related_name='payment_day_lookup_type')
     name = models.CharField(max_length=256, unique=True)
-    day = models.PositiveIntegerField()
+    day = models.PositiveIntegerField(unique=True)
 
     def __str__(self):
         return str(self.name)
@@ -155,7 +160,7 @@ class Contact(models.Model):
         related_name='contact_type_lookup_name')  # option field
     name = models.CharField(max_length=255)
     # auto fill according to the type of account_type in PaymentSection
-    account_id = models.CharField(max_length=12)
+    contact_id = models.CharField(max_length=12)
     nif = models.CharField(max_length=13, unique=True)
     # Client address of tax
     tax_address = models.TextField()
@@ -179,7 +184,7 @@ class Contact(models.Model):
         Tax, on_delete=models.SET_NULL,
         related_name='vat_tax', null=True)  # option field
     # option field
-    ret_or_re = models.ForeignKey(
+    ret_or_equiv = models.ForeignKey(
         Tax, on_delete=models.SET_NULL,
         related_name='ret_or_re_tax', null=True)
     payment_method = models.ForeignKey(
