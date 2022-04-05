@@ -115,6 +115,14 @@ class TeamListView(CompanyPermissionsMixin, generics.ListAPIView):
         return Team.objects.filter(company=company)
 
 
+class TeamRetrieveAPIView(CompanyPermissionsMixin, generics.RetrieveAPIView):
+    permission_classes = (permissions.IsAuthenticated, IsCompanyAccess)
+    serializer_class = TeamSerializer
+
+    def get_queryset(self):
+        return Team.objects.filter(company=self.request.company)
+
+
 '''
 This View have an id of Team in the URL params by that it fetch the
 instance of team and after checking some permissions it destroy that instance
@@ -296,7 +304,7 @@ This View is use for returning Payroll Items related to any One payroll.
 '''
 
 
-class PayRollItemListAPIView(CompanyPermissionsMixin, generics.RetrieveAPIView):
+class PayRollRetrieveAPIView(CompanyPermissionsMixin, generics.RetrieveAPIView):
     permission_classes = (permissions.IsAuthenticated, IsCompanyAccess)
     serializer_class = FetchPayrollSerializer
 
