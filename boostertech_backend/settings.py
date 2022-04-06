@@ -41,6 +41,8 @@ INSTALLED_APPS = [
     'Middleware',
     'Core',
     'Payroll',
+    'Contact',
+    'Lookup',
 ]
 
 MIDDLEWARE = [
