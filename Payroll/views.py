@@ -7,12 +7,15 @@ from django_filters.rest_framework import DjangoFilterBackend
 from .utils import get_contact_id
 from .serializers import (
     TeamSerializer,
+    TeamsDeleteSerializer,
     AddEmployeeSerializer,
     ListEmployeeSerializer,
+    EmployeesDeleteSerializer,
     PayRollCreateSerializer,
     FetchPayrollSerializer,
     PayRollListSerializer,
     PayRollUpdateSerializer,
+    PayrollsDeleteSerializer,
     ContactSerializer,
     ContactUpdateSerializer,
     ContactDeleteSerializer,
@@ -129,16 +132,26 @@ class TeamRetrieveAPIView(CompanyPermissionsMixin, generics.RetrieveAPIView):
 
 
 '''
-This View have an id of Team in the URL params by that it fetch the
+This View have an list of Ids of Team in payload by that it fetch the
 instance of team and after checking some permissions it destroy that instance
 '''
 
 
-class TeamDestroyView(CompanyPermissionsMixin, generics.DestroyAPIView):
+class TeamsDeleteAPIView(CompanyPermissionsMixin, generics.DestroyAPIView):
     permission_classes = (permissions.IsAuthenticated, IsCompanyAccess)
+    serializer_class = TeamsDeleteSerializer
 
-    def get_queryset(self):
-        return Team.objects.filter(company=self.request.company)
+    def delete(self, request, format=None):
+        serializer = self.get_serializer(data=self.request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        for id in data['teams_list']:
+            if Team.objects.filter(pk=id).filter(company=self.request.company).exists():
+                instance = Team.objects.get(pk=id)
+                instance.delete()
+            continue
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 # ---------------------- Starting Crud for Employee ---------------------------#
@@ -237,16 +250,38 @@ class EmployeeUpdateView(CompanyPermissionsMixin, generics.UpdateAPIView):
 
 
 '''
-Checking if user have permissions to the requested company and
-also employee related to that companny then employee will be deleted
+This View just recieving an id of Employee and returning its data
 '''
 
 
-class EmployeeDestroyView(CompanyPermissionsMixin, generics.DestroyAPIView):
+class EmployeeRetrieveAPIView(CompanyPermissionsMixin, generics.RetrieveAPIView):
     permission_classes = (permissions.IsAuthenticated, IsCompanyAccess)
+    serializer_class = ListEmployeeSerializer
 
     def get_queryset(self):
         return Employee.objects.filter(company=self.request.company)
+
+
+'''
+Checking if employee related to current companny then employee will be deleted
+'''
+
+
+class EmployeesDeleteAPIView(CompanyPermissionsMixin, generics.DestroyAPIView):
+    permission_classes = (permissions.IsAuthenticated, IsCompanyAccess)
+    serializer_class = EmployeesDeleteSerializer
+
+    def delete(self, request, format=None):
+        serializer = self.get_serializer(data=self.request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        for id in data['employees_list']:
+            if Employee.objects.filter(pk=id).filter(company=self.request.company).exists():
+                instance = Employee.objects.get(pk=id)
+                instance.delete()
+            continue
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 # ---------------------- Starting Crud for PayRoll ---------------------------#
@@ -362,11 +397,21 @@ will be deleted.
 '''
 
 
-class PayRollDestroyView(CompanyPermissionsMixin, generics.DestroyAPIView):
+class PayRollsDeleteAPIView(CompanyPermissionsMixin, generics.DestroyAPIView):
     permission_classes = (permissions.IsAuthenticated, IsCompanyAccess)
+    serializer_class = PayrollsDeleteSerializer
 
-    def get_queryset(self):
-        return PayRoll.objects.filter(company=self.request.company)
+    def delete(self, request, format=None):
+        serializer = self.get_serializer(data=self.request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        for id in data['payrolls_list']:
+            if PayRoll.objects.filter(pk=id).filter(company=self.request.company).exists():
+                instance = PayRoll.objects.get(pk=id)
+                instance.delete()
+            continue
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 '''

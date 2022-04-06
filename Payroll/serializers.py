@@ -20,6 +20,16 @@ class TeamSerializer(serializers.ModelSerializer):
         ]
 
 
+class TeamsDeleteSerializer(serializers.ModelSerializer):
+    teams_list = serializers.ListField(child=serializers.IntegerField(required=True))
+
+    class Meta:
+        model = Team
+        fields = [
+            'teams_list'
+        ]
+
+
 # ---------------------- Serializers for Employee Views ---------------------------#
 class AddEmployeeSerializer(serializers.ModelSerializer):
     team = serializers.IntegerField(required=True)
@@ -45,9 +55,21 @@ class AddEmployeeSerializer(serializers.ModelSerializer):
 
 
 class ListEmployeeSerializer(serializers.ModelSerializer):
+    country_name = serializers.CharField(read_only=True, source='country.lookup_name')
+
     class Meta:
         model = Employee
         exclude = ['company', ]
+
+
+class EmployeesDeleteSerializer(serializers.ModelSerializer):
+    employees_list = serializers.ListField(child=serializers.IntegerField(required=True))
+
+    class Meta:
+        model = Employee
+        fields = [
+            'employees_list'
+        ]
 
 
 # ---------------------- Serializers for Payroll Views ---------------------------#
@@ -141,6 +163,16 @@ class PayrollRelatedPayRollItemListSerializer(serializers.ModelSerializer):
     class Meta:
         model = PayRollItem
         exclude = ['payroll', ]
+
+
+class PayrollsDeleteSerializer(serializers.ModelSerializer):
+    payrolls_list = serializers.ListField(child=serializers.IntegerField(required=True))
+
+    class Meta:
+        model = PayRoll
+        fields = [
+            'payrolls_list'
+        ]
 
 
 # This Serializer is to return payroll instance including the related payroll Items.
