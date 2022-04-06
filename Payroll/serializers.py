@@ -4,6 +4,8 @@ from .models import PayRoll, PayRollItem, Team, Employee, Contact, LookupType, L
 
 # ---------------------- Serializers for Team Views ---------------------------#
 class TeamSerializer(serializers.ModelSerializer):
+    country_name = serializers.CharField(read_only=True, source='country.lookup_name')
+
     class Meta:
         model = Team
         fields = [
@@ -13,6 +15,7 @@ class TeamSerializer(serializers.ModelSerializer):
             'postcode',
             'province',
             'country',
+            'country_name',
             'note',
         ]
 
