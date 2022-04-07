@@ -36,4 +36,4 @@ class TaxListAPIView(generics.ListAPIView):
             return Tax.objects.filter(lookup_name__lookup_name=self.kwargs['lookup'].lower()).values('id', 'vat', 'ret')
         if "payrolltax" == self.kwargs['lookup'].lower():
             return Tax.objects.filter(lookup_name__lookup_name=self.kwargs['lookup'].lower()).values('id', 'irfp')
-        return Tax.objects.all()
+        return Tax.objects.none()
