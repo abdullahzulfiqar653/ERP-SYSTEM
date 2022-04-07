@@ -15,6 +15,7 @@ from .serializers import (
     PayRollListSerializer,
     PayRollUpdateSerializer,
     PayrollsDeleteSerializer,
+    TeamFormListSerializer,
 )
 from .models import Team, Employee, PayRoll, PayRollItem
 from utils.pagination import LimitOffsetPagination
@@ -96,6 +97,14 @@ Team Listing view having a parameter in the URL as company_id and then veryfying
 user owns the company or have permission to access the company if yes then returning teams
 related to those users.
 '''
+
+
+class TeamFormListView(CompanyPermissionsMixin, generics.ListAPIView):
+    permission_classes = (permissions.IsAuthenticated, IsCompanyAccess)
+    serializer_class = TeamFormListSerializer
+
+    def get_queryset(self):
+        return Team.objects.filter(company=self.request.company)
 
 
 class TeamListView(CompanyPermissionsMixin, generics.ListAPIView):
