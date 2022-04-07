@@ -20,6 +20,15 @@ class TeamSerializer(serializers.ModelSerializer):
         ]
 
 
+class TeamFormListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Team
+        fields = [
+            'id',
+            'team_name',
+        ]
+
+
 class TeamsDeleteSerializer(serializers.ModelSerializer):
     teams_list = serializers.ListField(child=serializers.IntegerField(required=True))
 
@@ -56,6 +65,8 @@ class AddEmployeeSerializer(serializers.ModelSerializer):
 
 class ListEmployeeSerializer(serializers.ModelSerializer):
     country_name = serializers.CharField(read_only=True, source='country.lookup_name')
+    team_name = serializers.CharField(read_only=True, source='team.team_name')
+    contract_type_label = serializers.CharField(read_only=True, source='contract_type.lookup_name')
 
     class Meta:
         model = Employee
@@ -160,6 +171,9 @@ class PayRollUpdateSerializer(serializers.ModelSerializer):
 
 
 class PayrollRelatedPayRollItemListSerializer(serializers.ModelSerializer):
+    irfp_percent = serializers.DecimalField(
+        source='irfp.irfp', read_only=True, max_digits=5, decimal_places=3)
+
     class Meta:
         model = PayRollItem
         exclude = ['payroll', ]

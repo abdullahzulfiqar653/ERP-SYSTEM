@@ -2,6 +2,7 @@ from django.urls import path
 from .views import (
     AddTeamView,
     TeamListView,
+    TeamFormListView,
     UpdateTeamView,
     TeamsDeleteAPIView,
     TeamRetrieveAPIView,
@@ -24,6 +25,7 @@ from .views import (
 urlpatterns = [
     path('team/add/', AddTeamView.as_view()),
     path('teams/', TeamListView.as_view()),
+    path('list/teams/', TeamFormListView.as_view()),
     path('team/<pk>/', TeamRetrieveAPIView.as_view()),
     path('team/update/<int:team_id>/', UpdateTeamView.as_view()),
     path('teams/destroy/', TeamsDeleteAPIView.as_view()),
