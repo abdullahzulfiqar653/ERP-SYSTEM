@@ -11,6 +11,7 @@ from .views import (
     EmployeeCreateAPIView,
     EmployeeRetrieveAPIView,
     EmployeeListAPIView,
+    EmployeeFormListAPIView,
     EmployeesDeleteAPIView,
 
     PayRollCreateAPIView,
@@ -34,6 +35,7 @@ urlpatterns = [
     path('employee/update/<int:emp_id>/', EmployeeUpdateView.as_view()),
     path('employee/<pk>/', EmployeeRetrieveAPIView.as_view()),
     path('employees/', EmployeeListAPIView.as_view()),
+    path('list/employees/', EmployeeFormListAPIView.as_view()),
     path('employees/destroy/', EmployeesDeleteAPIView.as_view()),
 
     path('create/', PayRollCreateAPIView.as_view()),

@@ -9,6 +9,7 @@ from .serializers import (
     TeamsDeleteSerializer,
     AddEmployeeSerializer,
     ListEmployeeSerializer,
+    FormListEmployeeSerializer,
     EmployeesDeleteSerializer,
     PayRollCreateSerializer,
     FetchPayrollSerializer,
@@ -215,6 +216,14 @@ class EmployeeListAPIView(CompanyPermissionsMixin, generics.ListAPIView):
         return Employee.objects.filter(company=self.request.company)
 
 
+class EmployeeFormListAPIView(CompanyPermissionsMixin, generics.ListAPIView):
+    permission_classes = [permissions.IsAuthenticated, IsCompanyAccess]
+    serializer_class = FormListEmployeeSerializer
+
+    def get_queryset(self):
+        return Employee.objects.filter(company=self.request.company)
+
+
 '''
 This View on request first check if user have permissions to the company
 or not if yess then check if employee is the employee of the requested
@@ -229,7 +238,7 @@ class EmployeeUpdateView(CompanyPermissionsMixin, generics.UpdateAPIView):
     permission_classes = (permissions.IsAuthenticated, IsCompanyAccess)
     serializer_class = AddEmployeeSerializer
 
-    def update(self, request, emp_id):
+    def update(self, request, emp_id, partial=True):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
