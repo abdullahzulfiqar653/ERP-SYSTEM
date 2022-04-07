@@ -18,7 +18,7 @@ class LookupName(models.Model):
     lookup_name = models.CharField(max_length=255, unique=True)
 
     def __str__(self):
-        return str(self.lookup_type) + " - " + self.lookup_name
+        return self.lookup_name
 
 
 class Tax(models.Model):  # Ret is a tax type like VAT
