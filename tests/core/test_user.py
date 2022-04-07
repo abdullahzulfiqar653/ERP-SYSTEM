@@ -1,7 +1,16 @@
+from asyncio.windows_events import NULL
 from django.contrib.auth.models import User
 from rest_framework import status
 import pytest
 from model_bakery import baker
+
+
+@pytest.fixture
+def register_admin_user(api_client):
+    def do_register_admin_user(data):
+        response = api_client.post('/api/core/admin/register/', data)
+        return response
+    return do_register_admin_user
 
 
 @pytest.fixture
@@ -22,19 +31,30 @@ def create_user(api_client):
 
 
 @pytest.fixture
-def register_admin_user(api_client):
-    def do_register_admin_user(data):
-        response = api_client.post('/api/core/admin/register/', data)
-        return response
-    return do_register_admin_user
-
-
-@pytest.fixture
 def register_subuser(api_client):
     def do_register_subuser(data, headers):
         response = api_client.post('/api/core/user/register/', data, **headers)
         return response
     return do_register_subuser
+
+
+@pytest.fixture
+def email_verify(api_client):
+    def do_email_verify(data):
+        user = baker.make(User, email=data["email"])
+        user.user_profile.activation_key = data["key"]
+        user.user_profile.is_activation_key_used = data["status"]
+        user.user_profile.save()
+        # Act
+        response = api_client.post(
+            '/api/core/email/activate/',
+            {"activation_key": "" if data["key"] == NULL else user.user_profile.activation_key})
+        return response
+    return do_email_verify
+
+# ---------------------------------------------------------------------------------------------- #
+# ------------------------------------User Model Test Cases------------------------------------- #
+# ---------------------------------------------------------------------------------------------- #
 
 
 @pytest.mark.django_db
@@ -115,6 +135,31 @@ class TestUser:
         assert response.data['email'] is not None
         assert response.data['username'] is not None
         assert response.data['password'] is not None
+
+    # ----------------------------Email verification Endpoint Test Cases---------------------------- #
+    def test_email_verify_token_if_not_exist_return_400(self, email_verify):
+        response = email_verify({
+            "email": "someone@example.com",
+            "key": NULL,
+            "status": False
+        })
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_email_verify_token_if_expired_return_403(self, email_verify):
+        response = email_verify({
+            "email": "someone@example.com",
+            "key": "ahcxwkea",
+            "status": True
+        })
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_email_verify_token_if_Accepted_return_202(self, email_verify):
+        response = email_verify({
+            "email": "someone@example.com",
+            "key": "ahcxwkea",
+            "status": False
+        })
+        assert response.status_code == status.HTTP_202_ACCEPTED
 
     # ----------------------------Login Endpoint Test Cases---------------------------- #
     def test_admin_or_subuser_login_return_200(self, create_user):
