@@ -238,7 +238,7 @@ class EmployeeUpdateView(CompanyPermissionsMixin, generics.UpdateAPIView):
     permission_classes = (permissions.IsAuthenticated, IsCompanyAccess)
     serializer_class = AddEmployeeSerializer
 
-    def update(self, request, emp_id):
+    def update(self, request, emp_id, partial=True):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
