@@ -73,6 +73,18 @@ class ListEmployeeSerializer(serializers.ModelSerializer):
         exclude = ['company', ]
 
 
+class FormListEmployeeSerializer(serializers.ModelSerializer):
+    team_id = serializers.IntegerField(read_only=True, source='team.id')
+
+    class Meta:
+        model = Employee
+        fields = [
+            'id',
+            'team_id',
+            'name'
+        ]
+
+
 class EmployeesDeleteSerializer(serializers.ModelSerializer):
     employees_list = serializers.ListField(child=serializers.IntegerField(required=True))
 

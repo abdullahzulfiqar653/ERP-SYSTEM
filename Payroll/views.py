@@ -9,6 +9,7 @@ from .serializers import (
     TeamsDeleteSerializer,
     AddEmployeeSerializer,
     ListEmployeeSerializer,
+    FormListEmployeeSerializer,
     EmployeesDeleteSerializer,
     PayRollCreateSerializer,
     FetchPayrollSerializer,
@@ -210,6 +211,14 @@ class EmployeeListAPIView(CompanyPermissionsMixin, generics.ListAPIView):
     filter_backends = [DjangoFilterBackend, OrderingFilter]
     filterset_class = EmployeeFilter
     ordering_fields = ['id', 'name']
+
+    def get_queryset(self):
+        return Employee.objects.filter(company=self.request.company)
+
+
+class EmployeeFormListAPIView(CompanyPermissionsMixin, generics.ListAPIView):
+    permission_classes = [permissions.IsAuthenticated, IsCompanyAccess]
+    serializer_class = FormListEmployeeSerializer
 
     def get_queryset(self):
         return Employee.objects.filter(company=self.request.company)
