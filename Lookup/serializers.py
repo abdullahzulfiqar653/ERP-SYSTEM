@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import LookupType, LookupName, Tax
+from .models import LookupType, LookupName, Tax, AccountType
 
 
 # ---------------------- Serializers for Lookups Module ---------------------------#
@@ -24,3 +24,9 @@ class TaxSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tax
         exclude = ['lookup_name', ]
+
+
+class ChartOfAccountTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AccountType
+        fields = ['id', 'english_name']

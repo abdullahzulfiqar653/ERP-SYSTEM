@@ -1,10 +1,11 @@
-from .models import LookupName, Tax, LookupType
+from .models import AccountType, LookupName, Tax, LookupType
 from rest_framework import generics
 from rest_framework import permissions
 from .serializers import (
     LookupTypeSerializer,
     LookupSerializer,
     TaxSerializer,
+    ChartOfAccountTypeSerializer,
 )
 
 # Create your views here.
@@ -37,3 +38,15 @@ class TaxListAPIView(generics.ListAPIView):
         if "payrolltax" == self.kwargs['lookup'].lower():
             return Tax.objects.filter(lookup_name__lookup_name=self.kwargs['lookup'].lower()).values('id', 'irfp')
         return Tax.objects.none()
+
+
+class ChartOfAccountTypeAPIView(generics.ListAPIView):
+    permission_classes = (permissions.AllowAny,)
+    serializer_class = ChartOfAccountTypeSerializer
+
+    def get_queryset(self):
+        if "client&debitor" == self.kwargs['lookup'].lower():
+            return AccountType.objects.filter(lookup_name__lookup_name=self.kwargs['lookup'].lower())
+        if "provider&creditor" == self.kwargs['lookup'].lower():
+            return AccountType.objects.filter(lookup_name__lookup_name=self.kwargs['lookup'].lower())
+        return AccountType.objects.none()
