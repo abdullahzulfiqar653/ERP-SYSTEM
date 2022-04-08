@@ -18,7 +18,7 @@ class LookupName(models.Model):
     lookup_name = models.CharField(max_length=255, unique=True)
 
     def __str__(self):
-        return str(self.lookup_type) + " - " + self.lookup_name
+        return self.lookup_name
 
 
 class Tax(models.Model):  # Ret is a tax type like VAT
@@ -50,10 +50,10 @@ class AccountType(models.Model):  # This relate to chart of account.
         return str(self.english_name)
 
 
-class Payment_Day(models.Model):  # This relate to chart of account.
-    lookup_type = models.ForeignKey(
-        LookupType, on_delete=models.CASCADE,
-        related_name='payment_day_lookup_type')
+class PaymentDay(models.Model):  # This relate to chart of account.
+    lookup_name = models.ForeignKey(
+        LookupName, on_delete=models.CASCADE,
+        related_name='payment_day_lookup_name')
     name = models.CharField(max_length=256, unique=True)
     day = models.PositiveIntegerField(unique=True)
 

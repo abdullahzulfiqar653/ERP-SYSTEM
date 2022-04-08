@@ -19,6 +19,7 @@ class EmployeeFilter(FilterSet):
     class Meta:
         model = Employee
         fields = {
+            "id": ["exact"],
             "team__id": ["exact"],
             "name": ['iexact'],
             "surname": ['iexact'],
@@ -30,7 +31,7 @@ class EmployeeFilter(FilterSet):
             "current_salary": ['gt', 'lt'],
             "postcode": ['exact'],
             "province": ['iexact'],
-            "country__lookup_name": ['iexact'],
+            "country__id": ['exact'],
             "note": ['icontains'],
         }
 

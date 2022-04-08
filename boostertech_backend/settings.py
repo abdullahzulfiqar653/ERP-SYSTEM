@@ -199,7 +199,7 @@ REST_FRAMEWORK = {
 
     'COERCE_DECIMAL_TO_STRING': False
 }
-
+FILTERS_DEFAULT_LOOKUP_EXPR = 'icontains'
 JWT_AUTH = {
     # how long the original token is valid for
     'JWT_EXPIRATION_DELTA': datetime.timedelta(days=5),
