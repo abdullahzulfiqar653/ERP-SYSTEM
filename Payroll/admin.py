@@ -4,6 +4,7 @@ from .models import (
     Employee,
     PayRoll,
     PayRollItem,
+    PayrollTeam
 )
 # Register your models here.
 
@@ -31,11 +32,18 @@ class PayRollItemAdmin(admin.TabularInline):
     extra = 0
 
 
+class PayRollTeamAdmin(admin.ModelAdmin):
+    # model = PayrollTeam
+    # extra = 0
+    list_display = ['payroll', 'team']
+
+
 class PayRollAdmin(admin.ModelAdmin):
     inlines = [PayRollItemAdmin, ]
     list_display = ['id', 'created_at']
 
 
 admin.site.register(Team, TeamAdmin)
+admin.site.register(PayrollTeam, PayRollTeamAdmin)
 admin.site.register(Employee, EmployeeAdmin)
 admin.site.register(PayRoll, PayRollAdmin)
