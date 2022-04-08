@@ -1,9 +1,11 @@
+from logging import exception
 from rest_framework import status
 from rest_framework import generics
 from rest_framework import permissions
 from rest_framework.response import Response
 from rest_framework.filters import OrderingFilter
 from django_filters.rest_framework import DjangoFilterBackend
+from django.db import transaction
 from .serializers import (
     TeamSerializer,
     TeamsDeleteSerializer,
@@ -18,7 +20,7 @@ from .serializers import (
     PayrollsDeleteSerializer,
     TeamFormListSerializer,
 )
-from .models import Team, Employee, PayRoll, PayRollItem
+from .models import Team, Employee, PayRoll, PayRollItem, PayrollTeam
 from utils.pagination import LimitOffsetPagination
 from .filters import TeamFilter, EmployeeFilter, PayRollFilter
 from Middleware.CustomMixin import CompanyPermissionsMixin
@@ -310,15 +312,25 @@ class PayRollCreateAPIView(CompanyPermissionsMixin, generics.CreateAPIView):
     permission_classes = (permissions.IsAuthenticated, IsCompanyAccess)
     serializer_class = PayRollCreateSerializer
 
+    @transaction.atomic
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
         company = self.request.company
         payroll_items = data['payroll_items']
+        teams_list = data['teams_list']
         del data['payroll_items']
+        del data['teams_list']
         payroll = PayRoll.objects.create(company=company, **data)
-
+        for team in teams_list:
+            if Team.objects.filter(pk=team, company=company).exists():
+                PayrollTeam.objects.create(
+                    payroll=payroll,
+                    team_id=team
+                )
+            else:
+                raise Team.DoesNotExist
         for item in payroll_items:
             if Employee.objects.filter(pk=item['employee'], company=company).exists():
                 item['employee_id'] = item['employee']
@@ -327,7 +339,8 @@ class PayRollCreateAPIView(CompanyPermissionsMixin, generics.CreateAPIView):
                     payroll=payroll,
                     **item,
                 )
-            continue
+            else:
+                raise Employee.DoesNotExist
         return Response({"payroll": PayRollListSerializer(payroll).data}, status=status.HTTP_201_CREATED)
 
 
@@ -347,7 +360,7 @@ class PayRollListAPIView(CompanyPermissionsMixin, generics.ListAPIView):
     filterset_class = PayRollFilter
 
     def get_queryset(self):
-        return PayRoll.objects.all()
+        return PayRoll.objects.filter(company=self.request.company)
 
 
 '''

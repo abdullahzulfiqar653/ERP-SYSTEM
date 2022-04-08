@@ -1,5 +1,5 @@
 from django.db import models
-from Lookup.models import LookupName, AccountType, Tax, Payment_Day
+from Lookup.models import LookupName, AccountType, Tax, PaymentDay
 from Core.models import Company
 # Create your models here.
 
@@ -44,5 +44,5 @@ class Contact(models.Model):
         LookupName, on_delete=models.SET_NULL,
         related_name='payment_method_name', null=True)
     payment_extension = models.ForeignKey(
-        Payment_Day, on_delete=models.SET_NULL,
+        PaymentDay, on_delete=models.SET_NULL,
         related_name='payment_extension_days', null=True)  # option field

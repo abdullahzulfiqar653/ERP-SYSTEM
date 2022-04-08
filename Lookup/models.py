@@ -50,10 +50,10 @@ class AccountType(models.Model):  # This relate to chart of account.
         return str(self.english_name)
 
 
-class Payment_Day(models.Model):  # This relate to chart of account.
-    lookup_type = models.ForeignKey(
-        LookupType, on_delete=models.CASCADE,
-        related_name='payment_day_lookup_type')
+class PaymentDay(models.Model):  # This relate to chart of account.
+    lookup_name = models.ForeignKey(
+        LookupName, on_delete=models.CASCADE,
+        related_name='payment_day_lookup_name')
     name = models.CharField(max_length=256, unique=True)
     day = models.PositiveIntegerField(unique=True)
 

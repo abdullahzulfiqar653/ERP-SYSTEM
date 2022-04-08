@@ -72,6 +72,16 @@ class PayRoll(models.Model):
     company_cost = models.DecimalField(max_digits=12, decimal_places=2, )
 
 
+class PayrollTeam(models.Model):
+    payroll = models.ForeignKey(
+        PayRoll, on_delete=models.CASCADE,
+        related_name='payroll_teams')
+    team = models.ForeignKey(
+        Team,
+        on_delete=models.SET_NULL,
+        null=True, blank=True)
+
+
 class PayRollItem(models.Model):
     payroll = models.ForeignKey(
         PayRoll, on_delete=models.CASCADE,

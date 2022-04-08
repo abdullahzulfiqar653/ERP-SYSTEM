@@ -118,6 +118,7 @@ class PayRollItemSerializer(serializers.ModelSerializer):
 
 class PayRollCreateSerializer(serializers.ModelSerializer):
     payroll_items = PayRollItemSerializer(many=True)
+    teams_list = serializers.ListField(child=serializers.IntegerField())
 
     class Meta:
         model = PayRoll
@@ -133,7 +134,8 @@ class PayRollCreateSerializer(serializers.ModelSerializer):
             'ss_company',
             'discount',
             'company_cost',
-            'payroll_items'
+            'payroll_items',
+            'teams_list',
         ]
 
 
