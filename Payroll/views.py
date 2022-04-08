@@ -391,13 +391,16 @@ class PayRollItemUpdateAPIView(CompanyPermissionsMixin, generics.UpdateAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
-        company = self.request.company
+
         payroll_items = data['payroll_items']
         del data['payroll_items']
+        teams_list = data['teams_list']
+        del data['teams_list']
         if not PayRoll.objects.filter(pk=payroll_id, company=company).exists():
             return Response({"message": "Payroll not found"}, status=status.HTTP_404_NOT_FOUND)
         payroll = PayRoll(pk=payroll_id, company=company, **data)
         payroll.save()
+        print(list(PayrollTeam.objects.filter(payroll=payroll).values_list('team_id', flat=True)))
 
         for item in payroll_items:
             if Employee.objects.filter(pk=item['employee'], company=company).exists() and \
