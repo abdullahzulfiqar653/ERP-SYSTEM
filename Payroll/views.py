@@ -1,4 +1,3 @@
-from logging import exception
 from rest_framework import status
 from rest_framework import generics
 from rest_framework import permissions
