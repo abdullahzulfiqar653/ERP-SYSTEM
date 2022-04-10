@@ -141,12 +141,10 @@ class PayRollCreateSerializer(serializers.ModelSerializer):
 
 class PayRollItemUpdateSerializer(serializers.ModelSerializer):
     employee = serializers.IntegerField(required=True)
-    id = serializers.IntegerField(required=True, allow_null=True)
 
     class Meta:
         model = PayRollItem
         fields = [
-            'id',
             'employee',
             'gross',
             'bonus',
