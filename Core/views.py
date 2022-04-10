@@ -15,21 +15,21 @@ from .models import UserProfile, Company, CompanyAccessRecord
 from .helper import generate_token
 from Middleware.permissions import IsCompanyAccess
 from Middleware.CustomMixin import CompanyPermissionsMixin
-
+from django.db import transaction
 from .serializers import (
-    RegisterSerializer,
-    ChangePasswordSerializer,
-    CustomJWTSerializer,
-    UpdateUserProfileSerializer,
-    CompaniesFetchSerializer,
-    AdminChangeUserPasswordSerializer,
-    CompanyCreateSerializer,
-    CompanyAccessSerializer,
-    UsersListSerializer,
-    UserProfileImageSerializer,
-    UsersDeleteSerializer,
-    CompaniesDeleteSerializer,
-)
+        RegisterSerializer,
+        ChangePasswordSerializer,
+        CustomJWTSerializer,
+        UpdateUserProfileSerializer,
+        CompaniesFetchSerializer,
+        AdminChangeUserPasswordSerializer,
+        CompanyCreateSerializer,
+        CompanyAccessSerializer,
+        UsersListSerializer,
+        UserProfileImageSerializer,
+        UsersDeleteSerializer,
+        CompaniesDeleteSerializer,
+    )
 
 
 '''
@@ -60,7 +60,7 @@ class CustomJWTView(ObtainJSONWebToken):
                     'email': user.email,
                     'first_name': user.user_profile.first_name,
                     'last_name': user.user_profile.last_name,
-                    'image': settings.MEDIA_URL + str(user.user_profile.picture),
+                    'image': settings.MEDIA_URL+str(user.user_profile.picture),
                 }
             }, status.HTTP_200_OK)
         else:
@@ -92,18 +92,18 @@ class RefreshJWTTokenView(APIView):
         # data = {'token': verified_data['token']}
         valid_data = RefreshJSONWebTokenSerializer().validate(data)
         return Response({
-            'token': valid_data['token'],
-            'is_admin': valid_data['user'].is_staff,
-            'user': {
-                'id': valid_data['user'].id,
-                'email': valid_data['user'].email,
-                'first_name': valid_data['user'].user_profile.first_name,
-                'last_name': valid_data['user'].user_profile.last_name,
-                'image':
+                'token': valid_data['token'],
+                'is_admin': valid_data['user'].is_staff,
+                'user': {
+                    'id': valid_data['user'].id,
+                    'email': valid_data['user'].email,
+                    'first_name': valid_data['user'].user_profile.first_name,
+                    'last_name': valid_data['user'].user_profile.last_name,
+                    'image':
                     settings.MEDIA_URL +
                     str(valid_data['user'].user_profile.picture),
-            }
-        }, status.HTTP_200_OK)
+                }
+            }, status.HTTP_200_OK)
 
 
 '''
@@ -133,7 +133,7 @@ class AdminRegisterAPIView(generics.GenericAPIView):
             'link': settings.LINK_PROTOCOL + '://' + settings.LINK_DOMAIN +
             '/auth/account-activated/?activation_key=' +
             email_activation_token,
-        }
+                }
         subject = 'Welcome to Booster Tech'
         to_email = serializer.validated_data['email']
         send_email(email, subject, to_email, 'email_activate.html')
@@ -171,7 +171,7 @@ class UserRegisterAPIView(generics.GenericAPIView):
                 'link': settings.LINK_PROTOCOL + '://' + settings.LINK_DOMAIN +
                 '/auth/account-activated/?activation_key=' +
                 email_activation_token,
-            }
+                    }
             subject = 'Welcome to Booster Tech'
             to_email = serializer.validated_data['email']
             send_email(email, subject, to_email, 'email_activate.html')
@@ -297,7 +297,7 @@ class ForgetPasswordView(APIView):
                     'link': settings.LINK_PROTOCOL + '://' +
                     settings.LINK_DOMAIN +
                     '/auth/reset-password/?token=' + reset_password_token,
-                }
+                    }
                 subject = 'Password Reset'
                 to_email = user.email
                 send_email(email, subject, to_email, 'reset_forgot_password.html')  # sending email
@@ -326,13 +326,10 @@ class ResetPasswordConfirmView(APIView):
     def post(self, request):
         activation_key = request.data['token']
         password = request.data['password']
-        # Checking if token is available in database
-        if UserProfile.objects.filter(activation_key=activation_key).exists():
-            # getting user profile against provided token
-            customer = UserProfile.objects.get(activation_key=activation_key)
+        if UserProfile.objects.filter(activation_key=activation_key).exists():  # Checking if token is available in database
+            customer = UserProfile.objects.get(activation_key=activation_key)  # getting user profile against provided token
             if not customer.is_activation_key_used:  # checking if token is already used or not?
-                # getting user against present profile
-                user = User.objects.get(email=customer.user.email)
+                user = User.objects.get(email=customer.user.email)  # getting user against present profile
                 user.set_password(password)
                 user.save()
                 customer.is_activation_key_used = True
@@ -345,13 +342,12 @@ class ResetPasswordConfirmView(APIView):
                     "message": '''With the given link you will be moved to booster
                     tech portal and you will be popped to enter a new password''',
                     'name': user.user_profile.first_name
-                }
+                    }
                 subject = 'Password Reset Confirm'
                 to_email = user.email
                 send_email(email, subject, to_email, 'register.html')
                 return Response(
-                    {'message': 'Dear ' + user.user_profile.first_name +
-                        ', your Password Reset Successfully'},
+                    {'message': 'Dear ' + user.user_profile.first_name + ', your Password Reset Successfully'},
                     status=status.HTTP_202_ACCEPTED)
             else:
                 return Response({'activation_key': "activation_key is expired or already used"}, status=status.HTTP_400_BAD_REQUEST)
@@ -378,7 +374,7 @@ class ProfileImageUploadView(APIView):
         user.user_profile.picture.delete()
         user.user_profile.picture = data['picture']
         user.user_profile.save()
-        return Response({"image": settings.MEDIA_URL + str(user.user_profile.picture)}, status=status.HTTP_200_OK)
+        return Response({"image": settings.MEDIA_URL+str(user.user_profile.picture)}, status=status.HTTP_200_OK)
 
 
 '''
@@ -414,14 +410,12 @@ class UpdateUserProfileView(APIView):
         serializer = self.serializer_class(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
         user = self.request.user
-        message = "Dear {} your Profile has been updated successfully".format(
-            user.user_profile.first_name)
+        message = "Dear {} your Profile has been updated successfully".format(user.user_profile.first_name)
         if user.is_staff:
             try:
                 if serializer.validated_data['user_id']:
                     user = User.objects.get(pk=int(serializer.validated_data['user_id']))
-                    message = "Dear admin, Profile of User named as {} has been updated successfully".format(
-                        user.user_profile.first_name)
+                    message = "Dear admin, Profile of User named as {} has been updated successfully".format(user.user_profile.first_name)
             except Exception as e:
                 print(e)
         first_name = serializer.validated_data['first_name']
@@ -462,38 +456,31 @@ class CompanyAccessView(generics.CreateAPIView):
     permission_classes = (permissions.IsAdminUser,)
     serializer_class = CompanyAccessSerializer
 
+    @transaction.atomic
     def post(self, request, *args, **kwargs):
         adminUser = self.request.user
         serializer = self.get_serializer(data=request.data)
-        companies_list = list(map(int, request.data['company_list']))
-        if serializer.is_valid():  # checking if coming data is valid
-            if User.objects.filter(pk=int(request.data['user_id'])).exists():  # checking if user requested esist in data base
-                # getting user instance so we can assign permissions to him
-                user = User.objects.filter(pk=int(request.data['user_id'])).first()
-                # checking if user is subuser of current admin user else without performing actions HTTP_401 returned
-                if user.user_profile.admin == adminUser:
-                    # getting list of previously assigned companies
-                    # subtracting old list from new so we can remove permissions which are not allowed
-                    permission_remove_list = list(CompanyAccessRecord.objects.filter(
-                        user=user).exclude(company_id__in=companies_list).values_list('company_id', flat=True))
-                    for company_id in companies_list:  # looping on list of companies
-                        # checking if current user is owner of current company if not then simply pass
-                        if Company.objects.filter(pk=company_id, user=adminUser).exists():
-                            # here checking if company permissions are already assigned to someone
-                            if company_id in list(CompanyAccessRecord.objects.all().values_list('company', flat=True)):
-                                continue
-                            else:
-                                record = CompanyAccessRecord(
-                                    user=user, company=Company.objects.get(pk=company_id))
-                                record.save()
-                        else:
-                            pass
-                    CompanyAccessRecord.objects.filter(company_id__in=permission_remove_list).delete()
-                    return Response({"message": "Permissions created."}, status=status.HTTP_201_CREATED)
-
-                return Response({"message": "you dont have permission for this user"}, status=status.HTTP_401_UNAUTHORIZED)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        if not User.objects.filter(pk=data['user_id']).exists():
             return Response({"message": "user not exists"}, status=status.HTTP_404_NOT_FOUND)
-        return Response(serializer.errors, status=status.HTTP_205_RESET_CONTENT)
+        user = User.objects.filter(pk=data['user_id']).first()
+        if not (user.user_profile.admin == adminUser):
+            return Response({"message": "you dont have permission for this user"}, status=status.HTTP_401_UNAUTHORIZED)
+        CompanyAccessRecord.objects.filter(user=user).delete()
+
+        for company_id in data['company_list']:  # looping on list of companies
+            # checking if current user is owner of current company if not then raise exception
+            if Company.objects.filter(pk=company_id, user=adminUser).exists():
+                # here checking if company permissions are already assigned to someone
+                if company_id in list(CompanyAccessRecord.objects.all().values_list('company', flat=True)):
+                    continue
+                else:
+                    record = CompanyAccessRecord(user=user, company=Company.objects.get(pk=company_id))
+                    record.save()
+            else:
+                raise Company.DoesNotExist
+        return Response({"message": "Permissions created."}, status=status.HTTP_201_CREATED)
 
 
 '''
@@ -555,8 +542,7 @@ class CompaniesListAPIView(generics.ListAPIView):
     def get_queryset(self):
         user = self.request.user
         if not self.request.user.is_staff:
-            user_records = list(CompanyAccessRecord.objects.filter(
-                user=user).values_list("company_id", flat=True))
+            user_records = list(CompanyAccessRecord.objects.filter(user=user).values_list("company_id", flat=True))
             return Company.objects.filter(pk__in=user_records)
         else:
             return Company.objects.filter(user=user)
@@ -598,8 +584,7 @@ class UserCompaniesListAPIView(generics.ListAPIView):
         user_id = self.request.GET.get('user_id')
         if UserProfile.objects.filter(user__pk=user_id, admin=self.request.user).exists():
             user = User.objects.filter(pk=user_id).first()
-            user_records = list(CompanyAccessRecord.objects.filter(
-                user=user).values_list("company_id", flat=True))
+            user_records = list(CompanyAccessRecord.objects.filter(user=user).values_list("company_id", flat=True))
             records = Company.objects.filter(pk__in=user_records).values_list("id", flat=True)
             return Response(records, status=status.HTTP_200_OK)
         return Response(status=status.HTTP_203_NON_AUTHORITATIVE_INFORMATION)
