@@ -379,7 +379,7 @@ class ProfileImageUploadView(APIView):
         user.user_profile.picture.delete()
         user.user_profile.picture = data['picture']
         user.user_profile.save()
-        return Response({"image": settings.MEDIA_URL+str(user.user_profile.picture)}, status=status.HTTP_200_OK)
+        return Response({"image": settings.MEDIA_URL + str(user.user_profile.picture)}, status=status.HTTP_200_OK)
 
 
 '''
