@@ -201,7 +201,7 @@ permission to that user for the requested companies.
 
 
 class CompanyAccessSerializer(serializers.ModelSerializer):
-    user_id = serializers.IntegerField()
+    user_id = serializers.IntegerField(required=True)
     company_list = serializers.ListField(child=serializers.IntegerField(required=True))
 
     class Meta:
