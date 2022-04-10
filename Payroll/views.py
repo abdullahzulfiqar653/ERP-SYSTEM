@@ -399,41 +399,26 @@ class PayRollItemUpdateAPIView(CompanyPermissionsMixin, generics.UpdateAPIView):
             return Response({"message": "Payroll not found"}, status=status.HTTP_404_NOT_FOUND)
         payroll = PayRoll(pk=payroll_id, company=company, **data)
         payroll.save()
-
-        teams_remove_list = list(PayrollTeam.objects.filter(
-            payroll=payroll).exclude(team_id__in=teams_list).values_list('team_id', flat=True))
-        for team_id in teams_list:
-            if Team.objects.filter(pk=team_id, company=company).exists():
-                if not PayrollTeam.objects.filter(team_id=team_id, payroll=payroll).exists():
-                    PayrollTeam.objects.create(payroll=payroll, team_id=team_id)
+        PayrollTeam.objects.filter(payroll=payroll).delete()
+        PayRollItem.objects.filter(payroll=payroll).delete()
+        for team in teams_list:
+            if Team.objects.filter(pk=team, company=company).exists():
+                PayrollTeam.objects.create(payroll=payroll, team_id=team)
             else:
-                Team.DoesNotExist
-        PayrollTeam.objects.filter(payroll=payroll, team_id__in=teams_remove_list).delete()
-        payroll_items_id = [item['id'] for item in payroll_items]
-        payrollItems_remove_list = list(PayRollItem.objects.filter(
-            payroll=payroll).exclude(pk__in=payroll_items_id).values_list('pk', flat=True))
-
+                raise Team.DoesNotExist
         for item in payroll_items:
             if Employee.objects.filter(pk=item['employee'], company=company).exists():
-                if PayRollItem.objects.filter(pk=item['id'], payroll=payroll).exists():
-                    item['employee_id'] = item['employee']
-                    del item['employee']
-                    payrollItem = PayRollItem(pk=item['id'], payroll=payroll, **item,)
-                    payrollItem.save()
-                elif not item['id']:
-                    item['employee_id'] = item['employee']
-                    del item['employee']
-                    PayRollItem.objects.create(
-                        payroll=payroll,
-                        **item,
-                    )
+                item['employee_id'] = item['employee']
+                del item['employee']
+                PayRollItem.objects.create(
+                    payroll=payroll,
+                    **item,
+                )
             else:
                 raise Employee.DoesNotExist
-        PayRollItem.objects.filter(payroll=payroll, pk__in=payrollItems_remove_list).delete()
         return Response(
             {"message": "Payroll Updated.", "payroll": PayRollListSerializer(payroll).data},
-            status=status.HTTP_200_OK
-        )
+            status=status.HTTP_200_OK)
 
 
 '''
