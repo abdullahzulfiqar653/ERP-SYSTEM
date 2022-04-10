@@ -15,7 +15,7 @@ from .models import UserProfile, Company, CompanyAccessRecord
 from .helper import generate_token
 from Middleware.permissions import IsCompanyAccess
 from Middleware.CustomMixin import CompanyPermissionsMixin
-
+from django.db import transaction
 from .serializers import (
         RegisterSerializer,
         ChangePasswordSerializer,
@@ -456,36 +456,31 @@ class CompanyAccessView(generics.CreateAPIView):
     permission_classes = (permissions.IsAdminUser,)
     serializer_class = CompanyAccessSerializer
 
+    @transaction.atomic
     def post(self, request, *args, **kwargs):
         adminUser = self.request.user
         serializer = self.get_serializer(data=request.data)
-        companies_list = list(map(int, request.data['company_list']))
-        if serializer.is_valid():  # checking if coming data is valid
-            if User.objects.filter(pk=int(request.data['user_id'])).exists():  # checking if user requested esist in data base
-                user = User.objects.filter(pk=int(request.data['user_id'])).first()  # getting user instance so we can assign permissions to him
-                # checking if user is subuser of current admin user else without performing actions HTTP_401 returned
-                if user.user_profile.admin == adminUser:
-                    # getting list of previously assigned companies
-                    # subtracting old list from new so we can remove permissions which are not allowed
-                    permission_remove_list = list(CompanyAccessRecord.objects.filter(
-                        user=user).exclude(company_id__in=companies_list).values_list('company_id', flat=True))
-                    for company_id in companies_list:  # looping on list of companies
-                        # checking if current user is owner of current company if not then simply pass
-                        if Company.objects.filter(pk=company_id, user=adminUser).exists():
-                            # here checking if company permissions are already assigned to someone
-                            if company_id in list(CompanyAccessRecord.objects.all().values_list('company', flat=True)):
-                                continue
-                            else:
-                                record = CompanyAccessRecord(user=user, company=Company.objects.get(pk=company_id))
-                                record.save()
-                        else:
-                            pass
-                    CompanyAccessRecord.objects.filter(company_id__in=permission_remove_list).delete()
-                    return Response({"message": "Permissions created."}, status=status.HTTP_201_CREATED)
-
-                return Response({"message": "you dont have permission for this user"}, status=status.HTTP_401_UNAUTHORIZED)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        if not User.objects.filter(pk=data['user_id']).exists():
             return Response({"message": "user not exists"}, status=status.HTTP_404_NOT_FOUND)
-        return Response(serializer.errors, status=status.HTTP_205_RESET_CONTENT)
+        user = User.objects.filter(pk=data['user_id']).first()
+        if not (user.user_profile.admin == adminUser):
+            return Response({"message": "you dont have permission for this user"}, status=status.HTTP_401_UNAUTHORIZED)
+        CompanyAccessRecord.objects.filter(user=user).delete()
+
+        for company_id in data['company_list']:  # looping on list of companies
+            # checking if current user is owner of current company if not then raise exception
+            if Company.objects.filter(pk=company_id, user=adminUser).exists():
+                # here checking if company permissions are already assigned to someone
+                if company_id in list(CompanyAccessRecord.objects.all().values_list('company', flat=True)):
+                    continue
+                else:
+                    record = CompanyAccessRecord(user=user, company=Company.objects.get(pk=company_id))
+                    record.save()
+            else:
+                raise Company.DoesNotExist
+        return Response({"message": "Permissions created."}, status=status.HTTP_201_CREATED)
 
 
 '''
