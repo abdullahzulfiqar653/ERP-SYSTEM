@@ -392,7 +392,7 @@ class PayRollItemUpdateAPIView(CompanyPermissionsMixin, generics.UpdateAPIView):
 
         payroll_items = data['payroll_items']
         del data['payroll_items']
-        #teams_list = data['teams_list']
+        teams_list = data['teams_list']
         del data['teams_list']
 
         if not PayRoll.objects.filter(pk=payroll_id, company=company).exists():
