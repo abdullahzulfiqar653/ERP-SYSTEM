@@ -466,29 +466,21 @@ class CompanyAccessView(generics.CreateAPIView):
                 # checking if user is subuser of current admin user else without performing actions HTTP_401 returned
                 if user.user_profile.admin == adminUser:
                     # getting list of previously assigned companies
-                    already_assigned_list = list(CompanyAccessRecord.objects.filter(user=user).values_list('company_id', flat=True))
                     # subtracting old list from new so we can remove permissions which are not allowed
-                    permission_remove_list = list(set(already_assigned_list) - set(companies_list))
+                    permission_remove_list = list(CompanyAccessRecord.objects.filter(
+                        user=user).exclude(company_id__in=companies_list).values_list('company_id', flat=True))
                     for company_id in companies_list:  # looping on list of companies
                         # checking if current user is owner of current company if not then simply pass
                         if Company.objects.filter(pk=company_id, user=adminUser).exists():
                             # here checking if company permissions are already assigned to someone
                             if company_id in list(CompanyAccessRecord.objects.all().values_list('company', flat=True)):
                                 continue
-                                # if CompanyAccessRecord.objects.get(company=company_id).id in\
-                                #   list(CompanyAccessRecord.objects.filter(user=user).values_list('id', flat=True)):
-                                #     continue
-                                # else:
-                                #     continue
                             else:
                                 record = CompanyAccessRecord(user=user, company=Company.objects.get(pk=company_id))
                                 record.save()
                         else:
                             pass
-
-                    for company_id in permission_remove_list:
-                        obj = CompanyAccessRecord.objects.get(company_id=company_id)
-                        obj.delete()
+                    CompanyAccessRecord.objects.filter(company_id__in=permission_remove_list).delete()
                     return Response({"message": "Permissions created."}, status=status.HTTP_201_CREATED)
 
                 return Response({"message": "you dont have permission for this user"}, status=status.HTTP_401_UNAUTHORIZED)
