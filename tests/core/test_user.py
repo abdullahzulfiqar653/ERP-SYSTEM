@@ -47,7 +47,7 @@ def email_verify(api_client):
         # Act
         response = api_client.post(
             '/api/core/email/activate/',
-            {"activation_key": "" if data["key"] == NULL else user.user_profile.activation_key})
+            {"activation_key": "-1" if data["key"] == "" else user.user_profile.activation_key})
         return response
     return do_email_verify
 
@@ -139,7 +139,7 @@ class TestUser:
     def test_email_verify_token_if_not_exist_return_400(self, email_verify):
         response = email_verify({
             "email": "someone@example.com",
-            "key": NULL,
+            "key": "",
             "status": False
         })
         assert response.status_code == status.HTTP_400_BAD_REQUEST
