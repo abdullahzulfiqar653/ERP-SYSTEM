@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import PayRoll, PayRollItem, Team, Employee
+from .models import PayRoll, PayRollItem, PayrollTeam, Team, Employee
 
 
 # ---------------------- Serializers for Team Views ---------------------------#
@@ -141,7 +141,7 @@ class PayRollCreateSerializer(serializers.ModelSerializer):
 
 class PayRollItemUpdateSerializer(serializers.ModelSerializer):
     employee = serializers.IntegerField(required=True)
-    id = serializers.IntegerField(required=True)
+    id = serializers.IntegerField(required=True, allow_null=True)
 
     class Meta:
         model = PayRollItem
@@ -184,15 +184,6 @@ class PayRollUpdateSerializer(serializers.ModelSerializer):
         ]
 
 
-class PayrollRelatedPayRollItemListSerializer(serializers.ModelSerializer):
-    irfp_percent = serializers.DecimalField(
-        source='irfp.irfp', read_only=True, max_digits=5, decimal_places=3)
-
-    class Meta:
-        model = PayRollItem
-        exclude = ['payroll', ]
-
-
 class PayrollsDeleteSerializer(serializers.ModelSerializer):
     payrolls_list = serializers.ListField(child=serializers.IntegerField(required=True))
 
@@ -203,9 +194,26 @@ class PayrollsDeleteSerializer(serializers.ModelSerializer):
         ]
 
 
+class PayrollRelatedPayRollItemListSerializer(serializers.ModelSerializer):
+    irfp_percent = serializers.DecimalField(
+        source='irfp.irfp', read_only=True, max_digits=5, decimal_places=3)
+
+    class Meta:
+        model = PayRollItem
+        exclude = ['payroll', ]
+
+
+class PayrollTeamListSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = PayrollTeam
+        exclude = ['payroll', ]
+
+
 # This Serializer is to return payroll instance including the related payroll Items.
 class FetchPayrollSerializer(serializers.ModelSerializer):
     payroll_items = PayrollRelatedPayRollItemListSerializer(read_only=True, many=True)
+    payroll_teams = PayrollTeamListSerializer(read_only=True, many=True)
 
     class Meta:
         model = PayRoll
