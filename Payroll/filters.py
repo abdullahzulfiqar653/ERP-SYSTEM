@@ -10,7 +10,7 @@ class TeamFilter(FilterSet):
             "address": ['icontains'],
             "postcode": ['exact'],
             "province": ['iexact'],
-            "country__lookup_name": ['iexact'],
+            "country__id": ['exact'],
             "note": ['icontains'],
         }
 
