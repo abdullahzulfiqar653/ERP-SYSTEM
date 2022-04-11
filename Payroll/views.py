@@ -55,7 +55,7 @@ class AddTeamView(CompanyPermissionsMixin, generics.CreateAPIView):
                 team.team_name, company.name), "team": TeamSerializer(team).data}, status=status.HTTP_201_CREATED)
         return Response(
             {"message": "Enter Unique Team name"},
-            status=status.HTTP_205_RESET_CONTENT)
+            status=status.HTTP_400_BAD_REQUEST)
 
 
 '''
@@ -85,7 +85,7 @@ class UpdateTeamView(CompanyPermissionsMixin, generics.UpdateAPIView):
 
         if not team.team_name == data["team_name"]:  # Checking if current team has the same name then ignoring next conditions
             if Team.objects.filter(company=company, team_name=data["team_name"]).exists():  # veryfying uniqness in current company
-                return Response({"messgae": "Team name must be unique"}, status=status.HTTP_205_RESET_CONTENT)
+                return Response({"messgae": "Team name must be unique"}, status=status.HTTP_400_BAD_REQUEST)
         team = Team(pk=team.id, company=company, **data)
         team.save()
         return Response(
@@ -182,7 +182,7 @@ class EmployeeCreateAPIView(CompanyPermissionsMixin, generics.CreateAPIView):
         if not Team.objects.filter(pk=data["team"], company=company).exists():
             return Response({"message": "Team not Found"}, status=status.HTTP_404_NOT_FOUND)
         if Employee.objects.filter(nif=data['nif']).exists():
-            return Response({"message": "nif must be unique"}, status=status.HTTP_205_RESET_CONTENT)
+            return Response({"message": "nif must be unique"}, status=status.HTTP_400_BAD_REQUEST)
         team_id = data["team"]
         del data["team"]
         employee = Employee(company=company, team_id=team_id, **data)
@@ -255,7 +255,7 @@ class EmployeeUpdateView(CompanyPermissionsMixin, generics.UpdateAPIView):
         if not emp.nif == data['nif']:  # checking if nif is same as previous nif
             # if nif is new then checking if no other employe have the same nif
             if Employee.objects.filter(nif=data['nif']).exists():
-                return Response({"message": "nif must be unique"}, status=status.HTTP_205_RESET_CONTENT)
+                return Response({"message": "nif must be unique"}, status=status.HTTP_400_BAD_REQUEST)
         emp = Employee(pk=emp.id, company=company, team_id=team_id, **data)
         emp.save()
         return Response({'message': "Employee {} updated".format(emp.name)}, status=status.HTTP_200_OK)
