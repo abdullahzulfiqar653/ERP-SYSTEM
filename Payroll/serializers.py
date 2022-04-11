@@ -195,6 +195,7 @@ class PayrollsDeleteSerializer(serializers.ModelSerializer):
 class PayrollRelatedPayRollItemListSerializer(serializers.ModelSerializer):
     irfp_percent = serializers.DecimalField(
         source='irfp.irfp', read_only=True, max_digits=5, decimal_places=3)
+    employee_name = serializers.CharField(source='employee.name')
 
     class Meta:
         model = PayRollItem
@@ -211,7 +212,7 @@ class PayrollTeamListSerializer(serializers.ModelSerializer):
 # This Serializer is to return payroll instance including the related payroll Items.
 class FetchPayrollSerializer(serializers.ModelSerializer):
     payroll_items = PayrollRelatedPayRollItemListSerializer(read_only=True, many=True)
-    payroll_teams = PayrollTeamListSerializer(read_only=True, many=True)
+    teams_list = PayrollTeamListSerializer(read_only=True, many=True)
 
     class Meta:
         model = PayRoll
