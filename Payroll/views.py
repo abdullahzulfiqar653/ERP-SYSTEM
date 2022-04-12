@@ -118,8 +118,7 @@ class TeamListView(CompanyPermissionsMixin, generics.ListAPIView):
     ordering_fields = ['id', 'team_name']
 
     def get_queryset(self):
-        company = self.request.company
-        return Team.objects.filter(company=company)
+        return Team.objects.filter(company=self.request.company)
 
 
 '''
