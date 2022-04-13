@@ -9,6 +9,7 @@ class TaxAdmin(admin.ModelAdmin):
 
 class LookupNameAdmin(admin.ModelAdmin):
     search_fields = ['lookup_name']
+    list_display = ['lookup_type', 'lookup_name']
 
 
 class AccountTypeAdmin(admin.ModelAdmin):

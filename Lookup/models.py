@@ -37,7 +37,7 @@ class Tax(models.Model):  # Ret is a tax type like VAT
 class AccountType(models.Model):  # This relate to chart of account.
     lookup_name = models.ForeignKey(
         LookupName, on_delete=models.SET_NULL,
-        related_name='account_type_lookup_name', null=True)
+        related_name='account_type_lookup_name', null=True, blank=True)
     account_number = models.CharField(max_length=12, unique=True)
     english_name = models.CharField(max_length=256, unique=True)
     chart = models.CharField(max_length=128,)
