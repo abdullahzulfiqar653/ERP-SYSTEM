@@ -40,7 +40,7 @@ class PayRollTeamAdmin(admin.ModelAdmin):
 
 class PayRollAdmin(admin.ModelAdmin):
     inlines = [PayRollItemAdmin, ]
-    list_display = ['id', 'created_at']
+    list_display = ['id', 'created_at', 'creation_date']
 
 
 admin.site.register(Team, TeamAdmin)
