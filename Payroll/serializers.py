@@ -75,6 +75,10 @@ class ListEmployeeSerializer(serializers.ModelSerializer):
 
 class FormListEmployeeSerializer(serializers.ModelSerializer):
     team_id = serializers.IntegerField(read_only=True, source='team.id')
+    name = serializers.SerializerMethodField()
+
+    def get_name(self, employee: Employee):
+        return '{} {}'.format(employee.name, employee.surname)
 
     class Meta:
         model = Employee
