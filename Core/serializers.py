@@ -1,6 +1,5 @@
 from rest_framework import status
 from rest_framework import serializers
-from rest_framework.validators import UniqueValidator
 from rest_framework_jwt.serializers import JSONWebTokenSerializer
 from rest_framework_jwt.settings import api_settings
 from django.contrib.auth.models import User
@@ -27,8 +26,7 @@ class CustomJWTSerializer(JSONWebTokenSerializer):
 
     def validate(self, attrs):
         password = attrs.get("password")
-        user_obj = User.objects.filter(email=attrs.get("email")).first(
-        ) or User.objects.filter(username=attrs.get("email")).first()
+        user_obj = User.objects.filter(email=attrs.get("email")).first() or User.objects.filter(username=attrs.get("email")).first()
         if user_obj is not None:
             credentials = {
                 'username': user_obj.username,
@@ -51,8 +49,7 @@ class CustomJWTSerializer(JSONWebTokenSerializer):
                     {"email": "Must include Email.", "password": "Must include password"},
                     status.HTTP_400_BAD_REQUEST)
         else:
-            raise serializers.ValidationError(
-                {"email": "Must include valid Email."}, status.HTTP_400_BAD_REQUEST)
+            raise serializers.ValidationError({"email": "Must include valid Email."}, status.HTTP_400_BAD_REQUEST)
 
 
 '''
@@ -64,9 +61,8 @@ model name is UserProfile
 
 
 class RegisterSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(max_length=128, min_length=8,
-                                     write_only=True, validators=[validate_password])
-    email = serializers.EmailField(validators=[UniqueValidator(queryset=User.objects.all())])
+    password = serializers.CharField(max_length=128, min_length=8, write_only=True, validators=[validate_password])
+    email = serializers.EmailField(validators=[])
     username = serializers.CharField(max_length=128, validators=[], required=True, write_only=True)
 
     class Meta:
@@ -76,6 +72,11 @@ class RegisterSerializer(serializers.ModelSerializer):
             'username',
             'password',
         ]
+
+    def validate(self, attrs):
+        if User.objects.filter(email=attrs['email']).exists():
+            raise serializers.ValidationError({'email': "Email already exists."})
+        return attrs
 
     def create(self, validated_data):
         username = generate_username()

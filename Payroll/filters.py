@@ -6,7 +6,7 @@ class TeamFilter(FilterSet):
     class Meta:
         model = Team
         fields = {
-            "team_name": ['iexact'],
+            "team_name": ['icontains'],
             "address": ['icontains'],
             "postcode": ['exact'],
             "province": ['iexact'],
@@ -40,6 +40,7 @@ class PayRollFilter(FilterSet):
     class Meta:
         model = PayRoll
         fields = {
+            "id": ["exact"],
             "created_at": ['year', 'month'],
             "gross": ['gt', 'lt'],
             "bonus": ['gt', 'lt'],
