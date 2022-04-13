@@ -81,7 +81,8 @@ class FormListEmployeeSerializer(serializers.ModelSerializer):
         fields = [
             'id',
             'team_id',
-            'name'
+            'name',
+            'current_salary'
         ]
 
 
