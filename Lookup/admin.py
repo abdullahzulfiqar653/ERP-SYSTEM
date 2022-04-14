@@ -21,7 +21,7 @@ class AccountTypeAdmin(admin.ModelAdmin):
         'category',
         'financial_statement'
     ]
-    search_fields = ['lookup_name__lookup_name']
+    search_fields = ['lookup_name__lookup_name', 'account_number', ]
 
 
 class PaymentDayAdmin(admin.ModelAdmin):
