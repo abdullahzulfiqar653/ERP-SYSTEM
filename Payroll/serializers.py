@@ -204,7 +204,10 @@ class PayrollsDeleteSerializer(serializers.ModelSerializer):
 class PayrollRelatedPayRollItemListSerializer(serializers.ModelSerializer):
     irfp_percent = serializers.DecimalField(
         source='irfp.irfp', read_only=True, max_digits=5, decimal_places=3)
-    employee_name = serializers.CharField(source='employee.name')
+    employee_name = serializers.SerializerMethodField()
+
+    def get_employee_name(self, item: PayRollItem):
+        return '{} {}'.format(item.employee.name, item.employee.surname)
 
     class Meta:
         model = PayRollItem
