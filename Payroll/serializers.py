@@ -47,7 +47,6 @@ class TeamsDeleteSerializer(serializers.ModelSerializer):
 # ---------------------- Serializers for Employee Views ---------------------------#
 class AddEmployeeSerializer(serializers.ModelSerializer):
     team = serializers.IntegerField(required=True)
-    nif = serializers.CharField(validators=[], )
 
     class Meta:
         model = Employee
