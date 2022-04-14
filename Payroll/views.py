@@ -118,7 +118,7 @@ class TeamListView(CompanyPermissionsMixin, generics.ListAPIView):
     ordering_fields = ['id', 'team_name']
 
     def get_queryset(self):
-        return Team.objects.filter(company=self.request.company)
+        return Team.objects.filter(company=self.request.company).order_by('-id')
 
 
 '''
@@ -215,7 +215,7 @@ class EmployeeListAPIView(CompanyPermissionsMixin, generics.ListAPIView):
     ordering_fields = ['id', 'name']
 
     def get_queryset(self):
-        return Employee.objects.filter(company=self.request.company)
+        return Employee.objects.filter(company=self.request.company).order_by('-id')
 
 
 class EmployeeFormListAPIView(CompanyPermissionsMixin, generics.ListAPIView):
@@ -357,7 +357,7 @@ class PayRollListAPIView(CompanyPermissionsMixin, generics.ListAPIView):
     filterset_class = PayRollFilter
 
     def get_queryset(self):
-        return PayRoll.objects.filter(company=self.request.company)
+        return PayRoll.objects.filter(company=self.request.company).order_by('-id')
 
 
 '''
