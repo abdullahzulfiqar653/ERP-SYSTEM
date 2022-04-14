@@ -36,7 +36,7 @@ class Employee(models.Model):
     name = models.CharField(max_length=255)
     surname = models.CharField(max_length=255)
     # spain tax number
-    nif = models.CharField(max_length=13, null=True, blank=True, unique=True)
+    nif = models.CharField(max_length=13,)
     social_security = models.TextField(null=True, blank=True)
     contract_type = models.ForeignKey(
         LookupName, on_delete=models.SET_NULL,
@@ -60,7 +60,7 @@ class PayRoll(models.Model):
         Company, on_delete=models.CASCADE,
         related_name='company_payroll')
     created_at = models.DateField(auto_now_add=False)
-    creation_date = models.DateField(auto_now_add=True)
+    creation_date = models.DateField(auto_now_add=True, )
     gross = models.DecimalField(max_digits=12, decimal_places=2, )
     bonus = models.DecimalField(max_digits=12, decimal_places=2, )
     total_gross = models.DecimalField(max_digits=12, decimal_places=2, )

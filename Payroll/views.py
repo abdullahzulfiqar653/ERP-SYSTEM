@@ -182,7 +182,7 @@ class EmployeeCreateAPIView(CompanyPermissionsMixin, generics.CreateAPIView):
         company = self.request.company
         if not Team.objects.filter(pk=data["team"], company=company).exists():
             return Response({"message": "Team not Found"}, status=status.HTTP_404_NOT_FOUND)
-        if Employee.objects.filter(nif=data['nif']).exists():
+        if Employee.objects.filter(nif=data['nif'], company=company).exists():
             return Response({"nif": "NIF already exist"}, status=status.HTTP_400_BAD_REQUEST)
         team_id = data["team"]
         del data["team"]
@@ -255,7 +255,7 @@ class EmployeeUpdateView(CompanyPermissionsMixin, generics.UpdateAPIView):
         del data["team"]
         if not emp.nif == data['nif']:  # checking if nif is same as previous nif
             # if nif is new then checking if no other employe have the same nif
-            if Employee.objects.filter(nif=data['nif']).exists():
+            if Employee.objects.filter(nif=data['nif'], company=company).exists():
                 return Response({"nif": "NIF Already exist."}, status=status.HTTP_400_BAD_REQUEST)
         emp = Employee(pk=emp.id, company=company, team_id=team_id, **data)
         emp.save()
@@ -398,8 +398,10 @@ class PayRollItemUpdateAPIView(CompanyPermissionsMixin, generics.UpdateAPIView):
 
         if not PayRoll.objects.filter(pk=payroll_id, company=company).exists():
             return Response({"message": "Payroll not found"}, status=status.HTTP_404_NOT_FOUND)
-        payroll = PayRoll(pk=payroll_id, company=company, **data)
+        creation_date = PayRoll.objects.get(pk=payroll_id).creation_date
+        payroll = PayRoll(pk=payroll_id, company=company, creation_date=creation_date, **data)
         payroll.save()
+
         PayrollTeam.objects.filter(payroll=payroll).delete()
         PayRollItem.objects.filter(payroll=payroll).delete()
         for team in teams_list:
