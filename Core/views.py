@@ -482,13 +482,9 @@ class CompanyAccessView(generics.CreateAPIView):
         for company_id in data['company_list']:  # looping on list of companies
             # checking if current user is owner of current company if not then raise exception
             if Company.objects.filter(pk=company_id, user=adminUser).exists():
-                # here checking if company permissions are already assigned to someone
-                if company_id in list(CompanyAccessRecord.objects.all().values_list('company', flat=True)):
-                    continue
-                else:
-                    record = CompanyAccessRecord(
-                        user=user, company=Company.objects.get(pk=company_id))
-                    record.save()
+                # making record of permission
+                record = CompanyAccessRecord(user=user, company=Company.objects.get(pk=company_id))
+                record.save()
             else:
                 raise Company.DoesNotExist
         return Response({"message": "Permissions created."}, status=status.HTTP_201_CREATED)

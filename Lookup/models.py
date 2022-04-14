@@ -39,7 +39,7 @@ class AccountType(models.Model):  # This relate to chart of account.
         LookupName, on_delete=models.SET_NULL,
         related_name='account_type_lookup_name', null=True, blank=True)
     account_number = models.CharField(max_length=12, unique=True)
-    english_name = models.CharField(max_length=256, unique=True)
+    english_name = models.CharField(max_length=256,)
     chart = models.CharField(max_length=128,)
     category = models.ForeignKey(
         LookupName, on_delete=models.SET_NULL,
