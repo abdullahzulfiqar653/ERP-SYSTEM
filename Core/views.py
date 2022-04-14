@@ -554,7 +554,7 @@ class CompaniesListAPIView(generics.ListAPIView):
                 user=user).values_list("company_id", flat=True))
             return Company.objects.filter(pk__in=user_records)
         else:
-            return Company.objects.filter(user=user)
+            return Company.objects.filter(user=user).order_by('-id')
 
 
 '''
@@ -574,7 +574,7 @@ class UsersListAPIView(generics.ListAPIView):
         user = self.request.user
         users = User.objects.filter(pk__in=list(UserProfile.objects.filter(
             admin=user).values_list('user_id', flat=True)), is_staff=False)
-        return users
+        return users.order_by('-id')
 
 
 '''
