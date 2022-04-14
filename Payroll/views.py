@@ -144,6 +144,7 @@ class TeamsDeleteAPIView(CompanyPermissionsMixin, generics.DestroyAPIView):
     permission_classes = (permissions.IsAuthenticated, IsCompanyAccess)
     serializer_class = TeamsDeleteSerializer
 
+    @transaction.atomic
     def delete(self, request, format=None):
         serializer = self.get_serializer(data=self.request.data)
         serializer.is_valid(raise_exception=True)
@@ -153,7 +154,8 @@ class TeamsDeleteAPIView(CompanyPermissionsMixin, generics.DestroyAPIView):
             if Team.objects.filter(pk=id).filter(company=self.request.company).exists():
                 instance = Team.objects.get(pk=id)
                 instance.delete()
-            continue
+            else:
+                raise Team.DoesNotExist
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
