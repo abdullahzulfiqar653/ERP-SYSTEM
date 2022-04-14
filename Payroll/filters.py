@@ -20,19 +20,12 @@ class EmployeeFilter(FilterSet):
         model = Employee
         fields = {
             "id": ["exact"],
-            "team__id": ["exact"],
-            "name": ['iexact'],
-            "surname": ['iexact'],
-            "nif": ['exact'],
-            "social_security": ['icontains'],
+            "name": ['icontains'],
+            "surname": ['icontains'],
             "contract_type": ['exact'],
-            "address": ['icontains'],
             "enddate": ['exact'],
+            "team": ["exact"],
             "current_salary": ['gt', 'lt'],
-            "postcode": ['exact'],
-            "province": ['iexact'],
-            "country__id": ['exact'],
-            "note": ['icontains'],
         }
 
 

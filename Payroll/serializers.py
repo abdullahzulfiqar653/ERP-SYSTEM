@@ -5,6 +5,10 @@ from .models import PayRoll, PayRollItem, PayrollTeam, Team, Employee
 # ---------------------- Serializers for Team Views ---------------------------#
 class TeamSerializer(serializers.ModelSerializer):
     country_name = serializers.CharField(read_only=True, source='country.lookup_name')
+    has_employees = serializers.SerializerMethodField()
+
+    def get_has_employees(self, team: Team):
+        return True if Employee.objects.filter(team=team).exists() else False
 
     class Meta:
         model = Team
@@ -17,6 +21,7 @@ class TeamSerializer(serializers.ModelSerializer):
             'country',
             'country_name',
             'note',
+            'has_employees',
         ]
 
 
