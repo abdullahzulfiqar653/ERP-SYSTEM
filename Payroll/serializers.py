@@ -4,7 +4,7 @@ from .models import PayRoll, PayRollItem, PayrollTeam, Team, Employee
 
 # ---------------------- Serializers for Team Views ---------------------------#
 class TeamSerializer(serializers.ModelSerializer):
-    country_name = serializers.CharField(read_only=True, source='country.lookup_name')
+    country_label = serializers.CharField(read_only=True, source='country.lookup_name')
     has_employees = serializers.SerializerMethodField(read_only=True)
 
     def get_has_employees(self, team: Team):
@@ -19,7 +19,7 @@ class TeamSerializer(serializers.ModelSerializer):
             'postcode',
             'province',
             'country',
-            'country_name',
+            'country_label',
             'note',
             'has_employees',
         ]
@@ -68,7 +68,7 @@ class AddEmployeeSerializer(serializers.ModelSerializer):
 
 
 class ListEmployeeSerializer(serializers.ModelSerializer):
-    country_name = serializers.CharField(read_only=True, source='country.lookup_name')
+    country_label = serializers.CharField(read_only=True, source='country.lookup_name')
     team_name = serializers.CharField(read_only=True, source='team.team_name')
     contract_type_label = serializers.CharField(read_only=True, source='contract_type.lookup_name')
 
