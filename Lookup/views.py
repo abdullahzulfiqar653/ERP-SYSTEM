@@ -26,17 +26,27 @@ class LookupListAPIView(generics.ListAPIView):
         return LookupName.objects.filter(lookup_type__lookup_type=self.kwargs['lookup'])
 
 
-class TaxListAPIView(generics.ListAPIView):
+class PayrollTaxListAPIView(generics.ListAPIView):
     permission_classes = (permissions.AllowAny,)
     serializer_class = TaxSerializer
 
     def get_queryset(self):
-        if "client" == self.kwargs['lookup'].lower() or "debitor" == self.kwargs['lookup'].lower():
-            return Tax.objects.filter(lookup_name__lookup_name=self.kwargs['lookup'].lower()).values('id', 'vat', 'equiv')
-        if "provider" == self.kwargs['lookup'].lower() or "creditor" == self.kwargs['lookup'].lower():
-            return Tax.objects.filter(lookup_name__lookup_name=self.kwargs['lookup'].lower()).values('id', 'vat', 'ret')
         if "payrolltax" == self.kwargs['lookup'].lower():
             return Tax.objects.filter(lookup_name__lookup_name=self.kwargs['lookup'].lower()).values('id', 'irfp')
+        return Tax.objects.filter(lookup_name_id=self.kwargs['lookup'])
+
+
+class ContactTaxListAPIView(generics.ListAPIView):
+    permission_classes = (permissions.AllowAny,)
+    serializer_class = TaxSerializer
+
+    def get_queryset(self):
+        lookup = LookupName.objects.filter(pk=self.kwargs['lookup']).first()
+        if lookup:
+            if "client" == lookup.lookup_name.lower() or "debitor" == lookup.lookup_name.lower():
+                return Tax.objects.filter(lookup_name_id=self.kwargs['lookup']).values('id', 'vat', 'equiv')
+            if "provider" == lookup.lookup_name.lower() or "creditor" == lookup.lookup_name.lower():
+                return Tax.objects.filter(lookup_name_id=self.kwargs['lookup']).values('id', 'vat', 'ret')
         return Tax.objects.none()
 
 
