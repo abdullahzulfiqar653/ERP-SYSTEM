@@ -42,7 +42,7 @@ class Employee(models.Model):
         LookupName, on_delete=models.SET_NULL,
         related_name='contract_type_lookup_name', null=True)
     address = models.TextField(null=True, blank=True)
-    enddate = models.DateField()
+    enddate = models.DateField(null=True, blank=True)
     current_salary = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
     postcode = models.CharField(max_length=10, null=True, blank=True)
     province = models.CharField(max_length=130, null=True, blank=True)
