@@ -27,6 +27,5 @@ def get_contact_id(contact_type):
         while Contact.objects.filter(contact_id=random_num).exists():
             random_num = random.randint(410000000001, 419999999999)
         return random_num
-
     else:
         return False
