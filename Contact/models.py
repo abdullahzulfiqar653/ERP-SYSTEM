@@ -14,7 +14,7 @@ class Contact(models.Model):
     name = models.CharField(max_length=255)
     # auto fill according to the type of account_type in PaymentSection
     contact_id = models.CharField(max_length=12)
-    nif = models.CharField(max_length=13, unique=True)
+    nif = models.CharField(max_length=13)
     # Client address of tax
     tax_address = models.TextField()
     tax_postcode = models.CharField(max_length=10,)

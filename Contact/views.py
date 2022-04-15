@@ -11,6 +11,7 @@ from .models import Contact
 from .filters import ContactFilter
 from .serializers import (
     ContactSerializer,
+    ContactListSerializer,
     ContactUpdateSerializer,
     ContactDeleteSerializer,
 )
@@ -27,46 +28,15 @@ class ContactCreateAPIView(CompanyPermissionsMixin, generics.CreateAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
+        if Contact.objects.filter(nif=data['nif'], company=company).exists():
+            return Response({"nif": "NIF already exists."}, status=status.HTTP_400_BAD_REQUEST)
         data['contact_id'] = get_contact_id(data['contact_type'])
         contact = Contact(company=company, **data)
         contact.save()
-        return Response({"message": "Contact Created."}, status=status.HTTP_201_CREATED)
-
-
-'''
-
-'''
-
-
-class ContactUpdateAPIView(generics.UpdateAPIView):
-    permission_classes = [permissions.IsAuthenticated, ]
-    serializer_class = ContactSerializer
-
-    def update(self, request, contact_id, partial=True):
-        company = self.request.company
-        serializer = ContactUpdateSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        data = serializer.validated_data
-
-        if Contact.objects.filter(pk=contact_id, company=company).exists():
-            oldContact = Contact.objects.filter(pk=contact_id, company=company).first()
-            if not oldContact.contact_type.id == data['contact_type'].id:
-                if Contact.objects.filter(nif=data['nif']).exists():
-                    return Response({"message": "nif must be unique"}, status=status.HTTP_205_RESET_CONTENT)
-                data['contact_id'] = get_contact_id(data['contact_type'])
-                contact = Contact(company=company, **data)
-                contact.save()
-                oldContact.delete()
-                return Response({"message": "Contact Updated"}, status=status.HTTP_200_OK)
-            if not oldContact.nif == data['nif']:  # checking if nif is same as previous nif
-                # if nif is new then checking if no other employe have the same nif
-                if Contact.objects.filter(nif=data['nif']).exists():
-                    return Response({"message": "nif must be unique"}, status=status.HTTP_205_RESET_CONTENT)
-            contact = Contact(pk=contact_id, company=company, **data)
-            contact.save()
-            return Response({"message": "Contact Updated"}, status=status.HTTP_200_OK)
-        else:
-            return Response({"message": "Contact not found."}, status=status.HTTP_404_NOT_FOUND)
+        return Response({
+            "message": "Contact Created.",
+            "contact": ContactSerializer(contact).data},
+            status=status.HTTP_201_CREATED)
 
 
 '''
@@ -74,12 +44,53 @@ update
 '''
 
 
+class ContactUpdateAPIView(generics.UpdateAPIView):
+    permission_classes = [permissions.IsAuthenticated, ]
+
+    def update(self, request, contact_id, partial=True):
+        company = self.request.company
+        serializer = ContactUpdateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        if not Contact.objects.filter(pk=contact_id, company=company).exists():
+            return Response({"message": "Contact not found."}, status=status.HTTP_404_NOT_FOUND)
+        oldContact = Contact.objects.filter(pk=contact_id, company=company).first()
+
+        if not oldContact.nif == data['nif']:  # checking if nif is same as previous nif
+            # if nif is new then checking if no other employe have the same nif
+            if Contact.objects.filter(nif=data['nif'], company=company).exists():
+                return Response({"nif": "NIF already exists."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not oldContact.contact_type.id == data['contact_type'].id:
+            data['contact_id'] = get_contact_id(data['contact_type'])
+            contact = Contact(company=company, **data)
+            contact.save()
+            oldContact.delete()
+        else:
+            data['contact_id'] = oldContact.contact_id
+            contact = Contact(pk=contact_id, company=company, **data)
+            contact.save()
+        return Response({
+            "message": "Contact Updated",
+            "contact": ContactSerializer(contact).data},
+            status=status.HTTP_200_OK)
+
+
 class ContactListAPIView(CompanyPermissionsMixin, generics.ListAPIView):
     permission_classes = (permissions.IsAuthenticated, IsCompanyAccess)
-    serializer_class = ContactSerializer
+    serializer_class = ContactListSerializer
     pagination_class = LimitOffsetPagination
     filter_backends = [DjangoFilterBackend, ]
     filterset_class = ContactFilter
+
+    def get_queryset(self):
+        return Contact.objects.filter(company=self.request.company)
+
+
+class ContactRetrieveAPIView(CompanyPermissionsMixin, generics.RetrieveAPIView):
+    permission_classes = (permissions.IsAuthenticated, IsCompanyAccess)
+    serializer_class = ContactSerializer
 
     def get_queryset(self):
         return Contact.objects.filter(company=self.request.company)
@@ -95,13 +106,9 @@ class ContactsdeleteAPIView(CompanyPermissionsMixin, generics.DestroyAPIView):
     serializer_class = ContactDeleteSerializer
 
     def delete(self, request, format=None):
+        company = self.request.company
         serializer = self.get_serializer(data=self.request.data)
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
-
-        for id in data['contact_list']:
-            if Contact.objects.filter(pk=id).filter(company=self.request.company).exists():
-                instance = Contact.objects.get(pk=id)
-                instance.delete()
-            continue
+        Contact.objects.filter(pk__in=data['contact_list'], company=company).delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
