@@ -3,18 +3,17 @@ from .models import LookupName, LookupType, Tax, PaymentDay, AccountType
 
 
 # Register your models here.
-class TaxAdmin(admin.ModelAdmin):
-    list_display = ['id', 'lookup_name', 'vat', 'ret', 'equiv', 'irfp']
 
 
 class LookupNameAdmin(admin.ModelAdmin):
     search_fields = ['lookup_name']
-    list_display = ['lookup_type', 'lookup_name']
+    list_display = ['id', 'lookup_type', 'lookup_name']
 
 
 class AccountTypeAdmin(admin.ModelAdmin):
     autocomplete_fields = ['lookup_name', 'category']
     list_display = [
+        'id',
         'lookup_name',
         'account_number',
         'chart',
@@ -27,10 +26,16 @@ class AccountTypeAdmin(admin.ModelAdmin):
 class PaymentDayAdmin(admin.ModelAdmin):
     autocomplete_fields = ['lookup_name']
     list_display = [
+        'id',
         'lookup_name',
         'name',
         'day',
     ]
+
+
+class TaxAdmin(admin.ModelAdmin):
+    autocomplete_fields = ['lookup_name']
+    list_display = ['id', 'lookup_name', 'vat', 'ret', 'equiv', 'irfp']
 
 
 admin.site.register(LookupName, LookupNameAdmin)
