@@ -229,6 +229,22 @@ class FetchPayrollSerializer(serializers.ModelSerializer):
     class Meta:
         model = PayRoll
         exclude = ['company']
+        # fields = [
+        #     'created_at',
+        #     'payroll_items',
+        #     'teams_list',
+        #     'creation_date',
+        #     'gross',
+        #     'bonus',
+        #     'total_gross',
+        #     'irfp',
+        #     'irfp_total',
+        #     'ss_employee',
+        #     'net',
+        #     'ss_company',
+        #     'discount',
+        #     'company_cost',
+        # ]
 
 
 # This Serializer is to return only payroll instances not the related payroll Items.
