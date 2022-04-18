@@ -55,8 +55,11 @@ class ChartOfAccountTypeAPIView(generics.ListAPIView):
     serializer_class = ChartOfAccountTypeSerializer
 
     def get_queryset(self):
-        if "client&debitor" == self.kwargs['lookup'].lower():
-            return AccountType.objects.filter(lookup_name__lookup_name=self.kwargs['lookup'].lower())
-        if "provider&creditor" == self.kwargs['lookup'].lower():
-            return AccountType.objects.filter(lookup_name__lookup_name=self.kwargs['lookup'].lower())
+        if not LookupName.objects.filter(pk=self.kwargs['lookup']).exists():
+            raise LookupName.DoesNotExist
+        lookup = LookupName.objects.filter(pk=self.kwargs['lookup']).first()
+        if "client" == lookup.lookup_name.lower() or "debitor" == lookup.lookup_name.lower():
+            return AccountType.objects.filter(category__lookup_name='Income')
+        if "provider" == lookup.lookup_name.lower() or "creditor" == lookup.lookup_name.lower():
+            return AccountType.objects.filter(category__lookup_name='Expense')
         return AccountType.objects.none()
