@@ -31,6 +31,7 @@ class ChartOfAccountTypeSerializer(serializers.ModelSerializer):
         model = AccountType
         fields = ['id', 'english_name']
 
+
 class PaymentDaySerializer(serializers.ModelSerializer):
     class Meta:
         model = PaymentDay
