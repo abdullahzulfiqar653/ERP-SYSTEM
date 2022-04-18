@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import LookupType, LookupName, Tax, AccountType
+from .models import LookupType, LookupName, Tax, AccountType, PaymentDay
 
 
 # ---------------------- Serializers for Lookups Module ---------------------------#
@@ -30,3 +30,8 @@ class ChartOfAccountTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = AccountType
         fields = ['id', 'english_name']
+
+class PaymentDaySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PaymentDay
+        fields = ['id', 'name']

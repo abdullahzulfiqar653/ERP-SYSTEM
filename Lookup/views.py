@@ -1,4 +1,4 @@
-from .models import AccountType, LookupName, Tax, LookupType
+from .models import AccountType, LookupName, PaymentDay, Tax, LookupType
 from rest_framework import generics
 from rest_framework import permissions
 from .serializers import (
@@ -6,6 +6,7 @@ from .serializers import (
     LookupSerializer,
     TaxSerializer,
     ChartOfAccountTypeSerializer,
+    PaymentDaySerializer,
 )
 
 # Create your views here.
@@ -63,3 +64,9 @@ class ChartOfAccountTypeAPIView(generics.ListAPIView):
         if "provider" == lookup.lookup_name.lower() or "creditor" == lookup.lookup_name.lower():
             return AccountType.objects.filter(category__lookup_name='Expense')
         return AccountType.objects.none()
+
+
+class PaymentDayListAPIView(generics.ListAPIView):
+    queryset = PaymentDay.objects.all()
+    permission_classes = (permissions.AllowAny,)
+    serializer_class = PaymentDaySerializer
