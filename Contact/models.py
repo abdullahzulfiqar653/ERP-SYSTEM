@@ -16,16 +16,16 @@ class Contact(models.Model):
     contact_id = models.CharField(max_length=12)
     nif = models.CharField(max_length=13)
     # Client address of tax
-    tax_address = models.TextField(null=True, blank=True)
-    tax_postcode = models.CharField(max_length=10, null=True, blank=True)
-    tax_province = models.CharField(max_length=130, null=True, blank=True)
+    tax_address = models.TextField(blank=True)
+    tax_postcode = models.CharField(max_length=10, blank=True)
+    tax_province = models.CharField(max_length=130, blank=True)
     tax_country = models.ForeignKey(
         LookupName, on_delete=models.SET_NULL,
         related_name='tax_country_name', null=True)  # option fields
     # Client Address for shipping
-    shipping_address = models.TextField(null=True, blank=True)
-    shipping_postcode = models.CharField(max_length=10, null=True, blank=True)
-    shipping_province = models.CharField(max_length=130, null=True, blank=True)
+    shipping_address = models.TextField(blank=True)
+    shipping_postcode = models.CharField(max_length=10, blank=True)
+    shipping_province = models.CharField(max_length=130, blank=True)
     shipping_country = models.ForeignKey(
         LookupName, on_delete=models.SET_NULL,
         related_name='shipping_country_name', null=True)  # option field
