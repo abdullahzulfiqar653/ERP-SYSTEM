@@ -12,10 +12,9 @@ from .serializers import (
     ListEmployeeSerializer,
     FormListEmployeeSerializer,
     EmployeesDeleteSerializer,
-    PayRollCreateSerializer,
+    PayRollSerializer,
     FetchPayrollSerializer,
     PayRollListSerializer,
-    PayRollUpdateSerializer,
     PayrollsDeleteSerializer,
     TeamFormListSerializer,
 )
@@ -118,7 +117,8 @@ class TeamListView(CompanyPermissionsMixin, generics.ListAPIView):
     ordering_fields = ['id', 'team_name']
 
     def get_queryset(self):
-        return Team.objects.filter(company=self.request.company).order_by('-id')
+        year = self.request.META.get('HTTP_YEAR')
+        return Team.objects.filter(company=self.request.company, creation_date__year=year).order_by('-id')
 
 
 '''
@@ -215,7 +215,8 @@ class EmployeeListAPIView(CompanyPermissionsMixin, generics.ListAPIView):
     ordering_fields = ['id', 'name']
 
     def get_queryset(self):
-        return Employee.objects.filter(company=self.request.company).order_by('-id')
+        year = self.request.META.get("HTTP_YEAR")
+        return Employee.objects.filter(company=self.request.company, creation_date__year=year).order_by('-id')
 
 
 class EmployeeFormListAPIView(CompanyPermissionsMixin, generics.ListAPIView):
@@ -310,7 +311,7 @@ Payroll Item will be created.
 
 class PayRollCreateAPIView(CompanyPermissionsMixin, generics.CreateAPIView):
     permission_classes = (permissions.IsAuthenticated, IsCompanyAccess)
-    serializer_class = PayRollCreateSerializer
+    serializer_class = PayRollSerializer
 
     @transaction.atomic
     def post(self, request, *args, **kwargs):
@@ -357,7 +358,9 @@ class PayRollListAPIView(CompanyPermissionsMixin, generics.ListAPIView):
     filterset_class = PayRollFilter
 
     def get_queryset(self):
-        return PayRoll.objects.filter(company=self.request.company).order_by('-id')
+        year = self.request.META.get("HTTP_YEAR")
+
+        return PayRoll.objects.filter(company=self.request.company, creation_date__year=year).order_by('-id')
 
 
 '''
@@ -382,7 +385,7 @@ or not if yess then it simply update all parameters related to the payroll item.
 
 class PayRollItemUpdateAPIView(CompanyPermissionsMixin, generics.UpdateAPIView):
     permission_classes = (permissions.IsAuthenticated, IsCompanyAccess)
-    serializer_class = PayRollUpdateSerializer
+    serializer_class = PayRollSerializer
 
     @transaction.atomic
     def update(self, request, payroll_id, partial=True):
