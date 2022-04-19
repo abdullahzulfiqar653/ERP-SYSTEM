@@ -8,13 +8,15 @@ class ContactFilter(FilterSet):
         fields = {
             "contact_type__id": ['exact'],
             "name": ['iexact'],
-            # "contact_id": ['exact'],
+            "contact_id": ['exact'],
             "nif": ['exact'],
+            "tax_country__id": ['exact'],
+
 
             # "tax_address": ['icontains'],
             # "tax_postcode": ['exact'],
             # "tax_province": ['iexact'],
-            # "tax_country__lookup_name": ['iexact'],
+
 
             # "shipping_address": ['icontains'],
             # "shipping_postcode": ['exact'],
