@@ -21,6 +21,7 @@ class LookupSerializer(serializers.ModelSerializer):
 
 
 class TaxSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = Tax
         exclude = ['lookup_name', ]

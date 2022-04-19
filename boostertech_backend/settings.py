@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     'rest_framework_jwt',
     'rest_framework.authtoken',
     'django_filters',
+    "debug_toolbar",
 
     # developer started apps:
     'Middleware',
@@ -54,6 +55,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
 
     'Middleware.custommiddleware.CompanyAccessMiddleWare',
 ]
@@ -203,7 +205,7 @@ REST_FRAMEWORK = {
 # FILTERS_DEFAULT_LOOKUP_EXPR = 'icontains'
 JWT_AUTH = {
     # how long the original token is valid for
-    'JWT_EXPIRATION_DELTA': datetime.timedelta(days=5),
+    'JWT_EXPIRATION_DELTA': datetime.timedelta(days=20),
     'JWT_REFRESH_EXPIRATION_DELTA': datetime.timedelta(days=20),
     'JWT_ALLOW_REFRESH': True,
 }
