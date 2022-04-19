@@ -46,7 +46,7 @@ class TeamsDeleteSerializer(serializers.ModelSerializer):
 
 # ---------------------- Serializers for Employee Views ---------------------------#
 class AddEmployeeSerializer(serializers.ModelSerializer):
-    team = serializers.IntegerField(required=True)
+    team = serializers.IntegerField(required=False)
 
     class Meta:
         model = Employee
@@ -125,70 +125,13 @@ class PayRollItemSerializer(serializers.ModelSerializer):
         ]
 
 
-class PayRollCreateSerializer(serializers.ModelSerializer):
+class PayRollSerializer(serializers.ModelSerializer):
     payroll_items = PayRollItemSerializer(many=True)
     teams_list = serializers.ListField(child=serializers.IntegerField())
 
     class Meta:
         model = PayRoll
-        fields = [
-            'created_at',
-            'gross',
-            'bonus',
-            'total_gross',
-            'irfp',
-            'irfp_total',
-            'ss_employee',
-            'net',
-            'ss_company',
-            'discount',
-            'company_cost',
-            'payroll_items',
-            'teams_list',
-        ]
-
-
-class PayRollItemUpdateSerializer(serializers.ModelSerializer):
-    employee = serializers.IntegerField(required=True)
-
-    class Meta:
-        model = PayRollItem
-        fields = [
-            'employee',
-            'gross',
-            'bonus',
-            'total_gross',
-            'irfp',
-            'irfp_total',
-            'ss_employee',
-            'net',
-            'ss_company',
-            'discount',
-            'company_cost'
-        ]
-
-
-class PayRollUpdateSerializer(serializers.ModelSerializer):
-    payroll_items = PayRollItemUpdateSerializer(many=True)
-    teams_list = serializers.ListField(child=serializers.IntegerField())
-
-    class Meta:
-        model = PayRoll
-        fields = [
-            'created_at',
-            'gross',
-            'bonus',
-            'total_gross',
-            'irfp',
-            'irfp_total',
-            'ss_employee',
-            'net',
-            'ss_company',
-            'discount',
-            'company_cost',
-            'payroll_items',
-            'teams_list'
-        ]
+        exclude = ['company', 'creation_date']
 
 
 class PayrollsDeleteSerializer(serializers.ModelSerializer):
@@ -202,8 +145,6 @@ class PayrollsDeleteSerializer(serializers.ModelSerializer):
 
 
 class PayrollRelatedPayRollItemListSerializer(serializers.ModelSerializer):
-    irfp_percent = serializers.DecimalField(
-        source='irfp.irfp', read_only=True, max_digits=5, decimal_places=3)
     employee_name = serializers.SerializerMethodField()
 
     def get_employee_name(self, item: PayRollItem):
@@ -229,22 +170,6 @@ class FetchPayrollSerializer(serializers.ModelSerializer):
     class Meta:
         model = PayRoll
         exclude = ['company']
-        # fields = [
-        #     'created_at',
-        #     'payroll_items',
-        #     'teams_list',
-        #     'creation_date',
-        #     'gross',
-        #     'bonus',
-        #     'total_gross',
-        #     'irfp',
-        #     'irfp_total',
-        #     'ss_employee',
-        #     'net',
-        #     'ss_company',
-        #     'discount',
-        #     'company_cost',
-        # ]
 
 
 # This Serializer is to return only payroll instances not the related payroll Items.
