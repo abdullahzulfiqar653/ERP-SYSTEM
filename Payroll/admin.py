@@ -13,7 +13,8 @@ class TeamAdmin(admin.ModelAdmin):
     list_display = [
         'id',
         'team_name',
-        'company'
+        'company',
+        'creation_date'
     ]
 
 
@@ -23,7 +24,8 @@ class EmployeeAdmin(admin.ModelAdmin):
         'name',
         'nif',
         'team',
-        'company'
+        'company',
+        'creation_date'
     ]
 
 
@@ -40,7 +42,7 @@ class PayRollTeamAdmin(admin.ModelAdmin):
 
 class PayRollAdmin(admin.ModelAdmin):
     inlines = [PayRollItemAdmin, ]
-    list_display = ['id', 'created_at', 'creation_date']
+    list_display = ['id', 'created_at_year', 'creation_date']
 
 
 admin.site.register(Team, TeamAdmin)

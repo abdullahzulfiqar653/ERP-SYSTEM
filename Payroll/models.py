@@ -1,11 +1,14 @@
 from django.db import models
 from Core.models import Company
 from Lookup.models import LookupName, Tax
+import datetime
+from django.core.validators import MaxValueValidator, MinValueValidator
 # Create your models here.
 # --------------------- team Models -------------------- #
 
 
 class Team(models.Model):
+    creation_date = models.DateField(auto_now_add=True, )
     company = models.ForeignKey(
         Company, on_delete=models.CASCADE,
         related_name='company_team')
@@ -26,12 +29,13 @@ class Team(models.Model):
 
 
 class Employee(models.Model):
+    creation_date = models.DateField(auto_now_add=True, )
     company = models.ForeignKey(
         Company, on_delete=models.CASCADE,
         related_name='company_employee')
     team = models.ForeignKey(
         Team,
-        on_delete=models.PROTECT,
+        on_delete=models.SET_NULL,
         null=True, blank=True)
     name = models.CharField(max_length=255)
     surname = models.CharField(max_length=255)
@@ -55,12 +59,15 @@ class Employee(models.Model):
         return str(self.id) + "-   -" + self.name
 
 
+def max_value_current_year(value):
+    return MaxValueValidator(datetime.date.today().year)(value)
+
+
 class PayRoll(models.Model):
+    creation_date = models.DateField(auto_now_add=True, )
     company = models.ForeignKey(
         Company, on_delete=models.CASCADE,
         related_name='company_payroll')
-    created_at = models.DateField(auto_now_add=False)
-    creation_date = models.DateField(auto_now_add=True, )
     gross = models.DecimalField(max_digits=12, decimal_places=2, )
     bonus = models.DecimalField(max_digits=12, decimal_places=2, )
     total_gross = models.DecimalField(max_digits=12, decimal_places=2, )
@@ -71,6 +78,10 @@ class PayRoll(models.Model):
     ss_company = models.DecimalField(max_digits=12, decimal_places=2, )
     discount = models.DecimalField(max_digits=12, decimal_places=2, )
     company_cost = models.DecimalField(max_digits=12, decimal_places=2, )
+    created_at_year = models.PositiveIntegerField(
+        validators=[MinValueValidator(2020), max_value_current_year])
+    created_at_month = models.PositiveIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(12)])
 
 
 class PayrollTeam(models.Model):

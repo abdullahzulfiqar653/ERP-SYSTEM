@@ -34,7 +34,8 @@ class PayRollFilter(FilterSet):
         model = PayRoll
         fields = {
             "id": ["exact"],
-            "created_at": ['year', 'month'],
+            "created_at_year": ["exact"],
+            "created_at_month": ["exact"],
             "gross": ['gt', 'lt'],
             "bonus": ['gt', 'lt'],
             "total_gross": ['gt', 'lt'],
