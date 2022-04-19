@@ -5,6 +5,7 @@ from Core.models import Company
 
 
 class Contact(models.Model):
+    creation_date = models.DateField(auto_now_add=True, )
     company = models.ForeignKey(
         Company, on_delete=models.CASCADE,
         related_name='company_contact')
