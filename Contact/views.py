@@ -86,7 +86,7 @@ class ContactListAPIView(CompanyPermissionsMixin, generics.ListAPIView):
 
     def get_queryset(self):
         year = self.request.META.get("HTTP_YEAR")
-        return Contact.objects.filter(company=self.request.company, creation_date__year=year)
+        return Contact.objects.filter(company=self.request.company, creation_date__year=year).order_by('-id')
 
 
 class ContactRetrieveAPIView(CompanyPermissionsMixin, generics.RetrieveAPIView):
