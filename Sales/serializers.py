@@ -12,6 +12,7 @@ class InvoiceItemSerializer(serializers.ModelSerializer):
 
 class InvoiceSerializer(serializers.ModelSerializer):
     invoice_items = InvoiceItemSerializer(many=True)
+    status_label = serializers.CharField(source='status.lookup_name', read_only=True)
 
     class Meta:
         model = Invoice

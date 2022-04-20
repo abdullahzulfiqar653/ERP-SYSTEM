@@ -6,6 +6,10 @@ from Core.models import Company
 
 
 class Invoice(models.Model):
+    creation_date = models.DateField()
+    status = models.ForeignKey(
+        LookupName, on_delete=models.SET_NULL,
+        related_name='invoice_status', null=True, )
     company = models.ForeignKey(
         Company, on_delete=models.CASCADE,
         related_name='company_invoice')
@@ -21,8 +25,8 @@ class Invoice(models.Model):
     ret_total = models.DecimalField(max_digits=8, decimal_places=2, )
     total = models.DecimalField(max_digits=10, decimal_places=2, )
     payment_method = models.ForeignKey(
-        LookupName, on_delete=models.PROTECT,
-        related_name='invoice_payment_method_name', )
+        LookupName, on_delete=models.SET_NULL,
+        related_name='invoice_payment_method_name', null=True, )
     due_date = models.DateField(auto_now_add=False)
     iban = models.CharField(max_length=34)
 
