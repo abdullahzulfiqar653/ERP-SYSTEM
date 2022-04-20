@@ -69,6 +69,7 @@ class ContactUpdateAPIView(generics.UpdateAPIView):
             oldContact.delete()
         else:
             data['contact_id'] = oldContact.contact_id
+            data['creation_date'] = oldContact.creation_date
             contact = Contact(pk=contact_id, company=company, **data)
             contact.save()
         return Response({
