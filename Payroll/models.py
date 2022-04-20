@@ -31,8 +31,8 @@ class Team(models.Model):
 class Employee(models.Model):
     creation_date = models.DateField(auto_now_add=True, )
     image = models.ImageField(
-            blank=True, null=True, upload_to="employeeImages",
-            default="employeeImages/image.jpg")
+        blank=True, null=True, upload_to="employeeImages",
+        default="employeeImages/image.jpg")
     company = models.ForeignKey(
         Company, on_delete=models.CASCADE,
         related_name='company_employee')
@@ -50,7 +50,8 @@ class Employee(models.Model):
         related_name='contract_type_lookup_name', null=True)
     address = models.TextField(null=True, blank=True)
     enddate = models.DateField(null=True, blank=True)
-    current_salary = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
+    current_salary = models.DecimalField(
+        max_digits=10, decimal_places=2, default=0.0)
     postcode = models.CharField(max_length=10, null=True, blank=True)
     province = models.CharField(max_length=130, null=True, blank=True)
     country = models.ForeignKey(
@@ -74,9 +75,12 @@ class PayRoll(models.Model):
     gross = models.DecimalField(max_digits=12, decimal_places=2, )
     bonus = models.DecimalField(max_digits=12, decimal_places=2, )
     total_gross = models.DecimalField(max_digits=12, decimal_places=2, )
-    irfp = models.DecimalField(max_digits=5, decimal_places=2, )  # total percent applied on all employees
-    irfp_total = models.DecimalField(max_digits=12, decimal_places=2, )  # irfp total amount
-    ss_employee = models.DecimalField(max_digits=10, decimal_places=2, )  # need to ask
+    # total percent applied on all employees
+    irfp = models.DecimalField(max_digits=5, decimal_places=2, )
+    irfp_total = models.DecimalField(
+        max_digits=12, decimal_places=2, )  # irfp total amount
+    ss_employee = models.DecimalField(
+        max_digits=10, decimal_places=2, )  # need to ask
     net = models.DecimalField(max_digits=12, decimal_places=2, )
     ss_company = models.DecimalField(max_digits=12, decimal_places=2, )
     discount = models.DecimalField(max_digits=12, decimal_places=2, )
@@ -110,8 +114,10 @@ class PayRollItem(models.Model):
     irfp = models.ForeignKey(  # A tax type in percentage
         Tax, on_delete=models.SET_NULL,
         related_name='irfp_tax', null=True)
-    irfp_total = models.DecimalField(max_digits=10, decimal_places=2, )  # Value of irft
-    ss_employee = models.DecimalField(max_digits=10, decimal_places=2, )  # A calculated tax
+    irfp_total = models.DecimalField(
+        max_digits=10, decimal_places=2, )  # Value of irft
+    ss_employee = models.DecimalField(
+        max_digits=10, decimal_places=2, )  # A calculated tax
     net = models.DecimalField(max_digits=10, decimal_places=2, )
     ss_company = models.DecimalField(max_digits=10, decimal_places=2, )
     discount = models.DecimalField(max_digits=10, decimal_places=2, )
