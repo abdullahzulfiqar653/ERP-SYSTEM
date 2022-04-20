@@ -30,6 +30,9 @@ class Team(models.Model):
 
 class Employee(models.Model):
     creation_date = models.DateField(auto_now_add=True, )
+    image = models.ImageField(
+            blank=True, null=True, upload_to="employeeImages",
+            default="employeeImages/image.jpg")
     company = models.ForeignKey(
         Company, on_delete=models.CASCADE,
         related_name='company_employee')

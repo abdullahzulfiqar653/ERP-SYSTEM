@@ -33,15 +33,6 @@ class ContactSerializer(serializers.ModelSerializer):
 class ContactListSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=True)
     contact_type_label = serializers.CharField(source='contact_type.lookup_name')
-    # vat_label = serializers.DecimalField(
-    #     max_digits=5, decimal_places=2, source='vat.vat', read_only=True)
-    # ret_or_equiv_label = serializers.SerializerMethodField()
-
-    # def get_ret_or_equiv_percent(self, contact: Contact):
-    #     if contact.contact_type.lookup_name == "client" or contact.contact_type.lookup_name == "debitor":
-    #         return contact.ret_or_equiv.equiv
-    #     if contact.contact_type.lookup_name == "provider" or contact.contact_type.lookup_name == "creditor":
-    #         return contact.ret_or_equiv.ret
 
     class Meta:
         model = Contact
