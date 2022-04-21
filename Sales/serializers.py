@@ -35,6 +35,7 @@ class InvoiceSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({"message": "Invalid input."})
         InvoiceItem.objects.filter(invoice=instance).delete()
         invoice_items = validated_data.pop('invoice_items')
+        validated_data['creation_date'] = instance.creation_date
         invoice = Invoice(pk=instance.id, **validated_data)
         invoice.save()
         for item in invoice_items:
