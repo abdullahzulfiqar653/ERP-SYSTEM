@@ -180,12 +180,15 @@ class EmployeeCreateAPIView(CompanyPermissionsMixin, generics.CreateAPIView):
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
         company = self.request.company
-        if data.get("team") and (not Team.objects.filter(pk=data["team"], company=company).exists()):
-            return Response({"message": "Team not Found"}, status=status.HTTP_404_NOT_FOUND)
+        team_id = None
+        if data.get("team"):
+            if not Team.objects.filter(pk=data.get("team"), company=company).exists():
+                return Response({"message": "Team not Found"}, status=status.HTTP_404_NOT_FOUND)
+            else:
+                team_id = data.pop("team")
+
         if Employee.objects.filter(nif=data['nif'], company=company).exists():
             return Response({"nif": "NIF already exist"}, status=status.HTTP_400_BAD_REQUEST)
-        team_id = data["team"]
-        del data["team"]
         employee = Employee(company=company, team_id=team_id, **data)
         employee.save()
 
