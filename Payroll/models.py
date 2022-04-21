@@ -1,6 +1,6 @@
 from django.db import models
 from Core.models import Company
-from Lookup.models import LookupName, Tax
+from Lookup.models import LookupName
 import datetime
 from django.core.validators import MaxValueValidator, MinValueValidator
 # Create your models here.
@@ -111,9 +111,8 @@ class PayRollItem(models.Model):
     gross = models.DecimalField(max_digits=10, decimal_places=2, )
     bonus = models.DecimalField(max_digits=10, decimal_places=2, )
     total_gross = models.DecimalField(max_digits=10, decimal_places=2, )
-    irfp = models.ForeignKey(  # A tax type in percentage
-        Tax, on_delete=models.SET_NULL,
-        related_name='irfp_tax', null=True)
+    irfp = models.DecimalField(
+        max_digits=10, decimal_places=2, )
     irfp_total = models.DecimalField(
         max_digits=10, decimal_places=2, )  # Value of irft
     ss_employee = models.DecimalField(

@@ -1,6 +1,6 @@
 from django.db import models
 from Contact.models import Contact
-from Lookup.models import AccountType, LookupName
+from Lookup.models import LookupName
 from Core.models import Company
 # Create your models here.
 
@@ -14,10 +14,7 @@ class Invoice(models.Model):
         Company, on_delete=models.CASCADE,
         related_name='company_invoice')
     invoice_date = models.DateField()
-    client = models.ForeignKey(Contact, on_delete=models.PROTECT)
-    account = models.ForeignKey(
-        AccountType, on_delete=models.PROTECT,
-        related_name='invoice_account_type_name')
+    client = models.ForeignKey(Contact, on_delete=models.PROTECT, related_name='invoiceContactItems')
     base_amount = models.DecimalField(max_digits=10, decimal_places=2,)
     vat_percentage = models.DecimalField(max_digits=5, decimal_places=2, )
     vat_total = models.DecimalField(max_digits=8, decimal_places=2, )
