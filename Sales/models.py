@@ -6,7 +6,7 @@ from Core.models import Company
 
 
 class Invoice(models.Model):
-    creation_date = models.DateField()
+    creation_date = models.DateField(auto_now_add=True)
     status = models.ForeignKey(
         LookupName, on_delete=models.SET_NULL,
         related_name='invoice_status', null=True, )
