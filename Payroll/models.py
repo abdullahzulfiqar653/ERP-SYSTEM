@@ -7,8 +7,13 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 # --------------------- team Models -------------------- #
 
 
+def max_value_current_year(value):
+    return MaxValueValidator(datetime.date.today().year)(value)
+
+
 class Team(models.Model):
-    creation_date = models.DateField(auto_now_add=True, )
+    creation_year = models.PositiveIntegerField(
+        validators=[MinValueValidator(2020), max_value_current_year], blank=True, null=True)
     company = models.ForeignKey(
         Company, on_delete=models.CASCADE,
         related_name='company_team')
@@ -29,7 +34,8 @@ class Team(models.Model):
 
 
 class Employee(models.Model):
-    creation_date = models.DateField(auto_now_add=True, )
+    creation_year = models.PositiveIntegerField(
+        validators=[MinValueValidator(2020), max_value_current_year], blank=True, null=True)
     image = models.ImageField(
         blank=True, null=True, upload_to="employeeImages",
         default="employeeImages/image.jpg")
@@ -63,12 +69,9 @@ class Employee(models.Model):
         return str(self.id) + "-   -" + self.name
 
 
-def max_value_current_year(value):
-    return MaxValueValidator(datetime.date.today().year)(value)
-
-
 class PayRoll(models.Model):
-    creation_date = models.DateField(auto_now_add=True, )
+    creation_year = models.PositiveIntegerField(
+        validators=[MinValueValidator(2020), max_value_current_year], blank=True, null=True)
     company = models.ForeignKey(
         Company, on_delete=models.CASCADE,
         related_name='company_payroll')

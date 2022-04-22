@@ -46,9 +46,10 @@ class AddTeamView(CompanyPermissionsMixin, generics.CreateAPIView):
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
         company = self.request.company
+        year = self.request.META.get('HTTP_YEAR')
 
         if not Team.objects.filter(company=company, team_name=data["team_name"]).exists():
-            team = Team(company=company, **data)
+            team = Team(company=company, creation_year=year, **data)
             team.save()
             return Response({'message': "Team {} created against {}.".format(
                 team.team_name, company.name), "team": TeamSerializer(team).data}, status=status.HTTP_201_CREATED)
@@ -85,7 +86,8 @@ class UpdateTeamView(CompanyPermissionsMixin, generics.UpdateAPIView):
         if not team.team_name == data["team_name"]:  # Checking if current team has the same name then ignoring next conditions
             if Team.objects.filter(company=company, team_name=data["team_name"]).exists():  # veryfying uniqness in current company
                 return Response({"team_name": "Team name already exist."}, status=status.HTTP_400_BAD_REQUEST)
-        team = Team(pk=team.id, company=company, **data)
+
+        team = Team(pk=team.id, creation_year=team.creation_year, company=company, **data)
         team.save()
         return Response(
             {'message': "Team {} updated".format(team.team_name),
@@ -105,7 +107,8 @@ class TeamFormListView(CompanyPermissionsMixin, generics.ListAPIView):
     serializer_class = TeamFormListSerializer
 
     def get_queryset(self):
-        return Team.objects.filter(company=self.request.company)
+        year = self.request.META.get('HTTP_YEAR')
+        return Team.objects.filter(company=self.request.company, creation_year=year).order_by('-id')
 
 
 class TeamListView(CompanyPermissionsMixin, generics.ListAPIView):
@@ -118,7 +121,7 @@ class TeamListView(CompanyPermissionsMixin, generics.ListAPIView):
 
     def get_queryset(self):
         year = self.request.META.get('HTTP_YEAR')
-        return Team.objects.filter(company=self.request.company, creation_date__year=year).order_by('-id')
+        return Team.objects.filter(company=self.request.company, creation_year=year).order_by('-id')
 
 
 '''
@@ -180,16 +183,16 @@ class EmployeeCreateAPIView(CompanyPermissionsMixin, generics.CreateAPIView):
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
         company = self.request.company
-        team_id = None
+        year = self.request.META.get('HTTP_YEAR')
+        team = None
         if data.get("team"):
-            if not Team.objects.filter(pk=data.get("team"), company=company).exists():
+            if not data.get("team").company.id == company.id:
                 return Response({"message": "Team not Found"}, status=status.HTTP_404_NOT_FOUND)
             else:
-                team_id = data.pop("team")
-
+                team = data.pop("team")
         if Employee.objects.filter(nif=data['nif'], company=company).exists():
             return Response({"nif": "NIF already exist"}, status=status.HTTP_400_BAD_REQUEST)
-        employee = Employee(company=company, team_id=team_id, **data)
+        employee = Employee(company=company, team=team, creation_year=year,  **data)
         employee.save()
 
         return Response({'message': "Employee {} created against {}.".format(
@@ -219,7 +222,7 @@ class EmployeeListAPIView(CompanyPermissionsMixin, generics.ListAPIView):
 
     def get_queryset(self):
         year = self.request.META.get("HTTP_YEAR")
-        return Employee.objects.filter(company=self.request.company, creation_date__year=year).order_by('-id')
+        return Employee.objects.filter(company=self.request.company, creation_year=year).order_by('-id')
 
 
 class EmployeeFormListAPIView(CompanyPermissionsMixin, generics.ListAPIView):
@@ -227,7 +230,8 @@ class EmployeeFormListAPIView(CompanyPermissionsMixin, generics.ListAPIView):
     serializer_class = FormListEmployeeSerializer
 
     def get_queryset(self):
-        return Employee.objects.filter(company=self.request.company)
+        year = self.request.META.get("HTTP_YEAR")
+        return Employee.objects.filter(company=self.request.company, creation_year=year).order_by('-id')
 
 
 '''
@@ -249,19 +253,27 @@ class EmployeeUpdateView(CompanyPermissionsMixin, generics.UpdateAPIView):
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
         company = self.request.company
-        if not (Employee.objects.filter(pk=emp_id, company=company).exists()
-                and Team.objects.filter(pk=data["team"], company=company).exists()):
+        team = None
+        if not Employee.objects.filter(pk=emp_id, company=company).exists():
             return Response(
-                {'message': "team or employee not found"}, status=status.HTTP_404_NOT_FOUND)
-
+                {'message': "Employee not found"}, status=status.HTTP_404_NOT_FOUND)
+        if data.get("team"):
+            if not data.get("team").company.id == company.id:
+                return Response({"message": "Team not Found"}, status=status.HTTP_404_NOT_FOUND)
+            else:
+                team = data.pop("team")
         emp = Employee.objects.get(pk=emp_id, company=company)
-        team_id = data["team"]
-        del data["team"]
         if not emp.nif == data['nif']:  # checking if nif is same as previous nif
             # if nif is new then checking if no other employe have the same nif
             if Employee.objects.filter(nif=data['nif'], company=company).exists():
                 return Response({"nif": "NIF Already exist."}, status=status.HTTP_400_BAD_REQUEST)
-        emp = Employee(pk=emp.id, company=company, team_id=team_id, **data)
+        # This check is when object image attribute is not coming in payload
+        # So we add the previous image in payload so image will stay same
+        image = data.get("image", "noImage")
+        if image == "noImage":
+            data['image'] = emp.image
+
+        emp = Employee(pk=emp.id, company=company, team=team, creation_year=emp.creation_year, **data)
         emp.save()
         return Response({'message': "Employee {} updated".format(emp.name)}, status=status.HTTP_200_OK)
 
