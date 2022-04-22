@@ -197,7 +197,7 @@ class EmployeeCreateAPIView(CompanyPermissionsMixin, generics.CreateAPIView):
         if Employee.objects.filter(nif=data['nif'], company=company).exists():
             return Response({"nif": "NIF already exist"}, status=status.HTTP_400_BAD_REQUEST)
         employee = Employee(company=company, team=team,
-                            creation_year=year,  **data)
+                            creation_year=year, **data)
         employee.save()
 
         return Response({'message': "Employee {} created against {}.".format(
