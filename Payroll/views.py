@@ -83,11 +83,14 @@ class UpdateTeamView(CompanyPermissionsMixin, generics.UpdateAPIView):
                 {"message": "Team not Found"},
                 status=status.HTTP_404_NOT_FOUND)
 
-        if not team.team_name == data["team_name"]:  # Checking if current team has the same name then ignoring next conditions
-            if Team.objects.filter(company=company, team_name=data["team_name"]).exists():  # veryfying uniqness in current company
+        # Checking if current team has the same name then ignoring next conditions
+        if not team.team_name == data["team_name"]:
+            # veryfying uniqness in current company
+            if Team.objects.filter(company=company, team_name=data["team_name"]).exists():
                 return Response({"team_name": "Team name already exist."}, status=status.HTTP_400_BAD_REQUEST)
 
-        team = Team(pk=team.id, creation_year=team.creation_year, company=company, **data)
+        team = Team(pk=team.id, creation_year=team.creation_year,
+                    company=company, **data)
         team.save()
         return Response(
             {'message': "Team {} updated".format(team.team_name),
@@ -193,7 +196,8 @@ class EmployeeCreateAPIView(CompanyPermissionsMixin, generics.CreateAPIView):
                 team = data.pop("team")
         if Employee.objects.filter(nif=data['nif'], company=company).exists():
             return Response({"nif": "NIF already exist"}, status=status.HTTP_400_BAD_REQUEST)
-        employee = Employee(company=company, team=team, creation_year=year,  **data)
+        employee = Employee(company=company, team=team,
+                            creation_year=year,  **data)
         employee.save()
 
         return Response({'message': "Employee {} created against {}.".format(
@@ -274,7 +278,8 @@ class EmployeeUpdateView(CompanyPermissionsMixin, generics.UpdateAPIView):
         if image == "noImage":
             data['image'] = emp.image
 
-        emp = Employee(pk=emp.id, company=company, team=team, creation_year=emp.creation_year, **data)
+        emp = Employee(pk=emp.id, company=company, team=team,
+                       creation_year=emp.creation_year, **data)
         emp.save()
         return Response({'message': "Employee {} updated".format(emp.name)}, status=status.HTTP_200_OK)
 
@@ -339,7 +344,8 @@ class PayRollCreateAPIView(CompanyPermissionsMixin, generics.CreateAPIView):
         company = self.request.company
         payroll_items = data.pop("payroll_items")
         teams_list = data.pop("teams_list")
-        payroll = PayRoll.objects.create(company=company, creation_year=year, **data)
+        payroll = PayRoll.objects.create(
+            company=company, creation_year=year, **data)
         for team in teams_list:
             if Team.objects.filter(pk=team, company=company).exists():
                 PayrollTeam.objects.create(payroll=payroll, team_id=team)
@@ -416,7 +422,8 @@ class PayRollItemUpdateAPIView(CompanyPermissionsMixin, generics.UpdateAPIView):
         if not PayRoll.objects.filter(pk=payroll_id, company=company).exists():
             return Response({"message": "Payroll not found"}, status=status.HTTP_404_NOT_FOUND)
         year = PayRoll.objects.get(pk=payroll_id).creation_year
-        payroll = PayRoll(pk=payroll_id, company=company, creation_year=year, **data)
+        payroll = PayRoll(pk=payroll_id, company=company,
+                          creation_year=year, **data)
         payroll.save()
 
         PayrollTeam.objects.filter(payroll=payroll).delete()
@@ -437,7 +444,8 @@ class PayRollItemUpdateAPIView(CompanyPermissionsMixin, generics.UpdateAPIView):
             else:
                 raise Employee.DoesNotExist
         return Response(
-            {"message": "Payroll Updated.", "payroll": PayRollListSerializer(payroll).data},
+            {"message": "Payroll Updated.",
+                "payroll": PayRollListSerializer(payroll).data},
             status=status.HTTP_200_OK)
 
 
