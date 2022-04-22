@@ -5,23 +5,12 @@ from .models import PayRoll, PayRollItem, PayrollTeam, Team, Employee
 # ---------------------- Serializers for Team Views ---------------------------#
 class TeamSerializer(serializers.ModelSerializer):
     country_label = serializers.CharField(read_only=True, source='country.lookup_name')
-    has_employees = serializers.SerializerMethodField(read_only=True)
-
-    def get_has_employees(self, team: Team):
-        return True if Employee.objects.filter(team=team).exists() else False
 
     class Meta:
         model = Team
-        fields = [
-            'id',
-            'team_name',
-            'address',
-            'postcode',
-            'province',
-            'country',
-            'country_label',
-            'note',
-            'has_employees',
+        exclude = [
+            'company',
+            'creation_year',
         ]
 
 
@@ -46,35 +35,24 @@ class TeamsDeleteSerializer(serializers.ModelSerializer):
 
 # ---------------------- Serializers for Employee Views ---------------------------#
 class AddEmployeeSerializer(serializers.ModelSerializer):
-    team = serializers.IntegerField(required=False)
+    image = serializers.ImageField(validators=[], required=False, allow_null=True)
 
     class Meta:
         model = Employee
-        fields = [
-            'team',
-            'name',
-            'surname',
-            'nif',
-            'social_security',
-            'address',
-            'contract_type',
-            'enddate',
-            'current_salary',
-            'postcode',
-            'province',
-            'country',
-            'note',
+        exclude = [
+            'creation_year',
+            'company',
         ]
 
 
 class ListEmployeeSerializer(serializers.ModelSerializer):
     country_label = serializers.CharField(read_only=True, source='country.lookup_name')
-    team_name = serializers.CharField(read_only=True, source='team.team_name')
+    team_label = serializers.CharField(read_only=True, source='team.team_name')
     contract_type_label = serializers.CharField(read_only=True, source='contract_type.lookup_name')
 
     class Meta:
         model = Employee
-        exclude = ['company', ]
+        exclude = ['company', 'creation_year']
 
 
 class FormListEmployeeSerializer(serializers.ModelSerializer):
