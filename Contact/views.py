@@ -28,10 +28,11 @@ class ContactCreateAPIView(CompanyPermissionsMixin, generics.CreateAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
+        year = self.request.META.get('HTTP_YEAR')
         if Contact.objects.filter(nif=data['nif'], company=company).exists():
             return Response({"nif": "NIF already exists."}, status=status.HTTP_400_BAD_REQUEST)
         data['contact_id'] = get_contact_id(data['contact_type'])
-        contact = Contact(company=company, **data)
+        contact = Contact(company=company, creation_year=year, **data)
         contact.save()
         return Response({
             "message": "Contact Created.",
@@ -40,7 +41,9 @@ class ContactCreateAPIView(CompanyPermissionsMixin, generics.CreateAPIView):
 
 
 '''
-update
+update view contain all the same functionality as we update any instance except
+one that it contains an condition that if contact type is changed then it will
+generate a new contact or account id else it will use the same
 '''
 
 
@@ -64,14 +67,11 @@ class ContactUpdateAPIView(generics.UpdateAPIView):
 
         if not oldContact.contact_type.id == data['contact_type'].id:
             data['contact_id'] = get_contact_id(data['contact_type'])
-            contact = Contact(company=company, **data)
-            contact.save()
-            oldContact.delete()
         else:
             data['contact_id'] = oldContact.contact_id
-            data['creation_date'] = oldContact.creation_date
-            contact = Contact(pk=contact_id, company=company, **data)
-            contact.save()
+        data['creation_year'] = oldContact.creation_year
+        contact = Contact(pk=contact_id, company=company, **data)
+        contact.save()
         return Response({
             "message": "Contact Updated",
             "contact": ContactSerializer(contact).data},
@@ -87,7 +87,7 @@ class ContactListAPIView(CompanyPermissionsMixin, generics.ListAPIView):
 
     def get_queryset(self):
         year = self.request.META.get("HTTP_YEAR")
-        return Contact.objects.filter(company=self.request.company, creation_date__year=year).order_by('-id')
+        return Contact.objects.filter(company=self.request.company, creation_year=year).order_by('-id')
 
 
 class ContactRetrieveAPIView(CompanyPermissionsMixin, generics.RetrieveAPIView):
@@ -95,7 +95,8 @@ class ContactRetrieveAPIView(CompanyPermissionsMixin, generics.RetrieveAPIView):
     serializer_class = ContactSerializer
 
     def get_queryset(self):
-        return Contact.objects.filter(company=self.request.company)
+        year = self.request.META.get("HTTP_YEAR")
+        return Contact.objects.filter(company=self.request.company, creation_year=year)
 
 
 '''

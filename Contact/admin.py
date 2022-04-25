@@ -5,7 +5,7 @@ from .models import Contact
 
 class ContactAdmin(admin.ModelAdmin):
     readonly_fields = ('contact_id', )
-    list_display = ['id', 'company', 'contact_id', 'creation_date']
+    list_display = ['id', 'company', 'contact_id', 'creation_year']
 
 
 admin.site.register(Contact, ContactAdmin)

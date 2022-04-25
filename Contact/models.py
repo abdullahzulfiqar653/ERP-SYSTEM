@@ -1,14 +1,22 @@
+import datetime
 from django.db import models
+from django.core.validators import MaxValueValidator, MinValueValidator
 from Lookup.models import LookupName, AccountType, Tax, PaymentDay
 from Core.models import Company
+
 # Create your models here.
 
 
+def max_value_current_year(value):
+    return MaxValueValidator(datetime.date.today().year)(value)
+
+
 class Contact(models.Model):
-    creation_date = models.DateField(auto_now_add=True, )
+    creation_year = models.PositiveIntegerField(
+        validators=[MinValueValidator(2020), max_value_current_year], blank=True, null=True)
     company = models.ForeignKey(
-        Company, on_delete=models.CASCADE,
-        related_name='company_contact')
+                            Company, on_delete=models.CASCADE,
+                            related_name='company_contact')
     contact_type = models.ForeignKey(
         LookupName, on_delete=models.CASCADE,
         related_name='contact_type_lookup_name')  # option field
