@@ -14,6 +14,7 @@ from .serializers import (
     ContactListSerializer,
     ContactUpdateSerializer,
     ContactDeleteSerializer,
+    ContactListForExpenseSerializer,
 )
 
 
@@ -118,3 +119,17 @@ class ContactsdeleteAPIView(CompanyPermissionsMixin, generics.DestroyAPIView):
         data = serializer.validated_data
         Contact.objects.filter(pk__in=data['contact_list'], company=company).delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class ContactListForExpenseView(CompanyPermissionsMixin, generics.ListAPIView):
+    permission_classes = (permissions.IsAuthenticated, IsCompanyAccess)
+    serializer_class = ContactListForExpenseSerializer
+
+    def get_queryset(self):
+        company = self.request.company
+        lookup = self.kwargs['lookup']
+        if "provider" == lookup.lower():
+            return Contact.objects.filter(company=company, contact_type__lookup_name="Provider")
+        if "creditor" == lookup.lookup_name.lower():
+            return Contact.objects.filter(company=company, contact_type__lookup_name="Creditor")
+        return Contact.objects.none()

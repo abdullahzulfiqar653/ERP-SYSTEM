@@ -5,6 +5,7 @@ from .views import (
     ContactUpdateAPIView,
     ContactRetrieveAPIView,
     ContactListAPIView,
+    ContactListForExpenseView,
 )
 
 
@@ -14,4 +15,5 @@ urlpatterns = [
     path('update/<int:contact_id>/', ContactUpdateAPIView.as_view()),
     path('all/', ContactListAPIView.as_view()),
     path('destroy/', ContactsdeleteAPIView.as_view()),
+    path('expense/<str:lookup>/', ContactListForExpenseView.as_view()),
 ]
