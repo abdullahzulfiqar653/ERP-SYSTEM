@@ -90,6 +90,9 @@ class ContactListAPIView(CompanyPermissionsMixin, generics.ListAPIView):
         return Contact.objects.filter(company=self.request.company, creation_date__year=year).order_by('-id')
 
 
+'''This return the specific object by the given id in url'''
+
+
 class ContactRetrieveAPIView(CompanyPermissionsMixin, generics.RetrieveAPIView):
     permission_classes = (permissions.IsAuthenticated, IsCompanyAccess)
     serializer_class = ContactSerializer
