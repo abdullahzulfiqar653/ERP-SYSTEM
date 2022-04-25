@@ -15,7 +15,7 @@ class Expense(models.Model):
     creation_year = models.PositiveIntegerField(
         validators=[MinValueValidator(2020), max_value_current_year], blank=True, null=True)
     company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name="companyExpenses")
-    accounting_seat = models.PositiveIntegerField()
+    expense_accounting_seat = models.CharField(max_length=12)
     contact = models.ForeignKey(Contact, on_delete=models.CASCADE, related_name='ExpenseContactSeats')
     invoice_date = models.DateField()
     due_date = models.DateField()
@@ -36,7 +36,7 @@ class Purchase(models.Model):
     creation_year = models.PositiveIntegerField(
         validators=[MinValueValidator(2020), max_value_current_year], blank=True, null=True)
     company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name="companyPurchases")
-    accounting_seat = models.PositiveIntegerField()
+    purchase_accounting_seat = models.CharField(max_length=12)
     contact = models.ForeignKey(Contact, on_delete=models.CASCADE, related_name='PurchaseContactSeats')
     invoice_date = models.DateField()
     due_date = models.DateField()
@@ -57,7 +57,7 @@ class Asset(models.Model):
     creation_year = models.PositiveIntegerField(
         validators=[MinValueValidator(2020), max_value_current_year], blank=True, null=True)
     company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name="companyAssets")
-    accounting_seat = models.PositiveIntegerField()
+    asset_accounting_seat = models.CharField(max_length=12)
     contact = models.ForeignKey(Contact, on_delete=models.CASCADE, related_name='AssetContactSeats')
     invoice_date = models.DateField()
     due_date = models.DateField()
