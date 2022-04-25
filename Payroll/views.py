@@ -137,7 +137,8 @@ class TeamRetrieveAPIView(CompanyPermissionsMixin, generics.RetrieveAPIView):
     serializer_class = TeamSerializer
 
     def get_queryset(self):
-        return Team.objects.filter(company=self.request.company)
+        year = self.request.META.get("HTTP_YEAR")
+        return Team.objects.filter(company=self.request.company, creation_year=year)
 
 
 '''
@@ -294,7 +295,8 @@ class EmployeeRetrieveAPIView(CompanyPermissionsMixin, generics.RetrieveAPIView)
     serializer_class = ListEmployeeSerializer
 
     def get_queryset(self):
-        return Employee.objects.filter(company=self.request.company)
+        year = self.request.META.get("HTTP_YEAR")
+        return Employee.objects.filter(company=self.request.company, creation_year=year)
 
 
 '''
