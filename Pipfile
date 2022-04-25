@@ -1,0 +1,26 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+django = "==3.2.12"
+djangorestframework = "==3.13.1"
+django-environ = "*"
+djangorestframework-jwt = "==1.11.0"
+django-filter = "==21.1"
+django-debug-toolbar = "*"
+psycopg2 = "*"
+django-cors-headers = "==3.11.0"
+django-templated-mail = "==1.1.1"
+pillow = "==9.0.1"
+
+[dev-packages]
+flake8 = "*"
+pytest = "*"
+pytest-django = "*"
+model-bakery = "==1.5.0"
+pytest-watch = "==4.2.0"
+
+[requires]
+python_version = "3.9"
