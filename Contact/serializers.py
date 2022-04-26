@@ -83,3 +83,14 @@ class ContactDeleteSerializer(serializers.ModelSerializer):
         fields = [
             'contact_list'
         ]
+
+
+class ContactListForExpenseSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Contact
+        fields = [
+            'id',
+            'contact_id',
+            'name',
+            'account_type',
+        ]

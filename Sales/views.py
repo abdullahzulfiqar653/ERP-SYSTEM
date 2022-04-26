@@ -25,7 +25,7 @@ class InoviceViewSet(ModelViewSet, CompanyPermissionsMixin):
     def get_queryset(self):
         year = self.request.META.get("HTTP_YEAR")
         return Invoice.objects.filter(
-            company=self.request.company, creation_date__year=year).order_by('-id')
+            company=self.request.company, creation_year=year).order_by('-id')
 
     def perform_update(self, serializer):
         serializer.validated_data['company'] = self.request.company

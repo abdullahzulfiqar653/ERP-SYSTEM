@@ -1,12 +1,19 @@
+import datetime
 from django.db import models
+from django.core.validators import MaxValueValidator, MinValueValidator
 from Contact.models import Contact
 from Lookup.models import LookupName
 from Core.models import Company
 # Create your models here.
 
 
+def max_value_current_year(value):
+    return MaxValueValidator(datetime.date.today().year)(value)
+
+
 class Invoice(models.Model):
-    creation_date = models.DateField(auto_now_add=True)
+    creation_year = models.PositiveIntegerField(
+        validators=[MinValueValidator(2020), max_value_current_year], blank=True, null=True)
     status = models.ForeignKey(
         LookupName, on_delete=models.SET_NULL,
         related_name='invoice_status', null=True, )
