@@ -6,6 +6,7 @@ from .views import (
     ContactRetrieveAPIView,
     ContactListAPIView,
     ContactListForExpenseView,
+    ContactListForInvoiceDropdownAPIView,
 )
 
 
@@ -16,4 +17,5 @@ urlpatterns = [
     path('all/', ContactListAPIView.as_view()),
     path('destroy/', ContactsdeleteAPIView.as_view()),
     path('expense/<str:lookup>/', ContactListForExpenseView.as_view()),
+    path('invoice/', ContactListForInvoiceDropdownAPIView.as_view())
 ]

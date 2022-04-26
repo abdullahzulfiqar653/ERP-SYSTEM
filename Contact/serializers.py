@@ -94,3 +94,13 @@ class ContactListForExpenseSerializer(serializers.ModelSerializer):
             'name',
             'account_type',
         ]
+
+
+class ContactListForInvoiceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Contact
+        fields = [
+            'id',
+            'contact_id',
+            'name',
+        ]
