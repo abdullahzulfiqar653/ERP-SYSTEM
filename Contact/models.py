@@ -15,8 +15,8 @@ class Contact(models.Model):
     creation_year = models.PositiveIntegerField(
         validators=[MinValueValidator(2020), max_value_current_year], blank=True, null=True)
     company = models.ForeignKey(
-                            Company, on_delete=models.CASCADE,
-                            related_name='company_contact')
+        Company, on_delete=models.CASCADE,
+        related_name='company_contact')
     contact_type = models.ForeignKey(
         LookupName, on_delete=models.CASCADE,
         related_name='contact_type_lookup_name')  # option field
