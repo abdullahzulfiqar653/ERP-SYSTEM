@@ -57,4 +57,4 @@ class Contact(models.Model):
         related_name='payment_extension_days', null=True)  # option field
 
     def __str__(self) -> str:
-        return self.name+"--"+str(self.contact_id)
+        return self.name + "--" + str(self.contact_id)
