@@ -103,6 +103,7 @@ class ContactListForInvoiceSerializer(serializers.ModelSerializer):
             'id',
             'contact_id',
             'name',
+            'contact_type'
         ]
 
 

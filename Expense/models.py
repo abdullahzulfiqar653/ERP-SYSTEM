@@ -23,8 +23,8 @@ class Expense(models.Model):
     chart_of_account = models.ForeignKey(AccountType, on_delete=models.CASCADE, related_name='ExpenseAccounts')
 
 
-class ExpenseItems(models.Model):
-    expense = models.ForeignKey(Expense, on_delete=models.CASCADE, related_name="expenseItems")
+class ExpenseItem(models.Model):
+    expense = models.ForeignKey(Expense, on_delete=models.CASCADE, related_name="expense_items")
     base_amount = base_amount = models.DecimalField(max_digits=10, decimal_places=2,)
     vat = models.ForeignKey(Tax, on_delete=models.SET_NULL, null=True, related_name="expenseVat")
     calculated_vat = models.DecimalField(max_digits=8, decimal_places=2, )
@@ -44,8 +44,8 @@ class Purchase(models.Model):
     chart_of_account = models.ForeignKey(AccountType, on_delete=models.CASCADE, related_name='PurchaseAccounts')
 
 
-class PurchaseItems(models.Model):
-    expense = models.ForeignKey(Expense, on_delete=models.CASCADE, related_name="purchaseItems")
+class PurchaseItem(models.Model):
+    expense = models.ForeignKey(Expense, on_delete=models.CASCADE, related_name="purchase_items")
     base_amount = base_amount = models.DecimalField(max_digits=10, decimal_places=2,)
     vat = models.ForeignKey(Tax, on_delete=models.SET_NULL, null=True, related_name="purchaseVat")
     calculated_vat = models.DecimalField(max_digits=8, decimal_places=2, )
@@ -65,8 +65,8 @@ class Asset(models.Model):
     chart_of_account = models.ForeignKey(AccountType, on_delete=models.CASCADE, related_name='assetAccounts')
 
 
-class AssetItems(models.Model):
-    expense = models.ForeignKey(Expense, on_delete=models.CASCADE, related_name="AssetItems")
+class AssetItem(models.Model):
+    expense = models.ForeignKey(Expense, on_delete=models.CASCADE, related_name="asset_items")
     base_amount = base_amount = models.DecimalField(max_digits=10, decimal_places=2,)
     vat = models.ForeignKey(Tax, on_delete=models.SET_NULL, null=True, related_name="AssetVat")
     calculated_vat = models.DecimalField(max_digits=8, decimal_places=2, )
