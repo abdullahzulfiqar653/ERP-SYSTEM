@@ -15,6 +15,8 @@ from .serializers import (
     ContactUpdateSerializer,
     ContactDeleteSerializer,
     ContactListForExpenseSerializer,
+    ContactListForInvoiceSerializer,
+    ContactRetrieveForInvoiceSerializer
 )
 
 
@@ -133,3 +135,21 @@ class ContactListForExpenseView(CompanyPermissionsMixin, generics.ListAPIView):
         if "creditor" == lookup.lookup_name.lower():
             return Contact.objects.filter(company=company, contact_type__lookup_name="Creditor")
         return Contact.objects.none()
+
+
+class ContactListForInvoiceDropdownAPIView(CompanyPermissionsMixin, generics.ListAPIView):
+    permission_classes = (permissions.IsAuthenticated, IsCompanyAccess)
+    serializer_class = ContactListForInvoiceSerializer
+
+    def get_queryset(self):
+        year = self.request.META.get("HTTP_YEAR")
+        return Contact.objects.filter(company=self.request.company, creation_year=year).order_by('-id')
+
+
+class ContactRetrieveForInvoiceAPIView(CompanyPermissionsMixin, generics.RetrieveAPIView):
+    permission_classes = (permissions.IsAuthenticated, IsCompanyAccess)
+    serializer_class = ContactRetrieveForInvoiceSerializer
+
+    def get_queryset(self):
+        year = self.request.META.get("HTTP_YEAR")
+        return Contact.objects.filter(company=self.request.company, creation_year=year).order_by('-id')

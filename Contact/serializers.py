@@ -94,3 +94,35 @@ class ContactListForExpenseSerializer(serializers.ModelSerializer):
             'name',
             'account_type',
         ]
+
+
+class ContactListForInvoiceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Contact
+        fields = [
+            'id',
+            'contact_id',
+            'name',
+        ]
+
+
+class ContactRetrieveForInvoiceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Contact
+        fields = [
+            'id',
+            'contact_id',
+            'name',
+            'account_type',
+            'tax_address',
+            'tax_postcode',
+            'tax_province',
+            'tax_country',
+            'shipping_address',
+            'shipping_postcode',
+            'shipping_province',
+            'shipping_country',
+            'vat',
+            'ret_or_equiv',
+            'payment_method',
+        ]

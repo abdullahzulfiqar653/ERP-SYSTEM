@@ -14,9 +14,10 @@ def max_value_current_year(value):
 class Invoice(models.Model):
     creation_year = models.PositiveIntegerField(
         validators=[MinValueValidator(2020), max_value_current_year], blank=True, null=True)
-    status = models.ForeignKey(
-        LookupName, on_delete=models.SET_NULL,
-        related_name='invoice_status', null=True, )
+    status = models.CharField(max_length=50, default="Pending")
+    # status = models.ForeignKey(
+    #     LookupName, on_delete=models.SET_NULL,
+    #     related_name='invoice_status', null=True, )
     company = models.ForeignKey(
         Company, on_delete=models.CASCADE,
         related_name='company_invoice')
