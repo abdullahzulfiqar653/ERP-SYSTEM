@@ -55,3 +55,6 @@ class Contact(models.Model):
     payment_extension = models.ForeignKey(
         PaymentDay, on_delete=models.SET_NULL,
         related_name='payment_extension_days', null=True)  # option field
+
+    def __str__(self) -> str:
+        return self.name+"--"+str(self.contact_id)
