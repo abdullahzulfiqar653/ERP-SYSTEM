@@ -48,7 +48,7 @@ class AddTeamView(CompanyPermissionsMixin, generics.CreateAPIView):
         company = self.request.company
         year = self.request.META.get('HTTP_YEAR')
 
-        if not Team.objects.filter(company=company, team_name=data["team_name"], creation_year=year).exists():
+        if not Team.objects.filter(company=company, team_name=data["team_name"]).exists():
             team = Team(company=company, creation_year=year, **data)
             team.save()
             return Response({'message': "Team {} created against {}.".format(
@@ -137,8 +137,7 @@ class TeamRetrieveAPIView(CompanyPermissionsMixin, generics.RetrieveAPIView):
     serializer_class = TeamSerializer
 
     def get_queryset(self):
-        year = self.request.META.get("HTTP_YEAR")
-        return Team.objects.filter(company=self.request.company, creation_year=year)
+        return Team.objects.filter(company=self.request.company)
 
 
 '''
@@ -295,8 +294,7 @@ class EmployeeRetrieveAPIView(CompanyPermissionsMixin, generics.RetrieveAPIView)
     serializer_class = ListEmployeeSerializer
 
     def get_queryset(self):
-        year = self.request.META.get("HTTP_YEAR")
-        return Employee.objects.filter(company=self.request.company, creation_year=year)
+        return Employee.objects.filter(company=self.request.company)
 
 
 '''
