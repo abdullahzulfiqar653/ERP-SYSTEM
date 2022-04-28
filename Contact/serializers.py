@@ -114,7 +114,7 @@ class ContactRetrieveForInvoiceSerializer(serializers.ModelSerializer):
             'id',
             'contact_id',
             'name',
-            'account_type',
+            'contact_type',
             'tax_address',
             'tax_postcode',
             'tax_province',
