@@ -35,16 +35,16 @@ class Invoice(models.Model):
     due_date = models.DateField(auto_now_add=False)
     iban = models.CharField(max_length=34)
 
-    tax_address = models.TextField()
-    tax_postcode = models.CharField(max_length=10,)
-    tax_province = models.CharField(max_length=130,)
+    tax_address = models.TextField(blank=True, null=True)
+    tax_postcode = models.CharField(max_length=10, blank=True, null=True)
+    tax_province = models.CharField(max_length=130, blank=True, null=True)
     tax_country = models.ForeignKey(
-        LookupName, on_delete=models.SET_NULL,
-        related_name='invoice_tax_country_name', null=True)
+        LookupName, on_delete=models.PROTECT,
+        related_name='invoice_tax_country_name',)
 
-    shipping_address = models.TextField()
-    shipping_postcode = models.CharField(max_length=10,)
-    shipping_province = models.CharField(max_length=130,)
+    shipping_address = models.TextField(blank=True, null=True)
+    shipping_postcode = models.CharField(max_length=10, blank=True, null=True)
+    shipping_province = models.CharField(max_length=130, blank=True, null=True)
     shipping_country = models.ForeignKey(
         LookupName, on_delete=models.SET_NULL,
         related_name='invoice_shipping_country_name', null=True)
