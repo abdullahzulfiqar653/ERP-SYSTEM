@@ -48,7 +48,7 @@ class AddTeamView(CompanyPermissionsMixin, generics.CreateAPIView):
         company = self.request.company
         year = self.request.META.get('HTTP_YEAR')
 
-        if not Team.objects.filter(company=company, team_name=data["team_name"]).exists():
+        if not Team.objects.filter(company=company, team_name=data["team_name"], creation_year=year).exists():
             team = Team(company=company, creation_year=year, **data)
             team.save()
             return Response({'message': "Team {} created against {}.".format(
