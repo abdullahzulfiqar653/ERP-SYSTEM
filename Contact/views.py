@@ -61,9 +61,11 @@ class ContactUpdateAPIView(generics.UpdateAPIView):
 
         if not Contact.objects.filter(pk=contact_id, company=company).exists():
             return Response({"message": "Contact not found."}, status=status.HTTP_404_NOT_FOUND)
-        oldContact = Contact.objects.filter(pk=contact_id, company=company).first()
+        oldContact = Contact.objects.filter(
+            pk=contact_id, company=company).first()
 
-        if not oldContact.nif == data['nif']:  # checking if nif is same as previous nif
+        # checking if nif is same as previous nif
+        if not oldContact.nif == data['nif']:
             # if nif is new then checking if no other employe have the same nif
             if Contact.objects.filter(nif=data['nif'], company=company).exists():
                 return Response({"nif": "NIF already exists."}, status=status.HTTP_400_BAD_REQUEST)
@@ -119,7 +121,8 @@ class ContactsdeleteAPIView(CompanyPermissionsMixin, generics.DestroyAPIView):
         serializer = self.get_serializer(data=self.request.data)
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
-        Contact.objects.filter(pk__in=data['contact_list'], company=company).delete()
+        Contact.objects.filter(
+            pk__in=data['contact_list'], company=company).delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -145,7 +148,7 @@ class ContactListForInvoiceDropdownAPIView(CompanyPermissionsMixin, generics.Lis
         year = self.request.META.get("HTTP_YEAR")
         return Contact.objects.filter(
             company=self.request.company, creation_year=year, contact_type__lookup_name="Client"
-            ).order_by('-id')
+        ).order_by('-id')
 
 
 class ContactRetrieveForInvoiceAPIView(CompanyPermissionsMixin, generics.RetrieveAPIView):
