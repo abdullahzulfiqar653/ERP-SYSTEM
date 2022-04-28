@@ -12,14 +12,16 @@ class InvoiceItemSerializer(serializers.ModelSerializer):
 
 class InvoiceSerializer(serializers.ModelSerializer):
     invoice_items = InvoiceItemSerializer(many=True)
-    status_label = serializers.CharField(source='status.lookup_name', read_only=True)
-    account_label = serializers.CharField(source='client.contact_id', read_only=True)
+    client_id = serializers.CharField(source='client.contact_id', read_only=True)
+    client_label = serializers.CharField(source='client.name', read_only=True)
+    payment_method_label = serializers.CharField(source='payment_method.lookup_name', read_only=True)
     status = serializers.CharField(read_only=True)
 
     class Meta:
         model = Invoice
         exclude = [
             'company',
+            'creation_year',
         ]
 
     def create(self, validated_data):

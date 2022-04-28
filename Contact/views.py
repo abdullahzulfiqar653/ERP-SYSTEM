@@ -143,7 +143,9 @@ class ContactListForInvoiceDropdownAPIView(CompanyPermissionsMixin, generics.Lis
 
     def get_queryset(self):
         year = self.request.META.get("HTTP_YEAR")
-        return Contact.objects.filter(company=self.request.company, creation_year=year).order_by('-id')
+        return Contact.objects.filter(
+            company=self.request.company, creation_year=year, contact_type__lookup_name="Client"
+            ).order_by('-id')
 
 
 class ContactRetrieveForInvoiceAPIView(CompanyPermissionsMixin, generics.RetrieveAPIView):
