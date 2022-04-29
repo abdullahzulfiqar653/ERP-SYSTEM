@@ -33,7 +33,7 @@ class Invoice(models.Model):
         LookupName, on_delete=models.SET_NULL,
         related_name='invoice_payment_method_name', null=True, )
     due_date = models.DateField(auto_now_add=False)
-    iban = models.CharField(max_length=34)
+    iban = models.CharField(max_length=34, blank=True, null=True)
 
     tax_address = models.TextField(blank=True, null=True)
     tax_postcode = models.CharField(max_length=10, blank=True, null=True)
