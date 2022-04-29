@@ -46,10 +46,9 @@ class AddTeamView(CompanyPermissionsMixin, generics.CreateAPIView):
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
         company = self.request.company
-        year = self.request.META.get('HTTP_YEAR')
 
         if not Team.objects.filter(company=company, team_name=data["team_name"]).exists():
-            team = Team(company=company, creation_year=year, **data)
+            team = Team(company=company, **data)
             team.save()
             return Response({'message': "Team {} created against {}.".format(
                 team.team_name, company.name), "team": TeamSerializer(team).data}, status=status.HTTP_201_CREATED)
@@ -89,8 +88,7 @@ class UpdateTeamView(CompanyPermissionsMixin, generics.UpdateAPIView):
             if Team.objects.filter(company=company, team_name=data["team_name"]).exists():
                 return Response({"team_name": "Team name already exist."}, status=status.HTTP_400_BAD_REQUEST)
 
-        team = Team(pk=team.id, creation_year=team.creation_year,
-                    company=company, **data)
+        team = Team(pk=team.id, company=company, **data)
         team.save()
         return Response(
             {'message': "Team {} updated".format(team.team_name),
@@ -110,8 +108,7 @@ class TeamFormListView(CompanyPermissionsMixin, generics.ListAPIView):
     serializer_class = TeamFormListSerializer
 
     def get_queryset(self):
-        year = self.request.META.get('HTTP_YEAR')
-        return Team.objects.filter(company=self.request.company, creation_year=year).order_by('-id')
+        return Team.objects.filter(company=self.request.company).order_by('-id')
 
 
 class TeamListView(CompanyPermissionsMixin, generics.ListAPIView):
@@ -123,8 +120,7 @@ class TeamListView(CompanyPermissionsMixin, generics.ListAPIView):
     ordering_fields = ['id', 'team_name']
 
     def get_queryset(self):
-        year = self.request.META.get('HTTP_YEAR')
-        return Team.objects.filter(company=self.request.company, creation_year=year).order_by('-id')
+        return Team.objects.filter(company=self.request.company).order_by('-id')
 
 
 '''
@@ -155,14 +151,7 @@ class TeamsDeleteAPIView(CompanyPermissionsMixin, generics.DestroyAPIView):
         serializer = self.get_serializer(data=self.request.data)
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
-        year = self.request.META.get("HTTP_YEAR")
-
-        for id in data['teams_list']:
-            if Team.objects.filter(pk=id, company=self.request.company, creation_year=year).exists():
-                instance = Team.objects.get(pk=id)
-                instance.delete()
-            else:
-                raise Team.DoesNotExist
+        Team.objects.filter(pk__in=data['teams_list'], company=self.request.company).delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -187,7 +176,6 @@ class EmployeeCreateAPIView(CompanyPermissionsMixin, generics.CreateAPIView):
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
         company = self.request.company
-        year = self.request.META.get('HTTP_YEAR')
         team = None
         if data.get("team"):
             if not data.get("team").company.id == company.id:
@@ -196,8 +184,7 @@ class EmployeeCreateAPIView(CompanyPermissionsMixin, generics.CreateAPIView):
                 team = data.pop("team")
         if Employee.objects.filter(nif=data['nif'], company=company).exists():
             return Response({"nif": "NIF already exist"}, status=status.HTTP_400_BAD_REQUEST)
-        employee = Employee(company=company, team=team,
-                            creation_year=year, **data)
+        employee = Employee(company=company, team=team, **data)
         employee.save()
 
         return Response({'message': "Employee {} created against {}.".format(
@@ -226,8 +213,7 @@ class EmployeeListAPIView(CompanyPermissionsMixin, generics.ListAPIView):
     ordering_fields = ['id', 'name']
 
     def get_queryset(self):
-        year = self.request.META.get("HTTP_YEAR")
-        return Employee.objects.filter(company=self.request.company, creation_year=year).order_by('-id')
+        return Employee.objects.filter(company=self.request.company).order_by('-id')
 
 
 class EmployeeFormListAPIView(CompanyPermissionsMixin, generics.ListAPIView):
@@ -235,8 +221,7 @@ class EmployeeFormListAPIView(CompanyPermissionsMixin, generics.ListAPIView):
     serializer_class = FormListEmployeeSerializer
 
     def get_queryset(self):
-        year = self.request.META.get("HTTP_YEAR")
-        return Employee.objects.filter(company=self.request.company, creation_year=year).order_by('-id')
+        return Employee.objects.filter(company=self.request.company).order_by('-id')
 
 
 '''
@@ -278,8 +263,7 @@ class EmployeeUpdateView(CompanyPermissionsMixin, generics.UpdateAPIView):
         if image == "noImage":
             data['image'] = emp.image
 
-        emp = Employee(pk=emp.id, company=company, team=team,
-                       creation_year=emp.creation_year, **data)
+        emp = Employee(pk=emp.id, company=company, team=team, **data)
         emp.save()
         return Response({'message': "Employee {} updated".format(emp.name)}, status=status.HTTP_200_OK)
 
@@ -310,13 +294,7 @@ class EmployeesDeleteAPIView(CompanyPermissionsMixin, generics.DestroyAPIView):
         serializer = self.get_serializer(data=self.request.data)
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
-        year = self.request.META.get("HTTP_YEAR")
-
-        for id in data['employees_list']:
-            if Employee.objects.filter(pk=id, company=self.request.company, creation_year=year).exists():
-                instance = Employee.objects.get(pk=id)
-                instance.delete()
-            continue
+        Employee.objects.filter(pk__in=data['employees_list'], company=self.request.company).delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 

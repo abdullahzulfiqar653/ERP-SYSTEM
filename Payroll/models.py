@@ -12,8 +12,6 @@ def max_value_current_year(value):
 
 
 class Team(models.Model):
-    creation_year = models.PositiveIntegerField(
-        validators=[MinValueValidator(2020), max_value_current_year], blank=True, null=True)
     company = models.ForeignKey(
         Company, on_delete=models.CASCADE,
         related_name='company_team')
@@ -34,8 +32,6 @@ class Team(models.Model):
 
 
 class Employee(models.Model):
-    creation_year = models.PositiveIntegerField(
-        validators=[MinValueValidator(2020), max_value_current_year], blank=True, null=True)
     image = models.ImageField(
         blank=True, null=True, upload_to="employeeImages",
         default="employeeImages/image.jpg")
