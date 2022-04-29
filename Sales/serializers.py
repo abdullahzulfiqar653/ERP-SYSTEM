@@ -16,6 +16,8 @@ class InvoiceSerializer(serializers.ModelSerializer):
     client_label = serializers.CharField(source='client.name', read_only=True)
     payment_method_label = serializers.CharField(source='payment_method.lookup_name', read_only=True)
     status = serializers.CharField(read_only=True)
+    vat_percentage_label = serializers.CharField(source='vat_percentage.vat')
+    equiv_percentage_label = serializers.CharField(source='equiv_percentage.equiv')
 
     class Meta:
         model = Invoice

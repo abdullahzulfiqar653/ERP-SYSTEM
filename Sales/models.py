@@ -2,7 +2,7 @@ import datetime
 from django.db import models
 from django.core.validators import MaxValueValidator, MinValueValidator
 from Contact.models import Contact
-from Lookup.models import LookupName
+from Lookup.models import LookupName, Tax
 from Core.models import Company
 # Create your models here.
 
@@ -24,10 +24,14 @@ class Invoice(models.Model):
     invoice_date = models.DateField()
     client = models.ForeignKey(Contact, on_delete=models.PROTECT, related_name='invoiceContactItems')
     base_amount = models.DecimalField(max_digits=10, decimal_places=2,)
-    vat_percentage = models.DecimalField(max_digits=5, decimal_places=2, )
+    vat_percentage = models.ForeignKey(
+        Tax, on_delete=models.SET_NULL,
+        related_name='invoice_vat_tax', null=True)
     vat_total = models.DecimalField(max_digits=8, decimal_places=2, )
-    ret_percentage = models.DecimalField(max_digits=5, decimal_places=2, )
-    ret_total = models.DecimalField(max_digits=8, decimal_places=2, )
+    equiv_percentage = models.ForeignKey(
+        Tax, on_delete=models.SET_NULL,
+        related_name='invoice_ret_tax', null=True)
+    equiv_total = models.DecimalField(max_digits=8, decimal_places=2, )
     total = models.DecimalField(max_digits=10, decimal_places=2, )
     payment_method = models.ForeignKey(
         LookupName, on_delete=models.SET_NULL,
