@@ -5,8 +5,15 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import OrderingFilter
 from Middleware.CustomMixin import CompanyPermissionsMixin
 from Middleware.permissions import IsCompanyAccess
-from .serializers import ExpenseSerializer, ExpenseDeleteSerializer
-from .models import Expense
+from .serializers import (
+    AssetDeleteSerializer,
+    AssetSerializer,
+    ExpenseSerializer,
+    ExpenseDeleteSerializer,
+    PurchaseSerializer,
+    PurchaseDeleteSerializer,
+    )
+from .models import Expense, Purchase, Asset
 # from .filters import InvoiceFilter
 from utils.pagination import LimitOffsetPagination
 
@@ -33,4 +40,54 @@ class ExpenseViewSet(ModelViewSet, CompanyPermissionsMixin):
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
         Expense.objects.filter(pk__in=data['expenses_list'], company=company).delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class PurchaseViewSet(ModelViewSet, CompanyPermissionsMixin):
+    permission_classes = [permissions.IsAuthenticated, IsCompanyAccess]
+    serializer_class = PurchaseSerializer
+    pagination_class = LimitOffsetPagination
+    filter_backends = [DjangoFilterBackend, OrderingFilter]
+    # filterset_class = InvoiceFilter
+    ordering_fields = ['id', ]
+
+    def get_serializer_context(self):
+        return {'request': self.request}
+
+    def get_queryset(self):
+        year = self.request.META.get("HTTP_YEAR")
+        return Purchase.objects.filter(
+            company=self.request.company, creation_year=year).order_by('-id')
+
+    def delete(self, request):
+        company = self.request.company
+        serializer = PurchaseDeleteSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        Purchase.objects.filter(pk__in=data['purchases_list'], company=company).delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class AssetViewSet(ModelViewSet, CompanyPermissionsMixin):
+    permission_classes = [permissions.IsAuthenticated, IsCompanyAccess]
+    serializer_class = AssetSerializer
+    pagination_class = LimitOffsetPagination
+    filter_backends = [DjangoFilterBackend, OrderingFilter]
+    # filterset_class = InvoiceFilter
+    ordering_fields = ['id', ]
+
+    def get_serializer_context(self):
+        return {'request': self.request}
+
+    def get_queryset(self):
+        year = self.request.META.get("HTTP_YEAR")
+        return Asset.objects.filter(
+            company=self.request.company, creation_year=year).order_by('-id')
+
+    def delete(self, request):
+        company = self.request.company
+        serializer = AssetDeleteSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        Asset.objects.filter(pk__in=data['assets_list'], company=company).delete()
         return Response(status=status.HTTP_204_NO_CONTENT)

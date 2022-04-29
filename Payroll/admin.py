@@ -14,7 +14,6 @@ class TeamAdmin(admin.ModelAdmin):
         'id',
         'team_name',
         'company',
-        'creation_year'
     ]
 
 
@@ -25,7 +24,6 @@ class EmployeeAdmin(admin.ModelAdmin):
         'nif',
         'team',
         'company',
-        'creation_year'
     ]
 
 
