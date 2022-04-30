@@ -59,5 +59,5 @@ class InvoiceItem(models.Model):
     quantity = models.PositiveIntegerField()
     description = models.TextField()
     price = models.DecimalField(max_digits=8, decimal_places=2,)
-    discount = models.DecimalField(max_digits=8, decimal_places=2,)
+    discount_percentage = models.DecimalField(max_digits=5, decimal_places=2,)
     base = models.DecimalField(max_digits=8, decimal_places=2, )
