@@ -10,7 +10,6 @@ class TeamSerializer(serializers.ModelSerializer):
         model = Team
         exclude = [
             'company',
-            'creation_year',
         ]
 
 
@@ -40,7 +39,6 @@ class AddEmployeeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Employee
         exclude = [
-            'creation_year',
             'company',
         ]
 
@@ -52,7 +50,7 @@ class ListEmployeeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Employee
-        exclude = ['company', 'creation_year']
+        exclude = ['company', ]
 
 
 class FormListEmployeeSerializer(serializers.ModelSerializer):
