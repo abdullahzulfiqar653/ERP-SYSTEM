@@ -30,9 +30,9 @@ class ExpenseViewSet(ModelViewSet, CompanyPermissionsMixin):
         return {'request': self.request}
 
     def get_queryset(self):
-        year = self.request.META.get("HTTP_YEAR")
+        # year = self.request.META.get("HTTP_YEAR")
         return Expense.objects.filter(
-            company=self.request.company, creation_year=year).order_by('-id')
+            company=self.request.company).order_by('-id')
 
     def delete(self, request):
         company = self.request.company
@@ -55,9 +55,9 @@ class PurchaseViewSet(ModelViewSet, CompanyPermissionsMixin):
         return {'request': self.request}
 
     def get_queryset(self):
-        year = self.request.META.get("HTTP_YEAR")
+        # year = self.request.META.get("HTTP_YEAR")
         return Purchase.objects.filter(
-            company=self.request.company, creation_year=year).order_by('-id')
+            company=self.request.company).order_by('-id')
 
     def delete(self, request):
         company = self.request.company
@@ -80,9 +80,9 @@ class AssetViewSet(ModelViewSet, CompanyPermissionsMixin):
         return {'request': self.request}
 
     def get_queryset(self):
-        year = self.request.META.get("HTTP_YEAR")
+        # year = self.request.META.get("HTTP_YEAR")
         return Asset.objects.filter(
-            company=self.request.company, creation_year=year).order_by('-id')
+            company=self.request.company).order_by('-id')
 
     def delete(self, request):
         company = self.request.company
