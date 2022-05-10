@@ -10,7 +10,7 @@ def get_contact_id(contact_type):
             return start
         contact_id = Contact.objects.filter(
             contact_type=contact_type).latest('id').contact_id
-        return str(int(contact_id)+1)
+        return str(int(contact_id) + 1)
 
     elif contact_type_name == "debitor":
         start = 440000000001
