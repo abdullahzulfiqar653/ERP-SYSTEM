@@ -42,7 +42,7 @@ class ExpenseSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({"message": "Invalid input."})
         ExpenseItem.objects.filter(expense=instance).delete()
         expense_items = validated_data.pop('expense_items')
-        # validated_data['creation_year'] = instance.creation_year
+        validated_data['creation_date'] = instance.creation_date
         validated_data['accounting_seat'] = instance.accounting_seat
         expense = Expense(pk=instance.id, company=company, **validated_data)
         expense.save()
@@ -95,7 +95,7 @@ class PurchaseSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({"message": "Invalid input."})
         PurchaseItem.objects.filter(purchase=instance).delete()
         purchase_items = validated_data.pop('purchase_items')
-        validated_data['creation_year'] = instance.creation_year
+        validated_data['creation_date'] = instance.creation_date
         validated_data['accounting_seat'] = instance.accounting_seat
         purchase = Purchase(pk=instance.id, company=company, **validated_data)
         purchase.save()
@@ -148,7 +148,7 @@ class AssetSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({"message": "Invalid input."})
         AssetItem.objects.filter(asset=instance).delete()
         asset_items = validated_data.pop('asset_items')
-        validated_data['creation_year'] = instance.creation_year
+        validated_data['creation_date'] = instance.creation_date
         validated_data['accounting_seat'] = instance.accounting_seat
         asset = Asset(pk=instance.id, company=company, **validated_data)
         asset.save()
