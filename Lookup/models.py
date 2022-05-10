@@ -25,10 +25,10 @@ class Tax(models.Model):  # Ret is a tax type like VAT
     lookup_name = models.ForeignKey(
         LookupName, on_delete=models.CASCADE,
         related_name='lookupName')
-    ret = models.DecimalField(max_digits=5, decimal_places=3, default=0.0)
-    equiv = models.DecimalField(max_digits=5, decimal_places=3, default=0.0)
-    vat = models.DecimalField(max_digits=5, decimal_places=3, default=0.0)
-    irfp = models.DecimalField(max_digits=5, decimal_places=3, default=0.0)
+    ret = models.DecimalField(max_digits=5, decimal_places=2, default=0.0)
+    equiv = models.DecimalField(max_digits=5, decimal_places=2, default=0.0)
+    vat = models.DecimalField(max_digits=5, decimal_places=2, default=0.0)
+    irfp = models.DecimalField(max_digits=5, decimal_places=2, default=0.0)
 
     def __str__(self):
         return str(self.id)

@@ -12,7 +12,7 @@ class InvoiceItemAdmin(admin.TabularInline):
 
 class InvoiceAdmin(admin.ModelAdmin):
     inlines = [InvoiceItemAdmin, ]
-    list_display = ['id', 'company', 'invoice_date', 'due_date', 'creation_year', 'status']
+    list_display = ['id', 'company', 'invoice_date', 'due_date', 'creation_date', 'status']
 
 
 admin.site.register(Invoice, InvoiceAdmin)

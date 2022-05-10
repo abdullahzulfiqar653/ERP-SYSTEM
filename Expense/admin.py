@@ -12,8 +12,8 @@ class ExpenseItemAdmin(admin.TabularInline):
 
 class ExpenseAdmin(admin.ModelAdmin):
     inlines = [ExpenseItemAdmin, ]
-    list_display = ['id', 'company', 'invoice_date', 'due_date', 'creation_year']
-    readonly_fields = ['creation_year', 'accounting_seat']
+    list_display = ['id', 'company', 'invoice_date', 'due_date', 'creation_date']
+    readonly_fields = ['creation_date', 'accounting_seat']
 
 
 admin.site.register(Expense, ExpenseAdmin)
@@ -26,8 +26,8 @@ class PurchaseItemAdmin(admin.TabularInline):
 
 class PurchaseAdmin(admin.ModelAdmin):
     inlines = [PurchaseItemAdmin, ]
-    list_display = ['id', 'company', 'invoice_date', 'due_date', 'creation_year']
-    readonly_fields = ['creation_year', 'accounting_seat']
+    list_display = ['id', 'company', 'invoice_date', 'due_date', 'creation_date']
+    readonly_fields = ['creation_date', 'accounting_seat']
 
 
 admin.site.register(Purchase, PurchaseAdmin)
@@ -40,8 +40,8 @@ class AssetItemAdmin(admin.TabularInline):
 
 class AssetAdmin(admin.ModelAdmin):
     inlines = [AssetItemAdmin, ]
-    list_display = ['id', 'company', 'invoice_date', 'due_date', 'creation_year']
-    readonly_fields = ['creation_year', 'accounting_seat']
+    list_display = ['id', 'company', 'invoice_date', 'due_date', 'creation_date']
+    readonly_fields = ['creation_date', 'accounting_seat']
 
 
 admin.site.register(Asset, AssetAdmin)
