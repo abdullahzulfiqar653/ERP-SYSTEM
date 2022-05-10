@@ -20,15 +20,15 @@ class ExpenseSerializer(serializers.ModelSerializer):
         model = Expense
         exclude = [
             'company',
-            'creation_year',
+            'creation_date',
         ]
 
     def create(self, validated_data):
         request = self.context.get('request')
-        year = request.META.get('HTTP_YEAR')
+        # year = request.META.get('HTTP_YEAR')
         expense_items = validated_data.pop('expense_items')
         validated_data["accounting_seat"] = get_expense_id()
-        expense = Expense(company=request.company, creation_year=year, **validated_data)
+        expense = Expense(company=request.company, **validated_data)
         expense.save()
         for item in expense_items:
             expense_item = ExpenseItem(expense=expense, **item)
@@ -42,7 +42,7 @@ class ExpenseSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({"message": "Invalid input."})
         ExpenseItem.objects.filter(expense=instance).delete()
         expense_items = validated_data.pop('expense_items')
-        validated_data['creation_year'] = instance.creation_year
+        # validated_data['creation_year'] = instance.creation_year
         validated_data['accounting_seat'] = instance.accounting_seat
         expense = Expense(pk=instance.id, company=company, **validated_data)
         expense.save()

@@ -23,14 +23,13 @@ class InvoiceSerializer(serializers.ModelSerializer):
         model = Invoice
         exclude = [
             'company',
-            'creation_year',
+            'creation_date',
         ]
 
     def create(self, validated_data):
         request = self.context.get('request')
-        year = request.META.get('HTTP_YEAR')
         invoice_items = validated_data.pop('invoice_items')
-        invoice = Invoice(company=request.company, creation_year=year, **validated_data)
+        invoice = Invoice(company=request.company, **validated_data)
         invoice.save()
         for item in invoice_items:
             invoice_item = InvoiceItem(invoice=invoice, **item)
@@ -42,7 +41,6 @@ class InvoiceSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({"message": "Invalid input."})
         InvoiceItem.objects.filter(invoice=instance).delete()
         invoice_items = validated_data.pop('invoice_items')
-        validated_data['creation_year'] = instance.creation_year
         invoice = Invoice(pk=instance.id, **validated_data)
         invoice.save()
         for item in invoice_items:

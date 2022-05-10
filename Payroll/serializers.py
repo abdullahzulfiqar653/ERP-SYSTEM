@@ -107,7 +107,7 @@ class PayRollSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PayRoll
-        exclude = ['company', 'creation_year']
+        exclude = ['company', 'creation_date']
 
 
 class PayrollsDeleteSerializer(serializers.ModelSerializer):

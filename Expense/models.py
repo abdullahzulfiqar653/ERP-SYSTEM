@@ -1,19 +1,12 @@
-import datetime
 from django.db import models
-from django.core.validators import MaxValueValidator, MinValueValidator
 from Contact.models import Contact
 from Core.models import Company
 from Lookup.models import Tax, AccountType
 # Create your models here.
 
 
-def max_value_current_year(value):
-    return MaxValueValidator(datetime.date.today().year)(value)
-
-
 class Expense(models.Model):
-    creation_year = models.PositiveIntegerField(
-        validators=[MinValueValidator(2020), max_value_current_year], blank=True, null=True)
+    creation_date = models.DateField(auto_now_add=True)
     company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name="companyExpenses")
     accounting_seat = models.CharField(max_length=12)
     contact = models.ForeignKey(Contact, on_delete=models.CASCADE, related_name='ExpenseContactSeats')
@@ -33,8 +26,7 @@ class ExpenseItem(models.Model):
 
 
 class Purchase(models.Model):
-    creation_year = models.PositiveIntegerField(
-        validators=[MinValueValidator(2020), max_value_current_year], blank=True, null=True)
+    creation_date = models.DateField(auto_now_add=True)
     company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name="companyPurchases")
     accounting_seat = models.CharField(max_length=12)
     contact = models.ForeignKey(Contact, on_delete=models.CASCADE, related_name='PurchaseContactSeats')
@@ -54,8 +46,7 @@ class PurchaseItem(models.Model):
 
 
 class Asset(models.Model):
-    creation_year = models.PositiveIntegerField(
-        validators=[MinValueValidator(2020), max_value_current_year], blank=True, null=True)
+    creation_date = models.DateField(auto_now_add=True)
     company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name="companyAssets")
     accounting_seat = models.CharField(max_length=12)
     contact = models.ForeignKey(Contact, on_delete=models.CASCADE, related_name='AssetContactSeats')

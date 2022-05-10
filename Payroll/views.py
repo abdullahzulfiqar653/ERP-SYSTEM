@@ -318,12 +318,11 @@ class PayRollCreateAPIView(CompanyPermissionsMixin, generics.CreateAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
-        year = self.request.META.get("HTTP_YEAR")
         company = self.request.company
         payroll_items = data.pop("payroll_items")
         teams_list = data.pop("teams_list")
         payroll = PayRoll.objects.create(
-            company=company, creation_year=year, **data)
+            company=company, **data)
         for team in teams_list:
             if Team.objects.filter(pk=team, company=company).exists():
                 PayrollTeam.objects.create(payroll=payroll, team_id=team)
@@ -358,8 +357,7 @@ class PayRollListAPIView(CompanyPermissionsMixin, generics.ListAPIView):
     filterset_class = PayRollFilter
 
     def get_queryset(self):
-        year = self.request.META.get("HTTP_YEAR")
-        return PayRoll.objects.filter(company=self.request.company, creation_year=year).order_by('-id')
+        return PayRoll.objects.filter(company=self.request.company).order_by('-id')
 
 
 '''
@@ -372,8 +370,7 @@ class PayRollRetrieveAPIView(CompanyPermissionsMixin, generics.RetrieveAPIView):
     serializer_class = FetchPayrollSerializer
 
     def get_queryset(self):
-        year = self.request.META.get("HTTP_YEAR")
-        return PayRoll.objects.filter(company=self.request.company, creation_year=year)
+        return PayRoll.objects.filter(company=self.request.company)
 
 
 '''
@@ -399,9 +396,7 @@ class PayRollItemUpdateAPIView(CompanyPermissionsMixin, generics.UpdateAPIView):
 
         if not PayRoll.objects.filter(pk=payroll_id, company=company).exists():
             return Response({"message": "Payroll not found"}, status=status.HTTP_404_NOT_FOUND)
-        year = PayRoll.objects.get(pk=payroll_id).creation_year
-        payroll = PayRoll(pk=payroll_id, company=company,
-                          creation_year=year, **data)
+        payroll = PayRoll(pk=payroll_id, company=company, **data)
         payroll.save()
 
         PayrollTeam.objects.filter(payroll=payroll).delete()
@@ -442,13 +437,7 @@ class PayRollsDeleteAPIView(CompanyPermissionsMixin, generics.DestroyAPIView):
         serializer = self.get_serializer(data=self.request.data)
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
-        year = self.request.META.get("HTTP_YEAR")
-
-        for id in data['payrolls_list']:
-            if PayRoll.objects.filter(pk=id).filter(company=self.request.company, creation_year=year).exists():
-                instance = PayRoll.objects.get(pk=id)
-                instance.delete()
-            continue
+        PayRoll.objects.filter(pk__in=data['payrolls_list'], company=self.request.company).delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
