@@ -28,6 +28,11 @@ class TaxSerializer(serializers.ModelSerializer):
 
 
 class ChartOfAccountTypeSerializer(serializers.ModelSerializer):
+    english_name = serializers.SerializerMethodField()
+
+    def get_english_name(self, account: AccountType):
+        return '{} - {}'.format(account.english_name, account.account_number)
+
     class Meta:
         model = AccountType
         fields = ['id', 'english_name']
