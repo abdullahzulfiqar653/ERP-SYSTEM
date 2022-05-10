@@ -73,15 +73,14 @@ class PurchaseSerializer(serializers.ModelSerializer):
         model = Purchase
         exclude = [
             'company',
-            'creation_year',
+            'creation_date',
         ]
 
     def create(self, validated_data):
         request = self.context.get('request')
-        year = request.META.get('HTTP_YEAR')
         purchase_items = validated_data.pop('purchase_items')
         validated_data["accounting_seat"] = get_purchase_id()
-        purchase = Purchase(company=request.company, creation_year=year, **validated_data)
+        purchase = Purchase(company=request.company, **validated_data)
         purchase.save()
         for item in purchase_items:
             purchase_item = PurchaseItem(purchase=purchase, **item)
@@ -131,10 +130,9 @@ class AssetSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         request = self.context.get('request')
-        year = request.META.get('HTTP_YEAR')
         asset_items = validated_data.pop('asset_items')
         validated_data["accounting_seat"] = get_asset_id()
-        asset = Asset(company=request.company, creation_year=year, **validated_data)
+        asset = Asset(company=request.company, **validated_data)
         asset.save()
         for item in asset_items:
             asset_item = AssetItem(asset=asset, **item)
