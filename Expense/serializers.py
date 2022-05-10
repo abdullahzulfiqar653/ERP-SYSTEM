@@ -125,7 +125,7 @@ class AssetSerializer(serializers.ModelSerializer):
         model = Asset
         exclude = [
             'company',
-            'creation_year',
+            'creation_date',
         ]
 
     def create(self, validated_data):
