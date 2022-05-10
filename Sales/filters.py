@@ -9,4 +9,5 @@ class InvoiceFilter(FilterSet):
             "due_date": ['exact'],
             "total": ['gt', 'lt'],
             "status__id": ["exact"],
+            "creation_date": ['gt', 'lt']
         }

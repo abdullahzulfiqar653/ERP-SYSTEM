@@ -45,5 +45,6 @@ class PayRollFilter(FilterSet):
             "net": ['gt', 'lt'],
             "ss_company": ['gt', 'lt'],
             "discount": ['gt', 'lt'],
-            "company_cost": ['gt', 'lt']
+            "company_cost": ['gt', 'lt'],
+            "creation_date": ['gt', 'lt']
         }

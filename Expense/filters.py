@@ -1,49 +1,35 @@
-# from django_filters import FilterSet
-# from .models import Purchase, Expense
+from django_filters import FilterSet
+from .models import Expense, Purchase, Asset
 
 
-# class ExpenseFilter(FilterSet):
-#     class Meta:
-#         model = Expense
-#         fields = {
-#             "expense_accounting_seat": ["exact"],
-#             "name": ['icontains'],
-#             "surname": ['icontains'],
-#             "contract_type": ['exact'],
-#             "enddate": ['exact'],
-#             "team": ["exact"],
-#             "current_salary": ['gt', 'lt'],
-#         }
+class ExpenseFilter(FilterSet):
+    class Meta:
+        model = Expense
+        fields = {
+            "creation_date": ['gt', 'lt'],
+            "accounting_seat": ["exact"],
+            "invoice_date": ['exact'],
+            "due_date": ['exact'],
+        }
 
 
-# class PurchaseFilter(FilterSet):
-#     class Meta:
-#         model = Purchase
-#         fields = {
-#             "team_name": ['icontains'],
-#             "address": ['icontains'],
-#             "postcode": ['exact'],
-#             "province": ['iexact'],
-#             "country__id": ['exact'],
-#             "note": ['icontains'],
-#         }
+class PurchaseFilter(FilterSet):
+    class Meta:
+        model = Purchase
+        fields = {
+            "creation_date": ['gt', 'lt'],
+            "accounting_seat": ["exact"],
+            "invoice_date": ['exact'],
+            "due_date": ['exact'],
+        }
 
 
-# class PayRollFilter(FilterSet):
-#     class Meta:
-#         model = PayRoll
-#         fields = {
-#             "id": ["exact"],
-#             "created_at_year": ["exact"],
-#             "created_at_month": ["exact"],
-#             "gross": ['gt', 'lt'],
-#             "bonus": ['gt', 'lt'],
-#             "total_gross": ['gt', 'lt'],
-#             "irfp": ['gt', 'lt'],
-#             "irfp_total": ['gt', 'lt'],
-#             "ss_employee": ['gt', 'lt'],
-#             "net": ['gt', 'lt'],
-#             "ss_company": ['gt', 'lt'],
-#             "discount": ['gt', 'lt'],
-#             "company_cost": ['gt', 'lt']
-#         }
+class AssetFilter(FilterSet):
+    class Meta:
+        model = Asset
+        fields = {
+            "creation_date": ['gt', 'lt'],
+            "accounting_seat": ["exact"],
+            "invoice_date": ['exact'],
+            "due_date": ['exact'],
+        }
