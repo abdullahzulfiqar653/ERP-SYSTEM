@@ -1,6 +1,6 @@
 import datetime
 from django.db import models
-from django.core.validators import MaxValueValidator, MinValueValidator
+from django.core.validators import MaxValueValidator
 from Lookup.models import LookupName, AccountType, Tax, PaymentDay
 from Core.models import Company
 
@@ -12,8 +12,6 @@ def max_value_current_year(value):
 
 
 class Contact(models.Model):
-    creation_year = models.PositiveIntegerField(
-        validators=[MinValueValidator(2020), max_value_current_year], blank=True, null=True)
     company = models.ForeignKey(
         Company, on_delete=models.CASCADE,
         related_name='company_contact')
@@ -55,6 +53,7 @@ class Contact(models.Model):
     payment_extension = models.ForeignKey(
         PaymentDay, on_delete=models.SET_NULL,
         related_name='payment_extension_days', null=True)  # option field
+    payment_account = models.CharField(max_length=256, null=True, blank=True)
 
     def __str__(self) -> str:
         return self.name + "--" + str(self.contact_id)

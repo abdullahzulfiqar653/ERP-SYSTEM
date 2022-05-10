@@ -27,6 +27,7 @@ class ContactSerializer(serializers.ModelSerializer):
             'ret_or_equiv',
             'payment_method',
             'payment_extension',
+            'payment_account',
         ]
 
 
@@ -67,6 +68,7 @@ class ContactUpdateSerializer(serializers.ModelSerializer):
             'ret_or_equiv',
             'payment_method',
             'payment_extension',
+            'payment_account',
         ]
 
 
@@ -126,4 +128,5 @@ class ContactRetrieveForInvoiceSerializer(serializers.ModelSerializer):
             'vat',
             'ret_or_equiv',
             'payment_method',
+            'payment_account',
         ]

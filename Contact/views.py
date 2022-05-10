@@ -31,11 +31,10 @@ class ContactCreateAPIView(CompanyPermissionsMixin, generics.CreateAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
-        year = self.request.META.get('HTTP_YEAR')
         if Contact.objects.filter(nif=data['nif'], company=company).exists():
             return Response({"nif": "NIF already exists."}, status=status.HTTP_400_BAD_REQUEST)
         data['contact_id'] = get_contact_id(data['contact_type'])
-        contact = Contact(company=company, creation_year=year, **data)
+        contact = Contact(company=company, **data)
         contact.save()
         return Response({
             "message": "Contact Created.",
@@ -74,7 +73,6 @@ class ContactUpdateAPIView(generics.UpdateAPIView):
             data['contact_id'] = get_contact_id(data['contact_type'])
         else:
             data['contact_id'] = oldContact.contact_id
-        data['creation_year'] = oldContact.creation_year
         contact = Contact(pk=contact_id, company=company, **data)
         contact.save()
         return Response({
@@ -91,8 +89,7 @@ class ContactListAPIView(CompanyPermissionsMixin, generics.ListAPIView):
     filterset_class = ContactFilter
 
     def get_queryset(self):
-        year = self.request.META.get("HTTP_YEAR")
-        return Contact.objects.filter(company=self.request.company, creation_year=year).order_by('-id')
+        return Contact.objects.filter(company=self.request.company).order_by('-id')
 
 
 '''This return the specific object by the given id in url'''
@@ -103,8 +100,7 @@ class ContactRetrieveAPIView(CompanyPermissionsMixin, generics.RetrieveAPIView):
     serializer_class = ContactSerializer
 
     def get_queryset(self):
-        year = self.request.META.get("HTTP_YEAR")
-        return Contact.objects.filter(company=self.request.company, creation_year=year)
+        return Contact.objects.filter(company=self.request.company)
 
 
 '''
@@ -145,9 +141,8 @@ class ContactListForInvoiceDropdownAPIView(CompanyPermissionsMixin, generics.Lis
     serializer_class = ContactListForInvoiceSerializer
 
     def get_queryset(self):
-        year = self.request.META.get("HTTP_YEAR")
         return Contact.objects.filter(
-            company=self.request.company, creation_year=year, contact_type__lookup_name="Client"
+            company=self.request.company, contact_type__lookup_name="Client"
         ).order_by('-id')
 
 
@@ -156,5 +151,4 @@ class ContactRetrieveForInvoiceAPIView(CompanyPermissionsMixin, generics.Retriev
     serializer_class = ContactRetrieveForInvoiceSerializer
 
     def get_queryset(self):
-        year = self.request.META.get("HTTP_YEAR")
-        return Contact.objects.filter(company=self.request.company, creation_year=year).order_by('-id')
+        return Contact.objects.filter(company=self.request.company).order_by('-id')
