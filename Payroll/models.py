@@ -85,10 +85,8 @@ class PayRoll(models.Model):
     ss_company = models.DecimalField(max_digits=12, decimal_places=2, )
     discount = models.DecimalField(max_digits=12, decimal_places=2, )
     company_cost = models.DecimalField(max_digits=12, decimal_places=2, )
-    created_at_year = models.PositiveIntegerField(
-        validators=[MinValueValidator(2020), max_value_current_year])
-    created_at_month = models.PositiveIntegerField(
-        validators=[MinValueValidator(1), MaxValueValidator(12)])
+    created_at_year = models.PositiveIntegerField(null=True, blank=True, validators=[MinValueValidator(2020), max_value_current_year])
+    created_at_month = models.PositiveIntegerField(null=True, blank=True, validators=[MinValueValidator(1), MaxValueValidator(12)])
 
 
 class PayrollTeam(models.Model):
