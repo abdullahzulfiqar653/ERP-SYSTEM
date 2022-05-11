@@ -39,20 +39,20 @@ class Contact(models.Model):
     #  chart of account type
     account_type = models.ForeignKey(
         AccountType, on_delete=models.SET_NULL,
-        related_name='account_type_name', null=True)  # option field
+        related_name='account_type_name', null=True, blank=True)  # option field
     vat = models.ForeignKey(
         Tax, on_delete=models.SET_NULL,
         related_name='vat_tax', null=True)  # option field
     # option field
     ret_or_equiv = models.ForeignKey(
         Tax, on_delete=models.SET_NULL,
-        related_name='ret_or_re_tax', null=True)
+        related_name='ret_or_re_tax', null=True, blank=True)
     payment_method = models.ForeignKey(
         LookupName, on_delete=models.SET_NULL,
-        related_name='payment_method_name', null=True)
+        related_name='payment_method_name', null=True, blank=True)
     payment_extension = models.ForeignKey(
         PaymentDay, on_delete=models.SET_NULL,
-        related_name='payment_extension_days', null=True)  # option field
+        related_name='payment_extension_days', null=True, blank=True)  # option field
     payment_account = models.CharField(max_length=256, null=True, blank=True)
 
     def __str__(self) -> str:
