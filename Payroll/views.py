@@ -396,7 +396,8 @@ class PayRollItemUpdateAPIView(CompanyPermissionsMixin, generics.UpdateAPIView):
 
         if not PayRoll.objects.filter(pk=payroll_id, company=company).exists():
             return Response({"message": "Payroll not found"}, status=status.HTTP_404_NOT_FOUND)
-        payroll = PayRoll(pk=payroll_id, company=company, **data)
+        creation_date = PayRoll.objects.get(id=payroll_id).creation_date
+        payroll = PayRoll(pk=payroll_id, company=company, creation_date=creation_date, **data)
         payroll.save()
 
         PayrollTeam.objects.filter(payroll=payroll).delete()
