@@ -14,7 +14,7 @@ from .serializers import (
     PurchaseDeleteSerializer,
 )
 from .models import Expense, Purchase, Asset
-# from .filters import InvoiceFilter
+from .filters import ExpenseFilter, PurchaseFilter, AssetFilter
 from utils.pagination import LimitOffsetPagination
 
 
@@ -23,7 +23,7 @@ class ExpenseViewSet(ModelViewSet, CompanyPermissionsMixin):
     serializer_class = ExpenseSerializer
     pagination_class = LimitOffsetPagination
     filter_backends = [DjangoFilterBackend, OrderingFilter]
-    # filterset_class = InvoiceFilter
+    filterset_class = ExpenseFilter
     ordering_fields = ['id', ]
 
     def get_serializer_context(self):
@@ -48,7 +48,7 @@ class PurchaseViewSet(ModelViewSet, CompanyPermissionsMixin):
     serializer_class = PurchaseSerializer
     pagination_class = LimitOffsetPagination
     filter_backends = [DjangoFilterBackend, OrderingFilter]
-    # filterset_class = InvoiceFilter
+    filterset_class = PurchaseFilter
     ordering_fields = ['id', ]
 
     def get_serializer_context(self):
@@ -73,14 +73,13 @@ class AssetViewSet(ModelViewSet, CompanyPermissionsMixin):
     serializer_class = AssetSerializer
     pagination_class = LimitOffsetPagination
     filter_backends = [DjangoFilterBackend, OrderingFilter]
-    # filterset_class = InvoiceFilter
+    filterset_class = AssetFilter
     ordering_fields = ['id', ]
 
     def get_serializer_context(self):
         return {'request': self.request}
 
     def get_queryset(self):
-        # year = self.request.META.get("HTTP_YEAR")
         return Asset.objects.filter(
             company=self.request.company).order_by('-id')
 
