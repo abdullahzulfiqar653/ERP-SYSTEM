@@ -18,13 +18,14 @@ class InvoiceSerializer(serializers.ModelSerializer):
     status = serializers.CharField(read_only=True)
     vat_percentage_label = serializers.CharField(source='vat_percentage.vat', read_only=True)
     equiv_percentage_label = serializers.CharField(source='equiv_percentage.equiv', read_only=True)
+    creation_date_label = serializers.ReadOnlyField
 
     class Meta:
         model = Invoice
         exclude = [
             'company',
-            'creation_date',
         ]
+        read_only_fields = ('creation_date', )
 
     def create(self, validated_data):
         request = self.context.get('request')
