@@ -2,24 +2,19 @@ Project name: ***Booster Tech***
 
 **clone project using HTTPS:**
 
-```git clone https://abdullahzulfiqar0345@bitbucket.org/BeyondErisSolutions/booster-tech-backend.git```
+```git clone https://github.com/abdullahzulfiqar785/ERP-SYSTEM.git```
 
 **make and activate environment for project using command given**
 
-1: **making environment**
+1: **making environment and installing dependencies**
 
-    macOS/Linux: python3 -m venv .venv 
-   Windows: python -m venv .venv
-   (be sure to have virtualenv globally if not then install using 'pip install virtualenv')
-
-2: **activating .venv:**
-    Windows: .\.venv\Scripts\activate
-    macOS/Linux: .\.venv\bin\activate
+    macOS/Linux/Windows: pipenv install 
+   after that use the command **pipenv --venv** so will have the interpretar path.
+   Select interpreter from this path and activate the environment
 
 **Install  all Packages**
 ```
-macOS/Linux: pip3 install -r requirements.txt
-Windows: pip install -r requirements.txt
+pipenv install already installed all packages
 ```
 ​
 **Run the Application and API**
