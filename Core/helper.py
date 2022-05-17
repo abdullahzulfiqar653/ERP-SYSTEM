@@ -10,14 +10,14 @@ def generate_token():
             string.ascii_uppercase +
             string.digits +
             string.ascii_lowercase
-            ) for _ in range(200))
+        ) for _ in range(200))
     while (UserProfile.objects.filter(activation_key=token).exists()):
         token = ''.join(
             random.SystemRandom().choice(
                 string.ascii_uppercase +
                 string.digits +
                 string.ascii_lowercase
-                )for _ in range(150))
+            )for _ in range(150))
     return token
 
 
@@ -27,12 +27,12 @@ def generate_username():
             string.ascii_uppercase +
             string.digits +
             string.ascii_lowercase
-            ) for _ in range(20))
+        ) for _ in range(20))
     while (User.objects.filter(username=username).exists()):
         username = ''.join(
             random.SystemRandom().choice(
                 string.ascii_uppercase +
                 string.digits +
                 string.ascii_lowercase
-                )for _ in range(20))
+            )for _ in range(20))
     return username
