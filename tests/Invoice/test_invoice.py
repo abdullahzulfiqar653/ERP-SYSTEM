@@ -29,7 +29,7 @@ def create_user_company_and_contact(api_client):
         headers = {
             'HTTP_AUTHORIZATION': "JWT {}".format(user_response.data['token']),
             'HTTP_COMPANY': company.id
-            }
+        }
         return {
             'contact': contact,
             'headers': headers
@@ -66,7 +66,7 @@ class TestInvoice:
                     "base": 12.12,
                     "invoice": 1
                 }
-                ],
+            ],
             "invoice_date": "2022-12-12",
             # "client": response['contact'].id,
             # "account": response['contact'].account_type.id,
